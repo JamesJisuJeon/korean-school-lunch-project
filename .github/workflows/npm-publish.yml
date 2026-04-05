@@ -18,10 +18,23 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
-    env:
-      working-directory: /root/lunch
     steps:
       - name: Check Out
         uses: actions/checkout@v4
-      - name: Backup Server
-        run: pwd
+      - name: Set Timestamp
+        run: echo "TIMESTAMP=$(date +"%Y%m%d%H%M%S")" >> $GITHUB_ENV
+      - name: Install
+        run: |
+          mkdir /root/lunch/main-$TIMESTAMP
+          rsync -av --exclude '.git' * /root/lunch/main-$TIMESTAMP
+          cd /root/lunch/main-$TIMESTAMP
+          npm install
+      - name: Set Default
+        run: |
+          rm /root/lunch/default
+          ln -s /root/lunch/main-$TIMESTAMP /root/lunch/default
+      - name: Start
+        run: |
+          cd /root/lunch/default
+          pm2 stop —name "lunch-prod"
+          pm2 start —name "lunch-prod" npm — start
