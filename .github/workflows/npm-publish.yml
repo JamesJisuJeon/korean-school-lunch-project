@@ -32,6 +32,7 @@ jobs:
           npm run build
       - name: Set .env
         run: |
+          cd /root/lunch/main-$TIMESTAMP
           touch .env
           echo "DATABASE_URL=postgresql://postgres:qwer1234@10.10.1.23:5432/postgres" >> .env
           echo "DIRECT_URL=postgresql://postgres:qwer1234@10.10.1.23:5432/postgres" >> .env
