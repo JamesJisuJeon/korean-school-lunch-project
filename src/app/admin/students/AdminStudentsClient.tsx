@@ -227,7 +227,7 @@ export default function AdminStudentsClient() {
         {!showAddForm && (
           <button 
             onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className="w-full md:w-auto px-8 py-3.5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 active:scale-95 transition-all text-base"
+            className="w-full md:w-auto px-8 py-3.5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 transition-all text-base"
           >
             <UserPlus className="w-5 h-5" /> 신규 학생 등록
           </button>
@@ -239,7 +239,7 @@ export default function AdminStudentsClient() {
         <section className="bg-white dark:bg-gray-900 p-8 rounded-[2rem] shadow-2xl border-2 border-blue-50 dark:border-blue-900/20 transition-all animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-              <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-100 dark:shadow-blue-900/20">
+              <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-100 dark:shadow-none dark:shadow-blue-900/20">
                 <GraduationCap className="w-6 h-6 text-white" /> 
               </div>
               {editingStudent ? "학생 정보 수정" : "새로 등록하기"}

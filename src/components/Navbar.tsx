@@ -1,9 +1,9 @@
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
 import Link from "next/link";
-import { Home, LogOut, User, BookOpen, Utensils, DollarSign, ClipboardList, BarChart2, ShoppingCart } from "lucide-react";
+import { Home, BookOpen, Utensils, DollarSign, ClipboardList, BarChart2, ShoppingCart } from "lucide-react";
 import AdminToggle from "./AdminToggle";
 import ThemeSelector from "./ThemeSelector";
-import InstallPWA from "./InstallPWA";
+import UserMenu from "./UserMenu";
 
 function MobileShortcut({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
   return (
@@ -38,26 +38,9 @@ export default async function Navbar() {
           </span>
         </Link>
         <div className="flex items-center gap-3 lg:order-2">
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 font-bold italic">
-            <User className="w-4 h-4" />
-            {session.user.name || session.user.email}
-          </div>
-          <InstallPWA />
           {isAdmin && <AdminToggle />}
           <ThemeSelector />
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button
-              type="submit"
-              className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 font-medium rounded-lg text-sm px-3 py-2 flex items-center gap-1 transition-colors"
-            >
-              <LogOut className="w-4 h-4" /> 로그아웃
-            </button>
-          </form>
+          <UserMenu name={session.user.name || session.user.email || ""} />
         </div>
       </div>
 

@@ -38,7 +38,7 @@ export async function GET(req: Request) {
         }
       },
       orderBy: [
-        { class: { name: "asc" } },
+        { class: { sortOrder: "asc" } },
         { name: "asc" }
       ]
     });
