@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
 
@@ -14,8 +14,8 @@ export async function POST(
   }
 
   try {
-    const userId = params.id;
-    const tempPassword = Math.random().toString(36).slice(-8);
+    const { id: userId } = await params;
+    const tempPassword = "password1234";
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     const user = await prisma.user.update({
@@ -26,8 +26,7 @@ export async function POST(
       },
     });
 
-    // TODO: 이메일 발송 로직 추가 (tempPassword 안내)
-    console.log(`[Email Mock] ${user.email}님께 새 임시 비밀번호 ${tempPassword}가 발송되었습니다.`);
+    console.log(`[비밀번호 리셋] ${user.email}님 비밀번호가 초기화되었습니다.`);
 
     return NextResponse.json({
       message: "비밀번호가 초기화되었습니다.",
