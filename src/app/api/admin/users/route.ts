@@ -29,8 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 임시 비밀번호 생성 (8자 랜덤)
-    const tempPassword = Math.random().toString(36).slice(-8);
+    const tempPassword = "password1234";
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
     const user = await prisma.user.create({
@@ -43,8 +42,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // TODO: 이메일 발송 로직 추가 (tempPassword 안내)
-    console.log(`[Email Mock] ${email}님께 임시 비밀번호 ${tempPassword}가 발송되었습니다.`);
+    console.log(`[신규 사용자] ${email}님 계정 생성 완료 (초기 비밀번호: ${tempPassword})`);
 
     return NextResponse.json({
       message: "사용자가 생성되었습니다.",
