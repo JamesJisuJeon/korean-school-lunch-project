@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { UserPlus, Search, Shield, Key, Mail, Trash2, X } from "lucide-react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { UserPlus, Search, Shield, Key, Trash2, X, Download, Upload, Users } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface User {
   id: string;
@@ -14,15 +15,16 @@ export default function UserManagementClient() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [importResult, setImportResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const [newUser, setNewUser] = useState({ name: "", email: "", roles: ["PARENT"] });
   const [editingUser, setEditingUser] = useState<any>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: "asc" | "desc" } | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { fetchUsers(); }, []);
 
   const fetchUsers = async () => {
     const res = await fetch("/api/admin/users");
@@ -30,28 +32,26 @@ export default function UserManagementClient() {
   };
 
   const handleSort = (key: keyof User) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
+    setSortConfig(prev =>
+      prev?.key === key
+        ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: "asc" }
+    );
   };
 
   const sortedUsers = useMemo(() => {
-    let sortableUsers = [...users.filter(u =>
+    let list = users.filter(u =>
       u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )];
-    if (sortConfig !== null) {
-      sortableUsers.sort((a, b) => {
-        const aValue = (a[sortConfig.key] || "").toString();
-        const bValue = (b[sortConfig.key] || "").toString();
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
+    );
+    if (sortConfig) {
+      list = [...list].sort((a, b) => {
+        const av = (a[sortConfig.key] || "").toString();
+        const bv = (b[sortConfig.key] || "").toString();
+        return sortConfig.direction === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       });
     }
-    return sortableUsers;
+    return list;
   }, [users, searchTerm, sortConfig]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -63,8 +63,7 @@ export default function UserManagementClient() {
       body: JSON.stringify(newUser),
     });
     if (res.ok) {
-      const data = await res.json();
-      alert(`사용자가 등록되었습니다.\n임시 비밀번호: ${data.user.tempPassword}\n사용자에게 이 비밀번호를 안내해 주세요.`);
+      alert("사용자가 등록되었습니다.\n초기 비밀번호: password1234");
       setNewUser({ name: "", email: "", roles: ["PARENT"] });
       setShowAddForm(false);
       fetchUsers();
@@ -95,35 +94,119 @@ export default function UserManagementClient() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm("해당 사용자를 정말 삭제하시겠습니까? 데이터가 모두 삭제됩니다.")) return;
+    if (!confirm("해당 사용자를 정말 삭제하시겠습니까?")) return;
     const res = await fetch("/api/admin/users", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: userId }),
     });
-    if (res.ok) {
-      alert("사용자가 삭제되었습니다.");
-      fetchUsers();
-    } else {
+    if (res.ok) fetchUsers();
+    else {
       const data = await res.json();
       alert(data.message || "삭제 중 오류가 발생했습니다.");
     }
   };
 
   const resetPassword = async (userId: string) => {
-    if (!confirm("해당 사용자의 비밀번호를 초기화하시겠습니까?")) return;
+    if (!confirm("비밀번호를 password1234로 초기화하시겠습니까?")) return;
     const res = await fetch(`/api/admin/users/${userId}/reset-password`, { method: "POST" });
-    if (res.ok) {
-      const data = await res.json();
-      alert(`비밀번호가 초기화되었습니다.\n새 임시 비밀번호: ${data.tempPassword}\n사용자에게 이 비밀번호를 안내해 주세요.`);
-    }
+    if (res.ok) alert("비밀번호가 password1234로 초기화되었습니다.");
+  };
+
+  const downloadTemplate = () => {
+    const data = [
+      { "이름(Name)": "홍길동", "이메일(Email)": "hong@example.com", "권한(Role)": "PARENT" },
+      { "이름(Name)": "김선생", "이메일(Email)": "kim@example.com", "권한(Role)": "TEACHER" },
+    ];
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws["!cols"] = [{ wch: 14 }, { wch: 26 }, { wch: 16 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    XLSX.writeFile(wb, "user_registration_template.xlsx");
+  };
+
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(evt.target?.result, { type: "binary" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw: any[] = XLSX.utils.sheet_to_json(ws);
+
+        const parsed = raw.map(row => ({
+          name: row["이름(Name)"] || row["이름"] || row["name"] || "",
+          email: row["이메일(Email)"] || row["이메일"] || row["email"] || "",
+          roles: [row["권한(Role)"] || row["권한"] || row["role"] || "PARENT"],
+        })).filter(r => r.email);
+
+        if (parsed.length === 0) {
+          setImportResult({ type: "error", message: "유효한 데이터가 없습니다. 양식을 확인해주세요." });
+          return;
+        }
+
+        setIsLoading(true);
+        const res = await fetch("/api/admin/users/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ users: parsed }),
+        });
+
+        const result = await res.json();
+        const hasErrors = result.errors?.length > 0;
+        let msg = result.message;
+        if (hasErrors) {
+          msg += "\n\n오류:\n" + result.errors.slice(0, 5).map((e: any) => `- ${e.email}: ${e.error}`).join("\n");
+        }
+        setImportResult({ type: hasErrors ? "error" : "success", message: msg });
+        fetchUsers();
+      } catch (err) {
+        setImportResult({ type: "error", message: `파일 읽기 오류: ${err}` });
+      } finally {
+        setIsLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
   };
 
   const inputClass = "w-full rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 text-base font-black focus:bg-white dark:focus:bg-gray-700 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/30 transition-all outline-none text-gray-900 dark:text-gray-100 shadow-sm";
 
   return (
     <div className="space-y-8">
-      {/* 액션 바 */}
+      {/* 헤더 액션 바 */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-6">
+        <div className="flex items-center gap-5">
+          <div className="p-4 bg-blue-600 rounded-3xl shadow-md">
+            <Users className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-gray-950 dark:text-gray-50">사용자 계정 관리</h1>
+            <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">초기 비밀번호는 <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded font-mono text-blue-600 dark:text-blue-400">password1234</code> 입니다.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
+          <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-black border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+            <Download className="w-5 h-5" /> 양식 다운로드
+          </button>
+          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none disabled:opacity-50">
+            <Upload className="w-5 h-5" /> 엑셀 대량 등록
+          </button>
+          <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
+        </div>
+      </div>
+
+      {/* 대량 등록 결과 */}
+      {importResult && (
+        <div className={`p-5 rounded-2xl border-2 flex items-start justify-between gap-4 ${importResult.type === "success" ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"}`}>
+          <p className={`text-sm font-bold whitespace-pre-wrap ${importResult.type === "success" ? "text-green-800 dark:text-green-300" : "text-red-800 dark:text-red-300"}`}>{importResult.message}</p>
+          <button onClick={() => setImportResult(null)} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
+        </div>
+      )}
+
+      {/* 검색 + 신규 등록 버튼 */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -134,17 +217,14 @@ export default function UserManagementClient() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 dark:text-gray-500 transition-colors"
-            >
+            <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 dark:text-gray-500 transition-colors">
               <X className="w-4 h-4" />
             </button>
           )}
         </div>
         {!showAddForm && !editingUser && (
           <button
-            onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
             className="w-full md:w-auto px-8 py-3.5 bg-blue-600 dark:bg-blue-500 text-white font-black rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-blue-900/30 active:scale-95 transition-all text-base"
           >
             <UserPlus className="w-5 h-5" /> 신규 사용자 등록
@@ -152,20 +232,17 @@ export default function UserManagementClient() {
         )}
       </div>
 
-      {/* 가입/수정 폼 */}
+      {/* 개별 등록/수정 폼 */}
       {(showAddForm || editingUser) && (
-        <div className="bg-white dark:bg-gray-900 p-8 rounded-[2rem] shadow-2xl border-2 border-blue-50 dark:border-blue-900/30 transition-all animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-white dark:bg-gray-900 p-8 rounded-[2rem] shadow-2xl border-2 border-blue-50 dark:border-blue-900/30 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xl font-black flex items-center gap-3">
               <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-100 dark:shadow-blue-900/30">
-                <Mail className="w-6 h-6 text-white" />
+                <UserPlus className="w-6 h-6 text-white" />
               </div>
               <span className="text-gray-900 dark:text-gray-50">{editingUser ? "사용자 정보 수정" : "새 사용자 정보 입력"}</span>
             </h3>
-            <button
-              onClick={() => { setShowAddForm(false); setEditingUser(null); }}
-              className="px-5 py-2.5 text-sm font-black bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-            >
+            <button onClick={() => { setShowAddForm(false); setEditingUser(null); }} className="px-5 py-2.5 text-sm font-black bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
               닫기
             </button>
           </div>
@@ -176,12 +253,9 @@ export default function UserManagementClient() {
                 <input
                   required
                   className={inputClass}
-                  placeholder="사용자 이름을 입력하세요"
+                  placeholder="사용자 이름"
                   value={editingUser ? editingUser.name : newUser.name}
-                  onChange={(e) => editingUser
-                    ? setEditingUser({...editingUser, name: e.target.value})
-                    : setNewUser({...newUser, name: e.target.value})
-                  }
+                  onChange={(e) => editingUser ? setEditingUser({ ...editingUser, name: e.target.value }) : setNewUser({ ...newUser, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -192,10 +266,7 @@ export default function UserManagementClient() {
                   className={inputClass}
                   placeholder="example@email.com"
                   value={editingUser ? editingUser.email : newUser.email}
-                  onChange={(e) => editingUser
-                    ? setEditingUser({...editingUser, email: e.target.value})
-                    : setNewUser({...newUser, email: e.target.value})
-                  }
+                  onChange={(e) => editingUser ? setEditingUser({ ...editingUser, email: e.target.value }) : setNewUser({ ...newUser, email: e.target.value })}
                 />
               </div>
             </div>
@@ -209,16 +280,13 @@ export default function UserManagementClient() {
                       type="checkbox"
                       checked={editingUser ? editingUser.roles.includes(role) : newUser.roles.includes(role)}
                       onChange={(e) => {
-                        const targetUser = editingUser || newUser;
-                        const newRoles = e.target.checked
-                          ? [...targetUser.roles, role]
-                          : targetUser.roles.filter((r: string) => r !== role);
-                        if (editingUser) setEditingUser({...editingUser, roles: newRoles});
-                        else setNewUser({...newUser, roles: newRoles});
+                        const target = editingUser || newUser;
+                        const updated = e.target.checked ? [...target.roles, role] : target.roles.filter((r: string) => r !== role);
+                        editingUser ? setEditingUser({ ...editingUser, roles: updated }) : setNewUser({ ...newUser, roles: updated });
                       }}
-                      className="w-6 h-6 rounded-lg text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-offset-0 focus:ring-blue-500 transition-all"
+                      className="w-6 h-6 rounded-lg text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-offset-0 focus:ring-blue-500"
                     />
-                    <span className="text-base font-black text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 tracking-tight">{role}</span>
+                    <span className="text-base font-black text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">{role}</span>
                   </label>
                 ))}
               </div>
@@ -228,9 +296,9 @@ export default function UserManagementClient() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full md:w-auto px-12 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white text-lg font-black rounded-2xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-600 shadow-xl shadow-blue-200 dark:shadow-blue-900/30 transition-all active:scale-95"
+                className="w-full md:w-auto px-12 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white text-lg font-black rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-600 shadow-xl shadow-blue-200 dark:shadow-blue-900/30 transition-all active:scale-95"
               >
-                {isLoading ? "처리 중..." : editingUser ? "사용자 정보 수정 완료" : "사용자 생성 및 비밀번호 발급"}
+                {isLoading ? "처리 중..." : editingUser ? "수정 완료" : "사용자 등록"}
               </button>
             </div>
           </form>
@@ -243,17 +311,11 @@ export default function UserManagementClient() {
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50">
               <tr>
-                <th
-                  onClick={() => handleSort('name')}
-                  className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  사용자 {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                <th onClick={() => handleSort("name")} className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  사용자 {sortConfig?.key === "name" && (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </th>
-                <th
-                  onClick={() => handleSort('email')}
-                  className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                >
-                  이메일 {sortConfig?.key === 'email' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                <th onClick={() => handleSort("email")} className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  이메일 {sortConfig?.key === "email" && (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">권한</th>
                 <th className="px-8 py-5 text-center text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">관리</th>
@@ -262,22 +324,20 @@ export default function UserManagementClient() {
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-900">
               {sortedUsers.map((u) => (
                 <tr key={u.id} className="hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors group">
-                  <td className="px-8 py-5 whitespace-nowrap">
-                    <div className="text-base font-black text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                      {u.name || "미지정"}
-                    </div>
+                  <td className="px-8 py-5 whitespace-nowrap text-base font-black text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {u.name || "미지정"}
+                  </td>
+                  <td className="px-8 py-5 whitespace-nowrap text-sm font-bold text-gray-500 dark:text-gray-400">
+                    {u.email}
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap">
-                    <div className="text-sm font-bold text-gray-500 dark:text-gray-400 tracking-tight">{u.email}</div>
-                  </td>
-                  <td className="px-8 py-5 whitespace-nowrap">
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap">
                       {u.roles.map(r => (
                         <span key={r} className={`px-2.5 py-1 text-[10px] font-black rounded-lg border tracking-tighter
-                          ${r === 'ADMIN' ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800' :
-                            r === 'PA' ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800' :
-                            r === 'TEACHER' ? 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-800' :
-                            'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800'}`}>
+                          ${r === "ADMIN" ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800" :
+                            r === "PA" ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800" :
+                            r === "TEACHER" ? "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-800" :
+                            "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800"}`}>
                           {r}
                         </span>
                       ))}
@@ -285,25 +345,13 @@ export default function UserManagementClient() {
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-center">
                     <div className="flex justify-center gap-3">
-                      <button
-                        onClick={() => resetPassword(u.id)}
-                        title="비밀번호 초기화"
-                        className="p-3 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all active:scale-90"
-                      >
+                      <button onClick={() => resetPassword(u.id)} title="비밀번호 초기화" className="p-3 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all active:scale-90">
                         <Key className="w-5 h-5" />
                       </button>
-                      <button
-                        onClick={() => { setEditingUser(u); setShowAddForm(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                        title="정보 수정"
-                        className="p-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-90"
-                      >
+                      <button onClick={() => { setEditingUser(u); setShowAddForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} title="정보 수정" className="p-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-90">
                         <Shield className="w-5 h-5" />
                       </button>
-                      <button
-                        onClick={() => deleteUser(u.id)}
-                        title="사용자 삭제"
-                        className="p-3 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-90"
-                      >
+                      <button onClick={() => deleteUser(u.id)} title="사용자 삭제" className="p-3 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-90">
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
@@ -314,7 +362,7 @@ export default function UserManagementClient() {
           </table>
           {sortedUsers.length === 0 && (
             <div className="text-center py-24 text-gray-300 dark:text-gray-600 font-black italic text-lg">
-              검색 결과가 없습니다.
+              {searchTerm ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
             </div>
           )}
         </div>
