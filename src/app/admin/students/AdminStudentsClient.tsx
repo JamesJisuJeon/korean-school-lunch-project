@@ -1,0 +1,443 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { UserPlus, Users, GraduationCap, Key, Trash2, Search, X, CheckCircle2, Filter } from "lucide-react";
+
+interface Class {
+  id: string;
+  name: string;
+  academicYear: {
+    name: string;
+  };
+}
+
+interface Parent {
+  id: string;
+  name: string | null;
+  email: string;
+  roles: string[];
+}
+
+interface Student {
+  id: string;
+  name: string;
+  isPAChild: boolean;
+  class?: Class;
+  classId?: string | null;
+  parents: Parent[];
+}
+
+interface AcademicYear {
+  id: string;
+  name: string;
+  isActive: boolean;
+  classes: { id: string; name: string }[];
+}
+
+export default function AdminStudentsClient() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [years, setYears] = useState<AcademicYear[]>([]);
+  const [parents, setParents] = useState<Parent[]>([]);
+  
+  // 폼 상태
+  const [name, setName] = useState("");
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedParentIds, setSelectedParentIds] = useState<string[]>([]);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  
+  // 검색 및 정렬 상태
+  const [parentSearch, setParentSearch] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [studentListSearch, setStudentListSearch] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    const [studentRes, yearRes, userRes] = await Promise.all([
+      fetch("/api/admin/students"),
+      fetch("/api/admin/school"),
+      fetch("/api/admin/users")
+    ]);
+    if (studentRes.ok) setStudents(await studentRes.json());
+    if (yearRes.ok) setYears(await yearRes.json());
+    if (userRes.ok) {
+      const allUsers = await userRes.json();
+      setParents(allUsers.filter((u: any) => u.roles.includes("PARENT")));
+    }
+    setIsLoading(false);
+  };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const activeYearClasses = useMemo(() => {
+    const activeYear = years.find(y => y.isActive);
+    return activeYear ? activeYear.classes : [];
+  }, [years]);
+
+  const sortedStudents = useMemo(() => {
+    let result = [...students.filter(s => 
+      s.name.toLowerCase().includes(studentListSearch.toLowerCase()) || 
+      (s.class?.name || "").toLowerCase().includes(studentListSearch.toLowerCase()) ||
+      s.parents.some(p => (p.name || "").toLowerCase().includes(studentListSearch.toLowerCase()))
+    )];
+
+    if (sortConfig) {
+      result.sort((a, b) => {
+        let aValue: any = "";
+        let bValue: any = "";
+
+        if (sortConfig.key === "name") {
+          aValue = a.name;
+          bValue = b.name;
+        } else if (sortConfig.key === "class") {
+          aValue = a.class?.name || "";
+          bValue = b.class?.name || "";
+        } else if (sortConfig.key === "parents") {
+          aValue = a.parents.map(p => p.name).join(", ");
+          bValue = b.parents.map(p => p.name).join(", ");
+        }
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  }, [students, studentListSearch, sortConfig]);
+
+  const filteredParents = useMemo(() => {
+    if (!parentSearch) return [];
+    return parents.filter(p => 
+      !selectedParentIds.includes(p.id) && 
+      ((p.name?.toLowerCase() || "").includes(parentSearch.toLowerCase()) || 
+       p.email.toLowerCase().includes(parentSearch.toLowerCase()))
+    ).slice(0, 5);
+  }, [parents, parentSearch, selectedParentIds]);
+
+  const selectedParentsData = useMemo(() => {
+    return parents.filter(p => selectedParentIds.includes(p.id));
+  }, [parents, selectedParentIds]);
+
+  const resetForm = () => {
+    setName("");
+    setSelectedClassId("");
+    setSelectedParentIds([]);
+    setEditingStudent(null);
+    setParentSearch("");
+    setShowAddForm(false);
+  };
+
+  const handleEdit = (student: Student) => {
+    setEditingStudent(student);
+    setName(student.name);
+    setSelectedClassId(student.class?.id || (student as any).classId || "");
+    setSelectedParentIds(student.parents.map(p => p.id));
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddOrUpdateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || selectedParentIds.length === 0) {
+      alert("학생 이름과 하나 이상의 학부모를 선택해주세요.");
+      return;
+    }
+
+    setIsLoading(true);
+    const method = editingStudent ? "PUT" : "POST";
+    const res = await fetch("/api/admin/students", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        id: editingStudent?.id,
+        name, 
+        classId: selectedClassId || null, 
+        parentIds: selectedParentIds 
+      }),
+    });
+    
+    if (res.ok) {
+      alert(editingStudent ? "학생 정보가 수정되었습니다." : "학생이 등록되었습니다.");
+      resetForm();
+      fetchData();
+    } else {
+      const data = await res.json();
+      alert(data.message || "오류가 발생했습니다.");
+    }
+    setIsLoading(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("정말 이 학생 정보를 삭제하시겠습니까?")) return;
+    const res = await fetch("/api/admin/students", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      fetchData();
+    } else {
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  };
+
+  const toggleParent = (parentId: string) => {
+    if (selectedParentIds.includes(parentId)) {
+      setSelectedParentIds(selectedParentIds.filter(id => id !== parentId));
+    } else {
+      setSelectedParentIds([...selectedParentIds, parentId]);
+      setParentSearch("");
+      setIsSearchOpen(false);
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-10 pb-20">
+      {/* 액션 바 */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+        <div className="relative w-full md:max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            className="pl-12 pr-10 w-full rounded-xl border-gray-200 dark:border-gray-700 bg-transparent text-base py-3 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 transition-all outline-none font-bold"
+            placeholder="학생, 학급, 학부모 검색..."
+            value={studentListSearch}
+            onChange={(e) => setStudentListSearch(e.target.value)}
+          />
+          {studentListSearch && (
+            <button 
+              onClick={() => setStudentListSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {!showAddForm && (
+          <button 
+            onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="w-full md:w-auto px-8 py-3.5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 active:scale-95 transition-all text-base"
+          >
+            <UserPlus className="w-5 h-5" /> 신규 학생 등록
+          </button>
+        )}
+      </div>
+
+      {/* 등록/수정 섹션 - 높이 축소 및 스타일 통일 */}
+      {showAddForm && (
+        <section className="bg-white dark:bg-gray-900 p-8 rounded-[2rem] shadow-2xl border-2 border-blue-50 dark:border-blue-900/20 transition-all animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+              <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-100 dark:shadow-blue-900/20">
+                <GraduationCap className="w-6 h-6 text-white" /> 
+              </div>
+              {editingStudent ? "학생 정보 수정" : "새로 등록하기"}
+            </h2>
+            <button onClick={resetForm} className="px-5 py-2.5 text-sm font-black bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-all">
+              닫기
+            </button>
+          </div>
+          
+          <form onSubmit={handleAddOrUpdateStudent} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">학생 이름</label>
+                <input
+                  required
+                  className="w-full rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3.5 text-base font-black focus:bg-white dark:focus:bg-gray-700 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/30 transition-all outline-none text-gray-900 dark:text-gray-100 shadow-sm"
+                  placeholder="학생 성함을 입력하세요"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">소속 학급 (현재 활성 연도)</label>
+                <select
+                  className="w-full rounded-2xl border-2 border-gray-100 bg-gray-50 p-3.5 text-base font-black focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-gray-900 shadow-sm appearance-none"
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                >
+                  <option value="">학급 미배정 (선택사항)</option>
+                  {activeYearClasses.map((cls) => (
+                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">학부모 연결 (검색 추가)</label>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  className="w-full pl-11 pr-10 py-3 rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm font-bold focus:bg-white dark:focus:bg-gray-700 focus:border-blue-500 dark:focus:border-blue-400 transition-all outline-none"
+                  placeholder="성함 또는 이메일로 검색하세요..."
+                  value={parentSearch}
+                  onFocus={() => setIsSearchOpen(true)}
+                  onChange={(e) => { setParentSearch(e.target.value); setIsSearchOpen(true); }}
+                />
+                {parentSearch && (
+                  <button 
+                    type="button"
+                    onClick={() => setParentSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-400 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {isSearchOpen && parentSearch && (
+                  <div className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                    {filteredParents.length > 0 ? (
+                      filteredParents.map(p => (
+                        <button key={p.id} type="button" onClick={() => toggleParent(p.id)} className="w-full px-5 py-3 text-left hover:bg-blue-50 flex justify-between items-center transition-colors group border-b border-gray-50 last:border-0">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-800 text-sm">{p.name || "이름없음"}</span>
+                            <span className="text-[10px] text-gray-500">{p.email}</span>
+                          </div>
+                          <CheckCircle2 className="w-4 h-4 text-transparent group-hover:text-blue-500 transition-colors" />
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-5 py-6 text-center text-gray-400 font-bold text-xs italic">결과가 없습니다.</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 min-h-[3rem] p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-2xl border-2 border-gray-50 dark:border-gray-700">
+                {selectedParentsData.map(p => (
+                  <div key={p.id} className="flex items-center gap-2 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm animate-in zoom-in-95">
+                    <span className="text-xs font-black text-gray-700 dark:text-gray-300">{p.name || "이름없음"}</span>
+                    <button type="button" onClick={() => toggleParent(p.id)} className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-md transition-colors"><X className="w-3 h-3" /></button>
+                  </div>
+                ))}
+                {selectedParentsData.length === 0 && <div className="text-[11px] text-gray-300 font-bold italic w-full text-center">연결된 학부모가 없습니다.</div>}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full md:w-auto px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-black rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 shadow-xl shadow-blue-200 transition-all active:scale-95"
+              >
+                {isLoading ? "처리 중..." : editingStudent ? "수정 완료" : "학생 등록 완료"}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {/* 목록 테이블 섹션 - UserMangementClient 스타일 반영 */}
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl shadow-blue-900/5 border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
+            <thead className="bg-gray-50/50 dark:bg-gray-800/50">
+              <tr>
+                <th
+                  onClick={() => handleSort('name')}
+                  className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    학생이름 {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('class')}
+                  className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    소속 학급 {sortConfig?.key === 'class' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
+                <th 
+                   onClick={() => handleSort('parents')}
+                  className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    학부모 {sortConfig?.key === 'parents' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </div>
+                </th>
+                <th className="px-8 py-5 text-center text-xs font-black text-gray-400 uppercase tracking-widest">관리</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-900">
+              {sortedStudents.map((student) => (
+                <tr key={student.id} className="hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors group">
+                  <td className="px-8 py-5 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <GraduationCap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="font-black text-base text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {student.name}
+                        {student.isPAChild && <span className="ml-2 text-[8px] px-1.5 py-0.5 bg-yellow-400 text-white rounded-md font-black">PA</span>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 whitespace-nowrap">
+                    <div className="text-sm font-bold text-gray-600 dark:text-gray-400">
+                      {student.class ? (
+                        <span className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-xs">
+                          {student.class.academicYear.name} / {student.class.name}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 dark:text-gray-600 italic">미배정</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-8 py-5">
+                    <div className="flex flex-wrap gap-1.5">
+                      {student.parents.map(p => (
+                        <span key={p.id} className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg border border-blue-100 text-[10px] font-black">
+                          {p.name || '이름없음'}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 whitespace-nowrap text-center">
+                    <div className="flex justify-center gap-3">
+                      <button 
+                        onClick={() => handleEdit(student)}
+                        className="p-3 text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-90"
+                      >
+                        <Key className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(student.id)}
+                        className="p-3 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-90"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {sortedStudents.length === 0 && (
+            <div className="text-center py-24 text-gray-300 font-black italic text-lg">
+              검색 결과가 없습니다.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setIsSearchOpen(false)} />
+      )}
+    </div>
+  );
+}

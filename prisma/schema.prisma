@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  PA
+  TEACHER
+  PARENT
+}
+
+enum OrderType {
+  PRE_ORDER
+  ON_SITE
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  password           String
+  name               String?
+  phone              String?
+  roles              Role[]    @default([PARENT])
+  mustChangePassword Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  students           Student[] @relation("StudentToParent")
+  classesAsTeacher   Class[]   @relation("TeacherClasses")
+  substitutes        Substitute[]
+}
+
+model AcademicYear {
+  id        String   @id @default(cuid())
+  name      String   @unique // e.g., "2024-2025"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  
+  classes   Class[]
+}
+
+model Class {
+  id             String       @id @default(cuid())
+  name           String
+  grade          String?      // e.g., "유치1", "초등2"
+  teacherName    String?      // e.g., "홍길동"
+  sortOrder      Int?         // 반 표시 순서
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  teacherId      String?      // Keep for linkage to User if needed later
+  teacher        User?        @relation("TeacherClasses", fields: [teacherId], references: [id])
+
+  students       Student[]
+  substitutes    Substitute[]
+}
+
+model Student {
+  id           String       @id @default(cuid())
+  name         String
+  parents      User[]       @relation("StudentToParent")
+  classId      String?
+  class        Class?       @relation(fields: [classId], references: [id])
+  isPAChild    Boolean      @default(false)
+
+  orders       Order[]
+  couponSales  CouponSale[]
+}
+
+model Substitute {
+  id        String   @id @default(cuid())
+  date      DateTime
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([date, classId])
+}
+
+model Menu {
+  id            String   @id @default(cuid())
+  date          DateTime @unique // Saturday date
+  mainItems     String?  // Main Menu
+  dessertItems  String?  // Dessert
+  beverageItems String?  // Beverage
+  imageUrl      String?  // Announcement image URL
+  price         Float    @default(7.0)
+  isPublished   Boolean  @default(false)
+  deadline      DateTime?
+
+  orders    Order[]
+}
+
+model Order {
+  id          String    @id @default(cuid())
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id])
+  menuId      String
+  menu        Menu      @relation(fields: [menuId], references: [id])
+  orderType   OrderType @default(PRE_ORDER)
+  isPaid      Boolean   @default(false)
+  amount      Float
+  paymentDate DateTime?
+  status      String    @default("WAITING") // WAITING, PAID, UNPAID, POST_PAID, CANCELLED
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([studentId, menuId])
+}
+
+model CouponSale {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id])
+  quantity      Int      @default(1)
+  amount        Float    @default(5.0) // $5 per coupon
+  date          DateTime @default(now())
+  paymentStatus String   @default("PAID") // PAID | UNPAID | POST_PAID
+}

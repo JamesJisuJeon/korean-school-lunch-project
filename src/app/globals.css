@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* Tailwind v4 + next-themes 클래스 기반 다크모드 활성화 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f9fafb;
+  --foreground: #111827;
+}
+
+.dark {
+  --background: #030712;
+  --foreground: #f9fafb;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
