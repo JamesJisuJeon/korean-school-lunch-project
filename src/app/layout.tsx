@@ -16,6 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "한국학교 점심 관리 시스템",
   description: "한국학교 학부모회 제공 점심 및 매점 운영 관리 시스템",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "점심관리",
+  },
 };
 
 import { ThemeProvider } from "@/components/ThemeProvider";

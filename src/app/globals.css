@@ -19,3 +19,11 @@ body {
   font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
