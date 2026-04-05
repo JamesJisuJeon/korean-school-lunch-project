@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: "사용자가 생성되었습니다.",
-      user: { id: user.id, email: user.email, tempPassword }, // 개발 편의를 위해 일단 반환
+      user: { id: user.id, email: user.email },
     });
   } catch (error) {
     console.error(error);
