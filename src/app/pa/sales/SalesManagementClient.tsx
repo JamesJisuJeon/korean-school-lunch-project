@@ -225,18 +225,18 @@ export default function SalesManagementClient() {
     <div className="space-y-8">
       {/* 통계 섹션 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-2 bg-gray-950 p-6 rounded-[2rem] shadow-2xl flex justify-around items-center text-white">
+        <div className="md:col-span-2 bg-gray-100 dark:bg-gray-900 p-6 rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-800 flex justify-around items-center">
           <div className="text-center">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">식사 신청 합계</p>
-            <h3 className="text-4xl font-black">
+            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">식사 신청 합계</p>
+            <h3 className="text-4xl font-black text-gray-950 dark:text-white">
               {students.filter(s => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length}
               <span className="text-sm"> 명</span>
             </h3>
           </div>
-          <div className="w-px h-10 bg-gray-800" />
+          <div className="w-px h-10 bg-gray-300 dark:bg-gray-700" />
           <div className="text-center">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">쿠폰 판매 합계</p>
-            <h3 className="text-4xl font-black text-purple-400">
+            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">쿠폰 판매 합계</p>
+            <h3 className="text-4xl font-black text-purple-600 dark:text-purple-400">
               {students.reduce((acc, curr) => acc + curr.couponSales.reduce((c, n) => c + n.quantity, 0), 0)}
               <span className="text-sm"> 매</span>
             </h3>

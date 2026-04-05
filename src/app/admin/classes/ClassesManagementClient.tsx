@@ -285,7 +285,7 @@ export default function ClassesManagementClient() {
           <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-black border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
             <Download className="w-5 h-5" /> 양식 다운로드
           </button>
-          <button onClick={() => fileInputRef.current?.click()} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-black dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
+          <button onClick={() => fileInputRef.current?.click()} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
             <Upload className="w-5 h-5" /> 엑셀 대량 등록
           </button>
           <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
@@ -394,9 +394,9 @@ export default function ClassesManagementClient() {
               )}
             </div>
             <div className="relative w-full md:w-64">
-              <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-white/70 w-5 h-5 pointer-events-none" />
+              <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/70 w-5 h-5 pointer-events-none" />
               <select
-                className="w-full pl-12 pr-6 py-5 rounded-[2rem] border-none shadow-md dark:shadow-none bg-gray-900 dark:bg-gray-700 text-white font-black appearance-none outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-all cursor-pointer"
+                className="w-full pl-12 pr-6 py-5 rounded-[2rem] border-none shadow-md dark:shadow-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-black appearance-none outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-all cursor-pointer"
                 value={searchYear}
                 onChange={e => setSearchYear(e.target.value)}
               >

@@ -297,11 +297,11 @@ export default function ParentOrderClient() {
         </div>
 
         {/* ③ 하단 바: 총금액 + 신청 버튼 */}
-        <div className="px-8 py-4 flex items-center justify-between gap-4 bg-gray-950 dark:bg-gray-800">
+        <div className="px-8 py-4 flex items-center justify-between gap-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">Total</p>
-              <p className="text-3xl font-black text-white leading-none">$ {totalPrice}</p>
+              <p className="text-gray-400 dark:text-gray-500 font-bold text-[10px] uppercase tracking-widest">Total</p>
+              <p className="text-3xl font-black text-gray-950 dark:text-white leading-none">$ {totalPrice}</p>
             </div>
             {selectedStudentIds.length > 0 && (
               <span className="bg-blue-600 text-xs px-2.5 py-1 rounded-full text-white font-black">{selectedStudentIds.length}명</span>
@@ -312,9 +312,9 @@ export default function ParentOrderClient() {
             disabled={isLoading || selectedStudentIds.length === 0 || !selectedMenuId || isExpired}
             className={`px-8 py-3 font-black text-sm rounded-2xl transition-all duration-200 active:scale-95 whitespace-nowrap ${
               isExpired
-                ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
                 : selectedStudentIds.length === 0
-                  ? "bg-gray-800 text-gray-600 cursor-not-allowed"
+                  ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-600 cursor-not-allowed"
                   : "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/40"
             }`}
           >

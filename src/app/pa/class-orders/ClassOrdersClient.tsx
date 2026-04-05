@@ -117,18 +117,18 @@ export default function ClassOrdersClient() {
 
       {/* 메뉴 정보 */}
       {currentMenu && (
-        <div className="bg-gray-950 dark:bg-gray-800 p-4 rounded-2xl shadow-lg flex flex-col md:flex-row gap-4 justify-around border dark:border-gray-700">
-          <div className="text-center border-r border-gray-800 dark:border-gray-600 pr-4 last:border-0">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Main</p>
-            <p className="text-sm font-bold text-white dark:text-gray-100">{currentMenu.mainItems || "-"}</p>
+        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-4 justify-around border border-gray-200 dark:border-gray-700">
+          <div className="text-center border-r border-gray-200 dark:border-gray-600 pr-4 last:border-0">
+            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Main</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentMenu.mainItems || "-"}</p>
           </div>
-          <div className="text-center border-r border-gray-800 dark:border-gray-600 pr-4 last:border-0">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Dessert</p>
-            <p className="text-sm font-bold text-white dark:text-gray-100">{currentMenu.dessertItems || "-"}</p>
+          <div className="text-center border-r border-gray-200 dark:border-gray-600 pr-4 last:border-0">
+            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Dessert</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentMenu.dessertItems || "-"}</p>
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Beverage</p>
-            <p className="text-sm font-bold text-white dark:text-gray-100">{currentMenu.beverageItems || "-"}</p>
+            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Beverage</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentMenu.beverageItems || "-"}</p>
           </div>
         </div>
       )}

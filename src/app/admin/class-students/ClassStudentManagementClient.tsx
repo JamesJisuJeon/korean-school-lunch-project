@@ -166,7 +166,7 @@ export default function ClassStudentManagementClient() {
           <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 text-gray-700 rounded-2xl font-black border-2 border-gray-100 hover:bg-gray-100 transition-all active:scale-95">
             <Download className="w-5 h-5" /> 양식 다운로드
           </button>
-          <button onClick={() => fileInputRef.current?.click()} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-black dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
+          <button onClick={() => fileInputRef.current?.click()} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
             <Upload className="w-5 h-5" /> 엑셀 대량 등록
           </button>
           <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
