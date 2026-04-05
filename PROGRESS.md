@@ -14,6 +14,8 @@
 - [x] **라이트 모드 다크 배경 버그 전수 수정** (2026-04-05)
 - [x] **PWA 홈 화면 추가 버튼 + 모바일 바로가기 아이콘 바** (2026-04-05)
 - [x] **사용자 계정 대량 등록 (엑셀 업로드) + 초기 비밀번호 고정** (2026-04-05)
+- [x] **프로덕션 빌드 타입 오류 전수 수정** (2026-04-05)
+- [x] **서버 포트 환경변수 관리** (2026-04-05)
 
 ---
 
@@ -130,6 +132,21 @@
   - 업로드 처리: 중복 이메일 건너뜀, 권한 값 없으면 `PARENT` 자동 적용.
   - 결과 인라인 배너: 성공/중복/오류 건수 표시.
 - **`/api/admin/users/import` API 신규 생성.**
+
+### 17. 서버 포트 환경변수 관리 (2026-04-05)
+- **`dotenv-cli` devDependency 추가.**
+- **`scripts/start-dev.js` / `scripts/start-prod.js` 신규 생성:** `.env` 파일을 직접 파싱해 `PORT` 값을 읽고 `next dev/start -p <PORT>`로 명시 전달.
+- **`package.json` 스크립트 변경:**
+  - `dev`: `node scripts/start-dev.js`
+  - `start`: `node scripts/start-prod.js`
+- **`.env`에 `PORT=3000` 추가:** 변경 시 `NEXTAUTH_URL`도 함께 수정 필요.
+
+### 16. 프로덕션 빌드 타입 오류 전수 수정 (2026-04-05)
+- **`prisma/seed-test-data.ts`:**
+  - `Student` 생성 시 `parentId` → `parents: { connect: { id } }` (다대다 관계 반영).
+  - `Menu` 생성 시 폐기된 `items` 필드 → `mainItems / dessertItems / beverageItems` 분리 필드로 교체.
+- **`src/auth.ts`:** JWT 콜백에서 `user.id` 타입 `string | undefined` → `user.id ?? ""` 로 안전하게 처리.
+- **빌드 결과:** `npm run build` 37개 라우트 정상 컴파일 확인.
 
 ### 12. 학급 관리 고도화: 순서 필드 + 정렬 (2026-04-05)
 - **DB 스키마:** `Class` 모델에 `sortOrder Int?` 필드 추가 (`npx prisma db push` 적용).
