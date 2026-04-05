@@ -10,7 +10,7 @@ export default async function PASalesPage() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-50">현장 수납 및 매점 관리</h1>
       <SalesManagementClient />
     </div>

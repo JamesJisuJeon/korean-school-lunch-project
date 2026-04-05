@@ -13,7 +13,7 @@ export default async function ClassesManagementPage() {
   }
 
   return (
-    <main className="p-8">
+    <main className="p-4 sm:p-8">
       <ClassesManagementClient />
     </main>
   );

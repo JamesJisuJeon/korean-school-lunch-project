@@ -294,7 +294,44 @@ export default function AdminSubstitutesClient() {
 
       {/* 목록 테이블 */}
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* 모바일 카드 */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+          {sortedSubstitutes.map((sub) => (
+            <div key={sub.id} className="p-4 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-black">
+                    {format(new Date(sub.date), "yyyy.MM.dd")}
+                  </span>
+                  <span className="font-black text-sm text-gray-900 dark:text-gray-100">{sub.class.name}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-xs shrink-0">
+                    {sub.user.name?.[0] || "?"}
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-gray-800 dark:text-gray-200">{sub.user.name || "이름없음"}</div>
+                    <div className="text-xs text-gray-400 dark:text-gray-500 truncate">{sub.user.email}</div>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => handleDelete(sub.id)}
+                className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+          {sortedSubstitutes.length === 0 && (
+            <div className="text-center py-16 text-gray-400 dark:text-gray-500 font-black italic">
+              {listSearch ? "검색 결과가 없습니다." : "배정된 보결 선생님이 없습니다."}
+            </div>
+          )}
+        </div>
+
+        {/* 데스크탑 테이블 */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>

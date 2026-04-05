@@ -14,7 +14,7 @@ export default async function AdminUsersPage() {
   }
 
   return (
-    <main className="p-8">
+    <main className="p-4 sm:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-gray-50">사용자 계정 및 권한 관리</h1>
