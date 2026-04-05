@@ -57,7 +57,8 @@ export default function ClassesManagementClient() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const newClassSearchRef = useRef<HTMLDivElement>(null);
-  const editClassSearchRef = useRef<HTMLTableCellElement>(null);
+  const editClassSearchRef = useRef<HTMLDivElement>(null);
+  const editMobileSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchData();
@@ -68,7 +69,9 @@ export default function ClassesManagementClient() {
       if (newClassSearchRef.current && !newClassSearchRef.current.contains(target)) {
         setShowTeacherSuggestions(false);
       }
-      if (editClassSearchRef.current && !editClassSearchRef.current.contains(target)) {
+      const inDesktopEdit = editClassSearchRef.current?.contains(target);
+      const inMobileEdit = editMobileSearchRef.current?.contains(target);
+      if (!inDesktopEdit && !inMobileEdit) {
         setShowEditTeacherSuggestions(false);
       }
     };
@@ -271,14 +274,14 @@ export default function ClassesManagementClient() {
   return (
     <div className="space-y-10 pb-20 max-w-[1400px] mx-auto animate-in fade-in duration-700">
       {/* Header */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-6">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-blue-600 rounded-3xl shadow-md">
-            <BookOpen className="w-8 h-8 text-white" />
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-4 sm:gap-6">
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md">
+            <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-gray-950 dark:text-gray-50">학급 운영 관리</h1>
-            <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">학사연도별 학급과 담임 선생님을 배정하고 관리합니다.</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50">학급 운영 관리</h1>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">학사연도별 학급과 담임 선생님을 배정하고 관리합니다.</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-3 w-full xl:w-auto">
@@ -314,7 +317,7 @@ export default function ClassesManagementClient() {
                   {years.map(y => <option key={y.id} value={y.id}>{y.name} 학사연도 {y.isActive ? '(현재 활성)' : ''}</option>)}
                 </select>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className={labelStyles}>순서</label>
                   <input type="text" inputMode="numeric" pattern="[0-9]*" className={inputStyles} placeholder="1" value={newClass.sortOrder} onChange={e => setNewClass({ ...newClass, sortOrder: e.target.value.replace(/[^0-9]/g, "") })} />
@@ -407,7 +410,122 @@ export default function ClassesManagementClient() {
           </div>
 
           <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-md border border-gray-200 dark:border-gray-800 overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* 모바일 카드 레이아웃 */}
+            <div className="xl:hidden divide-y divide-gray-100 dark:divide-gray-800">
+              {filteredClasses.map(cls => (
+                <div key={cls.id} className={`p-4 ${editingId === cls.id ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}>
+                  {editingId === cls.id ? (
+                    /* 수정 폼 */
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-3 py-1 rounded-xl text-[10px] font-black tracking-tighter ${cls.academicYear.isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
+                          {cls.academicYear.name}
+                        </span>
+                        <span className="text-xs font-black text-blue-600 dark:text-blue-400">수정 중</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className={labelStyles}>순서</label>
+                          <input type="text" inputMode="numeric" className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5 font-black text-gray-900 dark:text-gray-100 text-center text-sm outline-none" value={editFormData.sortOrder} onChange={e => setEditFormData({ ...editFormData, sortOrder: e.target.value.replace(/[^0-9]/g, "") })} />
+                        </div>
+                        <div>
+                          <label className={labelStyles}>학년</label>
+                          <input className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5 font-black text-gray-900 dark:text-gray-100 text-sm outline-none" value={editFormData.grade} onChange={e => setEditFormData({ ...editFormData, grade: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className={labelStyles}>학급명</label>
+                          <input className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5 font-black text-gray-900 dark:text-gray-100 text-sm outline-none" value={editFormData.name} onChange={e => setEditFormData({ ...editFormData, name: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="relative" ref={editMobileSearchRef}>
+                        <label className={labelStyles}>담임선생님</label>
+                        <input
+                          className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2.5 font-black text-gray-900 dark:text-gray-100 text-sm outline-none"
+                          value={editTeacherSearch}
+                          autoComplete="off"
+                          onFocus={() => setShowEditTeacherSuggestions(true)}
+                          onChange={e => {
+                            setEditTeacherSearch(e.target.value);
+                            setEditFormData({ ...editFormData, teacherName: e.target.value, teacherId: "" });
+                            setShowEditTeacherSuggestions(true);
+                          }}
+                        />
+                        {showEditTeacherSuggestions && (
+                          <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md max-h-40 overflow-y-auto p-1">
+                            {teachers.filter(t => t.name.includes(editTeacherSearch)).map(t => (
+                              <button
+                                key={t.id}
+                                className="w-full p-3 text-left text-sm font-black rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-900 dark:text-gray-100"
+                                onClick={() => {
+                                  setEditFormData({ ...editFormData, teacherName: t.name, teacherId: t.id });
+                                  setEditTeacherSearch(t.name);
+                                  setShowEditTeacherSuggestions(false);
+                                }}
+                              >
+                                {t.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 justify-end pt-1">
+                        <button onClick={() => saveEdit(cls.id, cls.academicYear.id)} className="flex items-center gap-1.5 px-4 py-2.5 bg-green-500 text-white rounded-xl font-black text-sm">
+                          <Check className="w-4 h-4" /> 저장
+                        </button>
+                        <button onClick={() => setEditingId(null)} className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-black text-sm">
+                          <X className="w-4 h-4" /> 취소
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* 일반 카드 뷰 */
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`px-3 py-1 rounded-xl text-[10px] font-black tracking-tighter ${cls.academicYear.isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
+                            {cls.academicYear.name}
+                          </span>
+                          {cls.sortOrder && <span className="text-xs font-black text-gray-400 dark:text-gray-500">#{cls.sortOrder}</span>}
+                        </div>
+                        <p className="text-base font-black text-gray-950 dark:text-gray-50">{cls.name}</p>
+                        {cls.grade && <p className="text-sm font-bold text-gray-500 dark:text-gray-400">{cls.grade}</p>}
+                        {cls.teacherName && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-xs">
+                              {cls.teacherName[0]}
+                            </div>
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{cls.teacherName}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            setEditingId(cls.id);
+                            setEditFormData({ name: cls.name, grade: cls.grade || "", teacherName: cls.teacherName || "", teacherId: cls.teacherId || "", sortOrder: cls.sortOrder?.toString() ?? "" });
+                            setEditTeacherSearch(cls.teacherName || "");
+                          }}
+                          className="p-2.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => deleteClass(cls.id)} className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {filteredClasses.length === 0 && (
+                <div className="px-8 py-20 text-center text-gray-400 dark:text-gray-500 font-black italic">
+                  등록된 학급 정보가 없습니다.
+                </div>
+              )}
+            </div>
+
+            {/* 데스크탑 테이블 */}
+            <div className="hidden xl:block overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
@@ -428,8 +546,8 @@ export default function ClassesManagementClient() {
                           <td className="px-4 py-6"><input type="text" inputMode="numeric" pattern="[0-9]*" className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2 font-black text-gray-900 dark:text-gray-100 text-center" value={editFormData.sortOrder} onChange={e => setEditFormData({ ...editFormData, sortOrder: e.target.value.replace(/[^0-9]/g, "") })} /></td>
                           <td className="px-8 py-6"><input className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 font-black text-gray-900 dark:text-gray-100" value={editFormData.grade} onChange={e => setEditFormData({ ...editFormData, grade: e.target.value })} /></td>
                           <td className="px-8 py-6"><input className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 font-black text-gray-900 dark:text-gray-100" value={editFormData.name} onChange={e => setEditFormData({ ...editFormData, name: e.target.value })} /></td>
-                          <td className="px-8 py-6" ref={editClassSearchRef}>
-                            <div className="relative">
+                          <td className="px-8 py-6">
+                            <div className="relative" ref={editClassSearchRef}>
                               <input
                                 className="w-full bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 font-black text-gray-900 dark:text-gray-100"
                                 value={editTeacherSearch}

@@ -352,11 +352,127 @@ export default function SalesManagementClient() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* 모바일 카드 레이아웃 */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+          {displayedStudents.map((student) => {
+            const order = student.orders[0];
+            const couponSale = student.couponSales[0] ?? null;
+            const couponQty = couponSale?.quantity ?? 0;
+
+            return (
+              <div key={student.id} className="p-4 space-y-3">
+                {/* 이름 + 학급 */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-base font-black text-gray-950 dark:text-gray-100">{student.name}</p>
+                    <p className="text-sm font-black text-blue-500 dark:text-blue-400">{student.class?.name || "반미지정"}</p>
+                    {student.isPAChild && (
+                      <span className="inline-block mt-1 text-[10px] bg-yellow-400 text-yellow-950 font-black px-2 py-0.5 rounded-md">학부모회 자녀</span>
+                    )}
+                  </div>
+                  {order ? (
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border ${
+                      order.orderType === "PRE_ORDER"
+                        ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
+                        : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
+                    }`}>
+                      <Check className="w-3 h-3" />
+                      {order.orderType === "PRE_ORDER" ? "사전" : "현장"} ${order.amount}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleOnSiteOrder(student.id)}
+                      className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border-2 border-blue-100 dark:border-blue-800 hover:bg-blue-600 hover:text-white transition-all active:scale-95 whitespace-nowrap"
+                    >
+                      현장 신청
+                    </button>
+                  )}
+                </div>
+
+                {/* 수납 상태 + 특이사항 */}
+                {order && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      className={`rounded-xl border-2 py-2 px-3 text-xs font-black transition-all appearance-none cursor-pointer ${
+                        PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
+                      } bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
+                      value={order.status}
+                      onChange={(e) => {
+                        if (order.orderType === "ON_SITE" && e.target.value === "CANCELLED") {
+                          cancelOnSiteOrder(order.id);
+                        } else {
+                          updateOrderStatus(order.id, e.target.value);
+                        }
+                      }}
+                    >
+                      {PAYMENT_STATUSES.map(status => (
+                        <option key={status.value} value={status.value}>{status.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      className="flex-1 min-w-[100px] bg-red-50/50 dark:bg-red-950/20 border border-transparent rounded-lg py-2 px-3 text-sm font-medium text-red-600 dark:text-red-400 italic placeholder:text-red-300 dark:placeholder:text-red-900/50 focus:border-red-400 focus:bg-white dark:focus:bg-gray-900 focus:outline-none"
+                      placeholder="특이사항..."
+                      defaultValue={order.notes || ""}
+                      onBlur={async (e) => {
+                        if (e.target.value !== (order.notes || "")) {
+                          await fetch("/api/pa/sales", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ orderId: order.id, notes: e.target.value }),
+                          });
+                          fetchStudents();
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* 쿠폰 */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">쿠폰 ($5)</span>
+                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-3 py-1.5 border-2 border-gray-100 dark:border-gray-700">
+                    <button
+                      onClick={() => updateCouponQty(student.id, couponQty, -1)}
+                      disabled={couponQty <= 0}
+                      className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 active:scale-90 text-lg font-bold"
+                    >
+                      -
+                    </button>
+                    <span className="text-lg font-black text-gray-900 dark:text-gray-100 w-5 text-center">{couponQty}</span>
+                    <button
+                      onClick={() => updateCouponQty(student.id, couponQty, 1)}
+                      className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-purple-600 transition-colors active:scale-90 text-lg font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                  {couponQty > 0 && couponSale && (
+                    <select
+                      className="rounded-xl border-2 py-2 px-3 text-xs font-black appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
+                      value={couponSale.paymentStatus}
+                      onChange={(e) => updateCouponPaymentStatus(student.id, selectedMenuId, e.target.value)}
+                    >
+                      <option value="PAID">납부</option>
+                      <option value="UNPAID">후납</option>
+                      <option value="POST_PAID">후납-납부</option>
+                    </select>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {displayedStudents.length === 0 && (
+            <div className="px-8 py-16 text-center text-gray-300 dark:text-gray-600 font-black italic">
+              {students.length === 0 ? "배식 날짜를 선택해 주세요." : "조건에 맞는 학생이 없습니다."}
+            </div>
+          )}
+        </div>
+
+        {/* 데스크탑 테이블 */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50">
               <tr>
-                {/* 학급 - 정렬 가능 */}
                 <th
                   className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-28"
                   onClick={() => handleSort("class")}
@@ -365,7 +481,6 @@ export default function SalesManagementClient() {
                     학급 <SortIcon col="class" />
                   </div>
                 </th>
-                {/* 이름 - 정렬 가능 */}
                 <th
                   className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-32"
                   onClick={() => handleSort("name")}
@@ -389,20 +504,17 @@ export default function SalesManagementClient() {
 
                 return (
                   <tr key={student.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
-                    {/* 학급 */}
                     <td className="px-4 py-5 whitespace-nowrap">
                       <p className="text-sm font-black text-blue-500 dark:text-blue-400">
                         {student.class?.name || "반미지정"}
                       </p>
                     </td>
-                    {/* 이름 */}
                     <td className="px-4 py-5 whitespace-nowrap">
                       <p className="text-base font-black text-gray-950 dark:text-gray-100">{student.name}</p>
                       {student.isPAChild && (
                         <span className="inline-block mt-1 text-[10px] bg-yellow-400 text-yellow-950 font-black px-2 py-0.5 rounded-md">학부모회 자녀</span>
                       )}
                     </td>
-                    {/* 신청 유형 */}
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order ? (
                         <div className="flex flex-col gap-1">
@@ -425,7 +537,6 @@ export default function SalesManagementClient() {
                         </button>
                       )}
                     </td>
-                    {/* 수납 상태 */}
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order ? (
                         <select
@@ -449,7 +560,6 @@ export default function SalesManagementClient() {
                         <span className="text-gray-200 dark:text-gray-700 font-bold italic">-</span>
                       )}
                     </td>
-                    {/* 특이사항 */}
                     <td className="px-4 py-5">
                       {order ? (
                         <input
@@ -471,7 +581,6 @@ export default function SalesManagementClient() {
                         <span className="text-gray-200 dark:text-gray-700 font-bold italic">-</span>
                       )}
                     </td>
-                    {/* 쿠폰 */}
                     <td className="px-4 py-5 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 w-32 mx-auto border-2 border-gray-100 dark:border-gray-700">
                         <button
@@ -490,7 +599,6 @@ export default function SalesManagementClient() {
                         </button>
                       </div>
                     </td>
-                    {/* 쿠폰비 수납 */}
                     <td className="px-4 py-5 whitespace-nowrap">
                       {couponQty > 0 && couponSale ? (
                         <select

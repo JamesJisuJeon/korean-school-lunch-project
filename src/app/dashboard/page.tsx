@@ -47,9 +47,9 @@ export default async function DashboardPage() {
   const canAccessTeacherMenu = !!activeClass || !!substituteToday;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-10 text-center md:text-left">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
+      <div className="mb-8 sm:mb-10 text-center md:text-left">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">
           안녕하세요, {session.user.name || session.user.email}님!
         </h1>
         <p className="mt-2 text-gray-500 dark:text-gray-400">

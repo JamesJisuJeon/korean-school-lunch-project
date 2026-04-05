@@ -161,20 +161,20 @@ export default function ParentOrderClient() {
       <section className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
 
         {/* ① 상단 바: 날짜 + 가격 + 메뉴 칩 + 마감 */}
-        <div className="px-8 py-5 flex flex-wrap items-center gap-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="px-4 sm:px-8 py-4 flex flex-wrap items-center gap-2 sm:gap-3 border-b border-gray-100 dark:border-gray-800">
           {/* 이번주 메뉴 안내 + 날짜 + 가격 */}
-          <div className="flex items-center gap-3 mr-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="p-2 bg-blue-600 rounded-xl">
               <ShoppingCart className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-black text-gray-950 dark:text-gray-50">이번주 메뉴 안내</span>
-            <span className="text-lg font-black text-gray-950 dark:text-gray-50">
+            <span className="text-base sm:text-lg font-black text-gray-950 dark:text-gray-50">이번주 메뉴 안내</span>
+            <span className="text-base sm:text-lg font-black text-gray-600 dark:text-gray-300">
               {selectedMenu
                 ? new Date(selectedMenu.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
                 : "메뉴 없음"}
             </span>
             {selectedMenu && (
-              <span className="text-lg font-black text-blue-600 dark:text-blue-400">$ {selectedMenu.price}</span>
+              <span className="text-base sm:text-lg font-black text-blue-600 dark:text-blue-400">$ {selectedMenu.price}</span>
             )}
           </div>
 
@@ -220,7 +220,7 @@ export default function ParentOrderClient() {
           </div>
 
           {/* 우: 자녀 선택 */}
-          <div className="p-6 flex flex-col gap-3">
+          <div className="p-4 sm:p-6 flex flex-col gap-3">
             {/* 상세 메뉴 */}
             {selectedMenu && (
               <div className="grid grid-cols-3 gap-2 mb-4">
@@ -297,11 +297,11 @@ export default function ParentOrderClient() {
         </div>
 
         {/* ③ 하단 바: 총금액 + 신청 버튼 */}
-        <div className="px-8 py-4 flex items-center justify-between gap-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-4 sm:px-8 py-4 flex items-center justify-between gap-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div>
               <p className="text-gray-400 dark:text-gray-500 font-bold text-[10px] uppercase tracking-widest">Total</p>
-              <p className="text-3xl font-black text-gray-950 dark:text-white leading-none">$ {totalPrice}</p>
+              <p className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-white leading-none">$ {totalPrice}</p>
             </div>
             {selectedStudentIds.length > 0 && (
               <span className="bg-blue-600 text-xs px-2.5 py-1 rounded-full text-white font-black">{selectedStudentIds.length}명</span>
@@ -325,13 +325,92 @@ export default function ParentOrderClient() {
 
       {/* ── 나의 신청 내역 ── */}
       <section className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="px-8 py-6 border-b border-gray-50 dark:border-gray-800">
-          <h2 className="text-xl font-black flex items-center gap-3 text-gray-900 dark:text-white">
-            <CheckCircle className="w-6 h-6 text-green-600" /> 나의 신청 내역
+        <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-50 dark:border-gray-800">
+          <h2 className="text-lg sm:text-xl font-black flex items-center gap-3 text-gray-900 dark:text-white">
+            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" /> 나의 신청 내역
           </h2>
           <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-1">마감 전까지 변경 및 취소가 가능합니다.</p>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* 모바일 카드 레이아웃 */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+          {orders.map(order => {
+            const menu = menus.find(m => m.id === order.menuId);
+            const canCancel = menu?.isPublished && (!menu.deadline || new Date() < new Date(menu.deadline));
+            return (
+              <div key={order.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-black text-base text-gray-950 dark:text-gray-50">{order.student.name}</p>
+                    <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mt-0.5">
+                      {new Date(order.menu.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className="text-base font-black text-blue-700 dark:text-blue-400">${order.amount}</span>
+                    {order.status === "PAID" || order.status === "POST_PAID" ? (
+                      <span className="px-2.5 py-1 text-[10px] font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border border-green-200 dark:border-green-800">수납완료</span>
+                    ) : order.status === "UNPAID" ? (
+                      <span className="px-2.5 py-1 text-[10px] font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800">후납</span>
+                    ) : order.status === "CANCELLED" ? (
+                      <span className="px-2.5 py-1 text-[10px] font-black bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full border border-red-200 dark:border-red-800">취소</span>
+                    ) : (
+                      <span className="px-2.5 py-1 text-[10px] font-black bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full border border-yellow-200 dark:border-yellow-800">수납대기</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  {editingOrderId === order.id ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        className="flex-1 border-2 border-blue-200 dark:border-blue-700 bg-white dark:bg-gray-800 rounded-lg p-2 text-sm font-bold text-gray-900 dark:text-gray-100 outline-none"
+                        value={editingNote}
+                        onChange={e => setEditingNote(e.target.value)}
+                        autoFocus
+                        placeholder="특이사항..."
+                      />
+                      <button onClick={() => updateOrderNote(order.id)} className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <CheckCircle className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => setEditingOrderId(null)} className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400 italic">{order.notes || "특이사항 없음"}</span>
+                      {!order.isPaid && canCancel && (
+                        <button
+                          onClick={() => { setEditingOrderId(order.id); setEditingNote(order.notes || ""); }}
+                          className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-400 rounded-md transition-all flex-shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {!order.isPaid && canCancel && editingOrderId !== order.id ? (
+                    <button
+                      disabled={isLoading}
+                      onClick={() => cancelOrder(order.id)}
+                      className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-black rounded-xl border border-red-100 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40 active:scale-95 transition-all whitespace-nowrap"
+                    >
+                      신청 취소
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+          {orders.length === 0 && (
+            <div className="px-4 py-16 text-center text-gray-300 dark:text-gray-600 font-black italic">
+              아직 신청 내역이 없습니다.
+            </div>
+          )}
+        </div>
+
+        {/* 데스크탑 테이블 */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50">
               <tr>
