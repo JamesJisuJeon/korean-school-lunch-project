@@ -31,7 +31,7 @@ jobs:
           npm install
       - name: Set Default
         run: |
-          rm /root/lunch/default
+          rm -f /root/lunch/default
           ln -s /root/lunch/main-$TIMESTAMP /root/lunch/default
       - name: Start
         run: |
