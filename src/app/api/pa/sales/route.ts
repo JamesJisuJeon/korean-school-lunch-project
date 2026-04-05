@@ -34,11 +34,7 @@ export async function GET(req: Request) {
           include: { menu: true }
         },
         couponSales: {
-          where: { 
-            date: {
-              gte: new Date(new Date().setHours(0,0,0,0)), // 오늘 판매된 것 위주
-            }
-          }
+          where: { menuId }
         }
       },
       orderBy: [
@@ -62,12 +58,12 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    const { orderId, status, notes, isPaid, couponSaleId, couponPaymentStatus } = await req.json();
+    const { orderId, status, notes, isPaid, studentId, menuId, couponPaymentStatus } = await req.json();
 
-    // 쿠폰비 수납 상태 변경
-    if (couponSaleId !== undefined) {
+    // 쿠폰비 수납 상태 변경 (studentId + menuId 기준)
+    if (studentId !== undefined && menuId !== undefined && couponPaymentStatus !== undefined) {
       const couponSale = await prisma.couponSale.update({
-        where: { id: couponSaleId },
+        where: { studentId_menuId: { studentId, menuId } },
         data: { paymentStatus: couponPaymentStatus }
       });
       return NextResponse.json(couponSale);
@@ -92,7 +88,7 @@ export async function PATCH(req: Request) {
   }
 }
 
-// 3. 현장 신청 직접 생성 (POST)
+// 3. 현장 신청 직접 생성 / 쿠폰 판매 (POST)
 export async function POST(req: Request) {
   const session = await auth();
   if (!session || !(session.user as any).roles.some((r: string) => ["PA", "ADMIN"].includes(r))) {
@@ -102,14 +98,23 @@ export async function POST(req: Request) {
   try {
     const { studentId, menuId, quantity } = await req.json();
 
-    // 쿠폰 판매 처리 (quantity가 있는 경우)
+    // 쿠폰 판매 처리 (quantity가 있는 경우) - 학생+메뉴 기준 단일 레코드 upsert
     if (quantity !== undefined) {
-      const couponSale = await prisma.couponSale.create({
-        data: {
+      if (quantity === 0) {
+        await prisma.couponSale.deleteMany({ where: { studentId, menuId } });
+        return NextResponse.json({ success: true });
+      }
+      const couponSale = await prisma.couponSale.upsert({
+        where: { studentId_menuId: { studentId, menuId } },
+        create: {
           studentId,
+          menuId,
           quantity,
           amount: quantity * 5,
-          date: new Date()
+        },
+        update: {
+          quantity,
+          amount: quantity * 5,
         }
       });
       return NextResponse.json(couponSale);
@@ -118,7 +123,7 @@ export async function POST(req: Request) {
     // 현장 신청 처리
     const menu = await prisma.menu.findUnique({ where: { id: menuId } });
     const student = await prisma.student.findUnique({ where: { id: studentId } });
-    
+
     if (!menu || !student) return NextResponse.json({ message: "정보를 찾을 수 없습니다." }, { status: 404 });
 
     const order = await (prisma as any).order.upsert({
@@ -169,4 +174,3 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: "삭제 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
-

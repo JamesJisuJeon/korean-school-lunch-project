@@ -16,15 +16,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Start dev server (Turbopack)
 
 # Database
-npx prisma migrate dev --name <name>   # Create and apply a migration
+npx prisma migrate dev --name <name>   # Create and apply a migration (스키마 변경 시 항상 이것만 사용)
 npx prisma generate                    # Regenerate Prisma client after schema changes
-npx prisma db push                     # Push schema changes without a migration file
+npx prisma migrate status              # Check migration sync status
 npx prisma studio                      # Open Prisma Studio (DB GUI)
 npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts  # Run seed
 
 # Lint
 npm run lint
 ```
+
+## Schema Change Workflow (필수 준수)
+
+`prisma/schema.prisma` 변경 시 **반드시** 아래 순서를 따른다:
+
+1. `prisma/schema.prisma` 수정
+2. `npx prisma migrate dev --name <변경내용_설명>` 실행
+   - 마이그레이션 SQL 파일이 `prisma/migrations/` 에 자동 생성되고 DB에 즉시 적용됨
+3. 필요 시 `npx prisma generate` 로 클라이언트 재생성
+
+> **절대 금지**: `prisma db push` 는 마이그레이션 파일을 생성하지 않으므로 사용하지 않는다.
+> **절대 금지**: `prisma migrate reset` 은 모든 데이터를 삭제하므로 사용하지 않는다.
+> **절대 금지**: `prisma migrate dev --create-only` 는 drift 감지 시 DB를 리셋할 수 있으므로 사용하지 않는다.
 
 ---
 
@@ -97,6 +110,4 @@ Tailwind v4 class-based dark mode is configured in `src/app/globals.css`:
 
 ### Known Issues (not yet fixed)
 
-- `orderType: "ONSITE"` in `/api/pa/sales` POST should be `"ON_SITE"` to match the Prisma enum.
 - `ParentOrderClient.tsx` empty-state row uses `colSpan={5}` but the table has 6 columns.
-- Coupon quantity decrease creates negative-quantity `CouponSale` records rather than updating existing ones.

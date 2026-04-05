@@ -21,6 +21,7 @@ interface StudentWithOrder {
     quantity: number;
     amount: number;
     paymentStatus: string;
+    menuId: string;
   }[];
 }
 
@@ -103,11 +104,11 @@ export default function SalesManagementClient() {
     if (res.ok) fetchStudents();
   };
 
-  const updateCouponPaymentStatus = async (couponSaleId: string, couponPaymentStatus: string) => {
+  const updateCouponPaymentStatus = async (studentId: string, menuId: string, couponPaymentStatus: string) => {
     await fetch("/api/pa/sales", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ couponSaleId, couponPaymentStatus }),
+      body: JSON.stringify({ studentId, menuId, couponPaymentStatus }),
     });
     fetchStudents();
   };
@@ -125,11 +126,12 @@ export default function SalesManagementClient() {
     }
   };
 
-  const updateCouponQty = async (studentId: string, delta: number) => {
+  const updateCouponQty = async (studentId: string, currentQty: number, delta: number) => {
+    const newQty = currentQty + delta;
     const res = await fetch("/api/pa/sales", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId, quantity: delta }),
+      body: JSON.stringify({ studentId, menuId: selectedMenuId, quantity: newQty }),
     });
     if (res.ok) fetchStudents();
   };
@@ -382,7 +384,8 @@ export default function SalesManagementClient() {
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-900">
               {displayedStudents.map((student) => {
                 const order = student.orders[0];
-                const couponQty = student.couponSales.reduce((acc, curr) => acc + curr.quantity, 0);
+                const couponSale = student.couponSales[0] ?? null;
+                const couponQty = couponSale?.quantity ?? 0;
 
                 return (
                   <tr key={student.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
@@ -472,7 +475,7 @@ export default function SalesManagementClient() {
                     <td className="px-4 py-5 whitespace-nowrap">
                       <div className="flex items-center justify-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 w-32 mx-auto border-2 border-gray-100 dark:border-gray-700">
                         <button
-                          onClick={() => updateCouponQty(student.id, -1)}
+                          onClick={() => updateCouponQty(student.id, couponQty, -1)}
                           disabled={couponQty <= 0}
                           className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-red-500 hover:border-red-100 dark:hover:border-red-900/50 transition-colors disabled:opacity-30 active:scale-90"
                         >
@@ -480,7 +483,7 @@ export default function SalesManagementClient() {
                         </button>
                         <span className="text-lg font-black text-gray-900 dark:text-gray-100 w-4 text-center">{couponQty}</span>
                         <button
-                          onClick={() => updateCouponQty(student.id, 1)}
+                          onClick={() => updateCouponQty(student.id, couponQty, 1)}
                           className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-purple-600 hover:border-purple-100 dark:hover:border-purple-900/50 transition-colors active:scale-90"
                         >
                           +
@@ -489,14 +492,11 @@ export default function SalesManagementClient() {
                     </td>
                     {/* 쿠폰비 수납 */}
                     <td className="px-4 py-5 whitespace-nowrap">
-                      {couponQty > 0 ? (
+                      {couponQty > 0 && couponSale ? (
                         <select
                           className="w-28 rounded-xl border-2 py-2 px-3 text-xs font-black transition-all appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
-                          value={student.couponSales[student.couponSales.length - 1]?.paymentStatus ?? "PAID"}
-                          onChange={(e) => {
-                            const lastSale = student.couponSales[student.couponSales.length - 1];
-                            if (lastSale) updateCouponPaymentStatus(lastSale.id, e.target.value);
-                          }}
+                          value={couponSale.paymentStatus}
+                          onChange={(e) => updateCouponPaymentStatus(student.id, selectedMenuId, e.target.value)}
                         >
                           <option value="PAID">납부</option>
                           <option value="UNPAID">후납</option>
