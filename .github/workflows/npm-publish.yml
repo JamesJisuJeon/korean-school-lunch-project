@@ -37,5 +37,5 @@ jobs:
       - name: Start
         run: |
           cd /root/lunch/default
-          pm2 stop --name "lunch-prod"
+          pm2 stop "lunch-prod"
           pm2 start npm --name "lunch-prod" -- start

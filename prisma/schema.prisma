@@ -99,7 +99,8 @@ model Menu {
   isPublished   Boolean  @default(false)
   deadline      DateTime?
 
-  orders    Order[]
+  orders      Order[]
+  couponSales CouponSale[]
 }
 
 model Order {
@@ -124,8 +125,12 @@ model CouponSale {
   id            String   @id @default(cuid())
   studentId     String
   student       Student  @relation(fields: [studentId], references: [id])
+  menuId        String
+  menu          Menu     @relation(fields: [menuId], references: [id])
   quantity      Int      @default(1)
   amount        Float    @default(5.0) // $5 per coupon
   date          DateTime @default(now())
   paymentStatus String   @default("PAID") // PAID | UNPAID | POST_PAID
+
+  @@unique([studentId, menuId])
 }
