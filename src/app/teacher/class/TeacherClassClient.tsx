@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, CheckCircle, Calendar } from "lucide-react";
+import { Users, CheckCircle, Calendar, Utensils, IceCream, Beer } from "lucide-react";
 
 interface Menu {
   id: string;
@@ -117,19 +117,18 @@ export default function TeacherClassClient() {
         </div>
 
         {currentMenu && (
-          <div className="lg:col-span-2 bg-gray-100 dark:bg-gray-800 p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-4 justify-around border border-gray-200 dark:border-gray-700">
-            <div className="text-center border-r border-gray-200 dark:border-gray-600 pr-4 last:border-0">
-              <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Main</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentMenu.mainItems || "-"}</p>
-            </div>
-            <div className="text-center border-r border-gray-200 dark:border-gray-600 pr-4 last:border-0">
-              <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Dessert</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentMenu.dessertItems || "-"}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Beverage</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{currentMenu.beverageItems || "-"}</p>
-            </div>
+          <div className="lg:col-span-2 grid grid-cols-3 gap-2">
+            {[
+              { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "Main", value: currentMenu.mainItems },
+              { icon: <IceCream className="w-4 h-4" />, bg: "bg-pink-50 dark:bg-pink-900/20", border: "border-pink-100 dark:border-pink-800", color: "text-pink-600 dark:text-pink-400", label: "Dessert", value: currentMenu.dessertItems },
+              { icon: <Beer className="w-4 h-4" />, bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-cyan-100 dark:border-cyan-800", color: "text-cyan-600 dark:text-cyan-400", label: "Beverage", value: currentMenu.beverageItems },
+            ].map((item, i) => (
+              <div key={i} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
+                <span className={item.color}>{item.icon}</span>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${item.color} opacity-70`}>{item.label}</p>
+                <p className="text-xs font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>

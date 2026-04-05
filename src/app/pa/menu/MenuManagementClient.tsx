@@ -243,8 +243,8 @@ export default function MenuManagementClient() {
               )}
               <div className="flex-1 p-4 sm:p-8 flex flex-col">
                 <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg sm:text-2xl font-black text-gray-950 dark:text-gray-50 mb-2">
+                  <div className="flex-1 min-w-0 w-full">
+                    <h3 className="text-lg sm:text-2xl font-black text-gray-950 dark:text-gray-50 mb-2 break-words">
                       {new Date(menu.date).toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </h3>
                     <div className="flex flex-wrap items-center gap-3">
@@ -252,8 +252,8 @@ export default function MenuManagementClient() {
                         {menu.isPublished ? '현재 게시 중' : '비공개'}
                       </span>
                       {menu.deadline && (
-                        <span className="text-sm font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full border-2 border-gray-100 dark:border-gray-700">
-                          <Clock className="w-4 h-4 text-blue-500 dark:text-blue-400" /> 마감: {new Date(menu.deadline).toLocaleString('ko-KR')}
+                        <span className="text-sm font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full border-2 border-gray-100 dark:border-gray-700 min-w-0">
+                          <Clock className="w-4 h-4 shrink-0 text-blue-500 dark:text-blue-400" /> <span className="break-words">마감: {new Date(menu.deadline).toLocaleString('ko-KR', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                         </span>
                       )}
                     </div>

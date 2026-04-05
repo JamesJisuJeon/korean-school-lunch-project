@@ -7,7 +7,7 @@ interface StudentWithOrder {
   id: string;
   name: string;
   isPAChild: boolean;
-  class: { name: string } | null;
+  class: { name: string; sortOrder: number | null } | null;
   orders: {
     id: string;
     isPaid: boolean;
@@ -148,8 +148,19 @@ export default function SalesManagementClient() {
 
   // 학급 목록 (필터 드롭다운용)
   const classList = useMemo(() => {
-    const names = Array.from(new Set(students.map(s => s.class?.name ?? "반미지정")));
-    return names.sort();
+    const seen = new Map<string, number | null>();
+    for (const s of students) {
+      const name = s.class?.name ?? "반미지정";
+      if (!seen.has(name)) seen.set(name, s.class?.sortOrder ?? null);
+    }
+    return Array.from(seen.entries())
+      .sort(([, aOrder], [, bOrder]) => {
+        if (aOrder === null && bOrder === null) return 0;
+        if (aOrder === null) return 1;
+        if (bOrder === null) return -1;
+        return aOrder - bOrder;
+      })
+      .map(([name]) => name);
   }, [students]);
 
   // 필터 + 검색 + 정렬
@@ -192,16 +203,15 @@ export default function SalesManagementClient() {
 
     // 정렬
     result.sort((a, b) => {
-      let aVal = "";
-      let bVal = "";
+      let cmp = 0;
       if (sortKey === "class") {
-        aVal = a.class?.name ?? "zzz";
-        bVal = b.class?.name ?? "zzz";
+        const aOrder = a.class?.sortOrder ?? Infinity;
+        const bOrder = b.class?.sortOrder ?? Infinity;
+        cmp = aOrder - bOrder;
+        if (cmp === 0) cmp = a.name.localeCompare(b.name, "ko");
       } else {
-        aVal = a.name;
-        bVal = b.name;
+        cmp = a.name.localeCompare(b.name, "ko");
       }
-      const cmp = aVal.localeCompare(bVal, "ko");
       return sortDir === "asc" ? cmp : -cmp;
     });
 
@@ -350,6 +360,31 @@ export default function SalesManagementClient() {
               {displayedStudents.length} / {students.length} 명
             </span>
           </div>
+        </div>
+
+        {/* 모바일 정렬 */}
+        <div className="md:hidden flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
+          <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">정렬</span>
+          <button
+            onClick={() => handleSort("class")}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all border ${
+              sortKey === "class"
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+            }`}
+          >
+            학급 <SortIcon col="class" />
+          </button>
+          <button
+            onClick={() => handleSort("name")}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black transition-all border ${
+              sortKey === "name"
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+            }`}
+          >
+            이름 <SortIcon col="name" />
+          </button>
         </div>
 
         {/* 모바일 카드 레이아웃 */}
