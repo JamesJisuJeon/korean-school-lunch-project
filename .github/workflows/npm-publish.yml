@@ -29,6 +29,7 @@ jobs:
           rsync -av --exclude '.git' * /root/lunch/main-$TIMESTAMP
           cd /root/lunch/main-$TIMESTAMP
           npm install
+          npm run build
       - name: Set Default
         run: |
           rm -f /root/lunch/default
@@ -36,5 +37,5 @@ jobs:
       - name: Start
         run: |
           cd /root/lunch/default
-          pm2 stop —name "lunch-prod"
-          pm2 start —name "lunch-prod" npm — start
+          pm2 stop --name "lunch-prod"
+          pm2 start npm --name "lunch-prod" -- start
