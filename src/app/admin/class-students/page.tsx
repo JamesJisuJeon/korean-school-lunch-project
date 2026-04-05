@@ -10,7 +10,7 @@ export default async function ClassStudentManagementPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <ClassStudentManagementClient />
     </div>
   );

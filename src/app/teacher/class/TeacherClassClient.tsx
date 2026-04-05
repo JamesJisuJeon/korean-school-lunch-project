@@ -72,14 +72,14 @@ export default function TeacherClassClient() {
   return (
     <div className="space-y-8">
       {/* 반 요약 정보 */}
-      <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-8">
-        <div className="flex items-center gap-6">
-          <div className="p-4 bg-orange-600 rounded-2xl shadow-md dark:shadow-none">
-            <Users className="w-10 h-10 text-white" />
+      <div className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-8">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="p-3 sm:p-4 bg-orange-600 rounded-2xl shadow-md dark:shadow-none">
+            <Users className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
           </div>
           <div>
-            <h2 className="text-3xl font-black text-gray-950 dark:text-gray-50">{classData.className}</h2>
-            <p className="text-gray-500 dark:text-gray-400 font-bold tracking-tighter uppercase">{classData.academicYear} ACADEMIC YEAR</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50">{classData.className}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-bold tracking-tighter uppercase">{classData.academicYear} ACADEMIC YEAR</p>
           </div>
         </div>
 
@@ -135,7 +135,7 @@ export default function TeacherClassClient() {
       </div>
 
       {/* 학생 명단 */}
-      <div className="bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 rounded-3xl overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
           <thead className="bg-gray-50 dark:bg-gray-800/50">
             <tr>

@@ -37,7 +37,7 @@ export default async function TeacherClassPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-50">
         {substitute ? "보결 학급 명단 확인" : "우리 반 점심 신청 명단"}
       </h1>

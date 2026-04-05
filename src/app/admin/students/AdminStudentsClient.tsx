@@ -340,9 +340,59 @@ export default function AdminStudentsClient() {
         </section>
       )}
 
-      {/* 목록 테이블 섹션 - UserMangementClient 스타일 반영 */}
+      {/* 목록 */}
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl shadow-blue-900/5 border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* 모바일 카드 레이아웃 */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+          {sortedStudents.map((student) => (
+            <div key={student.id} className="p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-base font-black text-gray-900 dark:text-gray-100">{student.name}</p>
+                    {student.isPAChild && <span className="text-[9px] px-1.5 py-0.5 bg-yellow-400 text-white rounded-md font-black">PA</span>}
+                  </div>
+                  {student.class ? (
+                    <span className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2.5 py-0.5 rounded-full text-xs font-bold inline-block mt-1">
+                      {student.class.academicYear.name} / {student.class.name}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 dark:text-gray-600 italic text-xs">미배정</span>
+                  )}
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {student.parents.map(p => (
+                      <span key={p.id} className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-800 text-[10px] font-black">
+                        {p.name || '이름없음'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleEdit(student)}
+                    className="p-2.5 text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-all active:scale-90"
+                  >
+                    <Key className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(student.id)}
+                    className="p-2.5 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-xl hover:bg-red-100 transition-all active:scale-90"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {sortedStudents.length === 0 && (
+            <div className="py-16 text-center text-gray-300 font-black italic">
+              검색 결과가 없습니다.
+            </div>
+          )}
+        </div>
+
+        {/* 데스크탑 테이블 */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50">
               <tr>
@@ -354,7 +404,7 @@ export default function AdminStudentsClient() {
                     학생이름 {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </div>
                 </th>
-                <th 
+                <th
                   onClick={() => handleSort('class')}
                   className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
@@ -362,8 +412,8 @@ export default function AdminStudentsClient() {
                     소속 학급 {sortConfig?.key === 'class' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                   </div>
                 </th>
-                <th 
-                   onClick={() => handleSort('parents')}
+                <th
+                  onClick={() => handleSort('parents')}
                   className="px-8 py-5 text-left text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -409,13 +459,13 @@ export default function AdminStudentsClient() {
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-center">
                     <div className="flex justify-center gap-3">
-                      <button 
+                      <button
                         onClick={() => handleEdit(student)}
                         className="p-3 text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-90"
                       >
                         <Key className="w-5 h-5" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(student.id)}
                         className="p-3 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-90"
                       >

@@ -177,14 +177,14 @@ export default function UserManagementClient() {
   return (
     <div className="space-y-8">
       {/* 헤더 액션 바 */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-6">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-blue-600 rounded-3xl shadow-md">
-            <Users className="w-8 h-8 text-white" />
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-4 sm:gap-6">
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md">
+            <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-gray-950 dark:text-gray-50">사용자 계정 관리</h1>
-            <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">초기 비밀번호는 <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded font-mono text-blue-600 dark:text-blue-400">password1234</code> 입니다.</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50">사용자 계정 관리</h1>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">초기 비밀번호는 <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded font-mono text-blue-600 dark:text-blue-400">password1234</code> 입니다.</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-3 w-full xl:w-auto">
@@ -305,9 +305,51 @@ export default function UserManagementClient() {
         </div>
       )}
 
-      {/* 목록 테이블 */}
+      {/* 목록 */}
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl shadow-blue-900/5 border border-gray-100 dark:border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* 모바일 카드 레이아웃 */}
+        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
+          {sortedUsers.map((u) => (
+            <div key={u.id} className="p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-black text-gray-900 dark:text-gray-100">{u.name || "미지정"}</p>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
+                  <div className="flex gap-1.5 flex-wrap mt-1.5">
+                    {u.roles.map(r => (
+                      <span key={r} className={`px-2.5 py-1 text-[10px] font-black rounded-lg border tracking-tighter
+                        ${r === "ADMIN" ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800" :
+                          r === "PA" ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800" :
+                          r === "TEACHER" ? "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-800" :
+                          "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800"}`}>
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => resetPassword(u.id)} title="비밀번호 초기화" className="p-2.5 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-xl hover:bg-amber-100 transition-all active:scale-90">
+                    <Key className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => { setEditingUser(u); setShowAddForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} title="정보 수정" className="p-2.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 transition-all active:scale-90">
+                    <Shield className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => deleteUser(u.id)} title="삭제" className="p-2.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl hover:bg-red-100 transition-all active:scale-90">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {sortedUsers.length === 0 && (
+            <div className="py-16 text-center text-gray-300 dark:text-gray-600 font-black italic">
+              {searchTerm ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
+            </div>
+          )}
+        </div>
+
+        {/* 데스크탑 테이블 */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50">
               <tr>

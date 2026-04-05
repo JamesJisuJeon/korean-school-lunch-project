@@ -164,8 +164,8 @@ export default function AnalyticsClient() {
           {/* 반별 통계 */}
           <div>
             <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">반별 통계</h2>
-            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-x-auto">
+              <table className="min-w-[640px] w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-black text-gray-500 dark:text-gray-400">반</th>

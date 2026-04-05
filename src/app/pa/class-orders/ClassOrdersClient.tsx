@@ -168,7 +168,7 @@ export default function ClassOrdersClient() {
       )}
 
       {!isLoading && selectedClassId && students.length >= 0 && classData?.className && (
-        <div className="bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800 rounded-3xl overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>

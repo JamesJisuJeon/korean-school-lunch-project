@@ -155,8 +155,8 @@ export default function MenuManagementClient() {
 
   return (
     <div className="space-y-12">
-      <section className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800">
-        <h2 className="text-2xl font-black mb-8 flex items-center gap-3 text-green-700 dark:text-green-400">
+      <section className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800">
+        <h2 className="text-xl sm:text-2xl font-black mb-6 sm:mb-8 flex items-center gap-3 text-green-700 dark:text-green-400">
           <Calendar className="w-8 h-8" /> 주간 메뉴 등록 및 이미지 업로드
         </h2>
         <form onSubmit={addMenu} className="space-y-8">
@@ -237,14 +237,14 @@ export default function MenuManagementClient() {
           {menus.map((menu) => (
             <div key={menu.id} className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border-2 border-gray-200 dark:border-gray-800 flex flex-col md:flex-row hover:shadow-2xl transition-shadow group">
               {menu.imageUrl && (
-                <div className="md:w-1/3 h-64 md:h-auto border-r-2 border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="md:w-1/3 h-48 sm:h-56 md:h-auto border-b-2 md:border-b-0 md:border-r-2 border-gray-100 dark:border-gray-800 overflow-hidden">
                   <img src={menu.imageUrl} alt="메뉴 안내" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
               )}
-              <div className="flex-1 p-8 flex flex-col">
-                <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
+              <div className="flex-1 p-4 sm:p-8 flex flex-col">
+                <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 gap-4">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-black text-gray-950 dark:text-gray-50 mb-2">
+                    <h3 className="text-lg sm:text-2xl font-black text-gray-950 dark:text-gray-50 mb-2">
                       {new Date(menu.date).toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </h3>
                     <div className="flex flex-wrap items-center gap-3">
@@ -258,8 +258,8 @@ export default function MenuManagementClient() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-6">
-                    <span className="text-4xl font-black text-blue-700 dark:text-blue-400">${menu.price}</span>
+                  <div className="flex items-center gap-4 sm:gap-6">
+                    <span className="text-3xl sm:text-4xl font-black text-blue-700 dark:text-blue-400">${menu.price}</span>
                     <div className="flex flex-col gap-2">
                       <button
                         onClick={() => handleEdit(menu)}
