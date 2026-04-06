@@ -30,6 +30,7 @@ export async function POST(req: Request) {
 
   try {
     const {
+      id,
       date,
       mainItems,
       dessertItems,
@@ -41,9 +42,20 @@ export async function POST(req: Request) {
       deadline
     } = await req.json();
 
-    // 날짜를 자정(UTC 00:00:00)으로 정규화하여 중복 저장을 방지하고 정확한 비교를 보장함
+    // 날짜를 자정(UTC 00:00:00)으로 정규화
     const menuDate = new Date(date);
     menuDate.setUTCHours(0, 0, 0, 0);
+
+    // 신규 등록 시 동일 날짜 중복 차단
+    if (!id) {
+      const duplicateDate = await prisma.menu.findFirst({ where: { date: menuDate } });
+      if (duplicateDate) {
+        return NextResponse.json(
+          { message: `${date} 날짜의 메뉴가 이미 등록되어 있습니다. 수정 버튼을 이용해주세요.` },
+          { status: 409 }
+        );
+      }
+    }
 
     const existingPublishedMenu = await prisma.menu.findFirst({
       where: { isPublished: true }
@@ -55,8 +67,8 @@ export async function POST(req: Request) {
 
       // 이번에 게시하려는 메뉴가 기존 게시된 메뉴와 날짜가 다르고, isPublished가 true라면 차단
       if (existingDate.getTime() !== menuDate.getTime() && isPublished) {
-        return NextResponse.json({ 
-          message: "이미 게시 중인 다른 날짜의 메뉴가 있습니다. 기존 메뉴의 게시를 해제해야 다른 메뉴를 게시할 수 있습니다." 
+        return NextResponse.json({
+          message: "이미 게시 중인 다른 날짜의 메뉴가 있습니다. 기존 메뉴의 게시를 해제해야 다른 메뉴를 게시할 수 있습니다."
         }, { status: 400 });
       }
     }
@@ -72,14 +84,14 @@ export async function POST(req: Request) {
       deadline: deadline ? new Date(deadline) : null
     };
 
-    const menu = await prisma.menu.upsert({
-      where: { date: menuDate },
-      update: menuData,
-      create: {
-        date: menuDate,
-        ...menuData
-      },
-    });
+    let menu;
+    if (id) {
+      // 수정: id로 직접 업데이트
+      menu = await prisma.menu.update({ where: { id }, data: { ...menuData, date: menuDate } });
+    } else {
+      // 신규 등록
+      menu = await prisma.menu.create({ data: { date: menuDate, ...menuData } });
+    }
 
     return NextResponse.json(menu);
   } catch (error) {
