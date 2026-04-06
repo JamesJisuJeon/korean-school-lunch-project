@@ -253,33 +253,33 @@ export default function SalesManagementClient() {
     <div className="space-y-8">
       {/* 통계 섹션 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-2 bg-gray-100 dark:bg-gray-900 p-6 rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-800 flex justify-around items-center">
+        <div className="md:col-span-2 bg-gray-100 dark:bg-gray-900 p-4 md:p-6 rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-800 flex justify-around items-center">
           <div className="text-center">
             <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">식사 신청 합계</p>
-            <h3 className="text-4xl font-black text-gray-950 dark:text-white">
+            <h3 className="text-3xl md:text-4xl font-black text-gray-950 dark:text-white">
               {students.filter(s => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length}
               <span className="text-sm"> 명</span>
             </h3>
           </div>
-          <div className="w-px h-10 bg-gray-300 dark:bg-gray-700" />
+          <div className="w-px h-8 md:h-10 bg-gray-300 dark:bg-gray-700" />
           <div className="text-center">
             <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">쿠폰 판매 합계</p>
-            <h3 className="text-4xl font-black text-purple-600 dark:text-purple-400">
+            <h3 className="text-3xl md:text-4xl font-black text-purple-600 dark:text-purple-400">
               {students.reduce((acc, curr) => acc + curr.couponSales.reduce((c, n) => c + n.quantity, 0), 0)}
               <span className="text-sm"> 매</span>
             </h3>
           </div>
         </div>
 
-        <div className="md:col-span-2 bg-white dark:bg-gray-900 p-6 rounded-[2.5rem] border border-gray-200 dark:border-gray-800 flex flex-col justify-center gap-2">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400">
-              <Calendar className="w-6 h-6" />
+        <div className="md:col-span-2 bg-white dark:bg-gray-900 p-4 md:p-6 rounded-[2.5rem] border border-gray-200 dark:border-gray-800 flex flex-col justify-center gap-2">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-2 md:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400">
+              <Calendar className="w-5 h-5 md:w-6 md:h-6" />
             </div>
             <div className="flex-1">
               <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">배식 날짜 선택</label>
               <select
-                className="w-full bg-transparent border-none p-0 font-black text-xl text-gray-900 dark:text-gray-100 focus:ring-0 cursor-pointer outline-none"
+                className="w-full bg-transparent border-none p-0 font-black text-lg md:text-xl text-gray-900 dark:text-gray-100 focus:ring-0 cursor-pointer outline-none"
                 value={selectedMenuId}
                 onChange={(e) => setSelectedMenuId(e.target.value)}
               >
@@ -404,20 +404,18 @@ export default function SalesManagementClient() {
             const couponQty = couponSale?.quantity ?? 0;
 
             return (
-              <div key={student.id} className="p-4 space-y-3">
-                {/* 이름 + 학급 */}
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-base font-black text-gray-950 dark:text-gray-100">{student.name}</p>
-                      <p className="text-sm font-black text-blue-500 dark:text-blue-400">{student.class?.name || "반미지정"}</p>
-                    </div>
+              <div key={student.id} className="p-4 space-y-2.5">
+                {/* Row 1: 이름/학급 (왼쪽) · 신청유형 (오른쪽) */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-base font-black text-gray-950 dark:text-gray-100 shrink-0">{student.name}</p>
+                    <p className="text-sm font-black text-blue-500 dark:text-blue-400 shrink-0">{student.class?.name || "반미지정"}</p>
                     {student.isPAChild && (
-                      <span className="inline-block mt-1 text-[10px] bg-yellow-400 text-yellow-950 font-black px-2 py-0.5 rounded-md">학부모회 자녀</span>
+                      <span className="text-[10px] bg-yellow-400 text-yellow-950 font-black px-2 py-0.5 rounded-md shrink-0">PA</span>
                     )}
                   </div>
                   {order ? (
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border ${
+                    <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border ${
                       order.orderType === "PRE_ORDER"
                         ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
                         : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
@@ -428,16 +426,16 @@ export default function SalesManagementClient() {
                   ) : (
                     <button
                       onClick={() => handleOnSiteOrder(student.id)}
-                      className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border-2 border-blue-100 dark:border-blue-800 hover:bg-blue-600 hover:text-white transition-all active:scale-95 whitespace-nowrap"
+                      className="shrink-0 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border-2 border-blue-100 dark:border-blue-800 hover:bg-blue-600 hover:text-white transition-all active:scale-95 whitespace-nowrap"
                     >
                       현장 신청
                     </button>
                   )}
                 </div>
 
-                {/* 수납 상태 + 특이사항 */}
+                {/* Row 2: 특이사항 (왼쪽) · 수납상태 (오른쪽) */}
                 {order && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-2">
                     <input
                       className="flex-1 min-w-0 bg-red-50/50 dark:bg-red-950/20 border border-transparent rounded-lg py-2 px-3 text-sm font-medium text-red-600 dark:text-red-400 italic placeholder:text-red-300 dark:placeholder:text-red-900/50 focus:border-red-400 focus:bg-white dark:focus:bg-gray-900 focus:outline-none"
                       placeholder="특이사항..."
@@ -454,7 +452,7 @@ export default function SalesManagementClient() {
                       }}
                     />
                     <select
-                      className={`shrink-0 rounded-xl border-2 py-2 px-3 text-xs font-black transition-all appearance-none cursor-pointer ${
+                      className={`shrink-0 rounded-xl border-2 py-2 px-3 text-xs font-black appearance-none cursor-pointer ${
                         PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
                       } bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
                       value={order.status}
@@ -473,28 +471,26 @@ export default function SalesManagementClient() {
                   </div>
                 )}
 
-                {/* 쿠폰 */}
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">쿠폰 ($5)</span>
-                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-3 py-1.5 border-2 border-gray-100 dark:border-gray-700">
-                    <button
-                      onClick={() => updateCouponQty(student.id, couponQty, -1)}
-                      disabled={couponQty <= 0}
-                      className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 active:scale-90 text-lg font-bold"
-                    >
-                      -
-                    </button>
-                    <span className="text-lg font-black text-gray-900 dark:text-gray-100 w-5 text-center">{couponQty}</span>
-                    <button
-                      onClick={() => updateCouponQty(student.id, couponQty, 1)}
-                      className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-purple-600 transition-colors active:scale-90 text-lg font-bold"
-                    >
-                      +
-                    </button>
+                {/* Row 3: 쿠폰 수량 (왼쪽) · 쿠폰 납부상태 (오른쪽) */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-gray-400 dark:text-gray-500 shrink-0">쿠폰 ($5)</span>
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-2.5 py-1.5 border-2 border-gray-100 dark:border-gray-700">
+                      <button
+                        onClick={() => updateCouponQty(student.id, couponQty, -1)}
+                        disabled={couponQty <= 0}
+                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 active:scale-90 text-base font-bold"
+                      >-</button>
+                      <span className="text-base font-black text-gray-900 dark:text-gray-100 w-5 text-center">{couponQty}</span>
+                      <button
+                        onClick={() => updateCouponQty(student.id, couponQty, 1)}
+                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-purple-600 transition-colors active:scale-90 text-base font-bold"
+                      >+</button>
+                    </div>
                   </div>
                   {couponQty > 0 && couponSale && (
                     <select
-                      className="rounded-xl border-2 py-2 px-3 text-xs font-black appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
+                      className="shrink-0 rounded-xl border-2 py-2 px-3 text-xs font-black appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
                       value={couponSale.paymentStatus}
                       onChange={(e) => updateCouponPaymentStatus(student.id, selectedMenuId, e.target.value)}
                     >

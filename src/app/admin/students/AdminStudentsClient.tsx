@@ -301,21 +301,36 @@ export default function AdminStudentsClient() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
-      {/* 헤더 액션 바 (대량 등록) */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-4">
-        <div>
-          <h2 className="text-base font-black text-gray-700 dark:text-gray-300">엑셀 대량 등록</h2>
-          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-0.5">활성 학사연도 학급명 · 학부모 이메일(쉼표 구분)을 입력해 한 번에 등록합니다.</p>
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800">
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md shrink-0">
+            <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50 shrink-0">학생 관리</h1>
+              <div className="hidden xl:flex gap-2 ml-2">
+                <button onClick={downloadTemplate} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+                  <Download className="w-3.5 h-3.5" /> 양식 다운로드
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50">
+                  <Upload className="w-3.5 h-3.5" /> 엑셀 대량 등록
+                </button>
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">학생 정보를 등록하고 학부모 계정과 연결합니다.</p>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
-          <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-black border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 text-sm">
+        <div className="flex gap-2 mt-4 xl:hidden">
+          <button onClick={downloadTemplate} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
             <Download className="w-4 h-4" /> 양식 다운로드
           </button>
-          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-black hover:bg-blue-700 transition-all active:scale-95 shadow-md disabled:opacity-50 text-sm">
+          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-md disabled:opacity-50">
             <Upload className="w-4 h-4" /> 엑셀 대량 등록
           </button>
-          <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
         </div>
+        <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
       </div>
 
       {/* 대량 등록 결과 */}

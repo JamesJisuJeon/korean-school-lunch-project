@@ -185,26 +185,36 @@ export default function UserManagementClient() {
 
   return (
     <div className="space-y-8">
-      {/* 헤더 액션 바 */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-4 sm:gap-6">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-4 sm:gap-5">
-          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md">
+          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md shrink-0">
             <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50">사용자 계정 관리</h1>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50 shrink-0">사용자 계정 및 권한 관리</h1>
+              <div className="hidden xl:flex gap-2 ml-2">
+                <button onClick={downloadTemplate} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+                  <Download className="w-3.5 h-3.5" /> 양식 다운로드
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-blue-600 dark:bg-gray-700 text-white rounded-xl hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 disabled:opacity-50">
+                  <Upload className="w-3.5 h-3.5" /> 엑셀 대량 등록
+                </button>
+              </div>
+            </div>
             <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">초기 비밀번호는 <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded font-mono text-blue-600 dark:text-blue-400">password1234</code> 입니다.</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
-          <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-black border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
-            <Download className="w-5 h-5" /> 양식 다운로드
+        <div className="flex gap-2 mt-4 xl:hidden">
+          <button onClick={downloadTemplate} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+            <Download className="w-4 h-4" /> 양식 다운로드
           </button>
-          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none disabled:opacity-50">
-            <Upload className="w-5 h-5" /> 엑셀 대량 등록
+          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-blue-600 dark:bg-gray-700 text-white rounded-2xl hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none disabled:opacity-50">
+            <Upload className="w-4 h-4" /> 엑셀 대량 등록
           </button>
-          <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
         </div>
+        <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
       </div>
 
       {/* 대량 등록 결과 */}
@@ -282,9 +292,9 @@ export default function UserManagementClient() {
 
             <div className="space-y-3">
               <label className="block text-xs font-black text-gray-400 dark:text-gray-500 mb-3 uppercase tracking-widest ml-1">부여 권한 (복수 선택 가능)</label>
-              <div className="flex flex-wrap gap-4 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 bg-gray-50 dark:bg-gray-800/50 p-4 sm:p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700">
                 {["PARENT", "TEACHER", "PA", "ADMIN"].map(role => (
-                  <label key={role} className="inline-flex items-center gap-3 cursor-pointer group px-4 py-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-700 hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition-all">
+                  <label key={role} className="inline-flex items-center gap-2 sm:gap-3 cursor-pointer group px-3 sm:px-4 py-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-700 hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition-all">
                     <input
                       type="checkbox"
                       checked={editingUser ? editingUser.roles.includes(role) : newUser.roles.includes(role)}
@@ -293,9 +303,9 @@ export default function UserManagementClient() {
                         const updated = e.target.checked ? [...target.roles, role] : target.roles.filter((r: string) => r !== role);
                         editingUser ? setEditingUser({ ...editingUser, roles: updated }) : setNewUser({ ...newUser, roles: updated });
                       }}
-                      className="w-6 h-6 rounded-lg text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-offset-0 focus:ring-blue-500"
+                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-offset-0 focus:ring-blue-500"
                     />
-                    <span className="text-base font-black text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">{role}</span>
+                    <span className="text-sm sm:text-base font-black text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">{role}</span>
                   </label>
                 ))}
               </div>

@@ -223,17 +223,27 @@ export default function MenuManagementClient() {
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl font-black flex items-center gap-3 text-green-700 dark:text-green-400">
             <Calendar className="w-8 h-8" />
-            {editingId ? "주간 메뉴 수정 중" : "주간 메뉴 등록"}
+            {editingId ? "주간 메뉴 수정" : "주간 메뉴 등록"}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             {showForm ? (
-              <button
-                type="button"
-                onClick={cancelForm}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm"
-              >
-                <X className="w-4 h-4" /> {editingId ? "수정 취소" : "등록 취소"}
-              </button>
+              <>
+                <button
+                  type="submit"
+                  form="menu-form"
+                  disabled={isLoading || isUploading}
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-all text-sm"
+                >
+                  <Check className="w-4 h-4" /> {editingId ? "수정" : "등록"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelForm}
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm"
+                >
+                  <X className="w-4 h-4" /> 취소
+                </button>
+              </>
             ) : (
               <button
                 type="button"
@@ -246,7 +256,7 @@ export default function MenuManagementClient() {
           </div>
         </div>
 
-        {showForm && <form onSubmit={addMenu} className="space-y-8">
+        {showForm && <form id="menu-form" onSubmit={addMenu} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="min-w-0">
               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">배식 날짜 (토요일)</label>
@@ -296,7 +306,7 @@ export default function MenuManagementClient() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end border-t pt-8 border-gray-100 dark:border-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
             <div className="min-w-0">
               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 flex items-center gap-1 mb-1"><Clock className="w-4 h-4" /> 신청 마감 일시</label>
               <input type="datetime-local" required className={inputClassName} value={newMenu.deadline} onChange={(e) => setNewMenu({ ...newMenu, deadline: e.target.value })} />
@@ -314,9 +324,6 @@ export default function MenuManagementClient() {
             </div>
           </div>
 
-          <button type="submit" disabled={isLoading || isUploading} className="w-full py-5 bg-green-700 dark:bg-green-600 text-white font-black text-xl rounded-2xl hover:bg-green-800 dark:hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-all border-b-4 border-green-900 dark:border-green-800 active:border-b-0 active:translate-y-1">
-            {isLoading ? "처리 중..." : "메뉴 데이터 및 이미지 저장 완료"}
-          </button>
         </form>}
       </section>
 
@@ -333,66 +340,68 @@ export default function MenuManagementClient() {
                 </div>
               )}
               <div className="flex-1 p-4 sm:p-8 flex flex-col">
-                <div className="flex flex-col sm:flex-row justify-between items-start mb-4 sm:mb-6 gap-4">
-                  <div className="flex-1 min-w-0 w-full">
-                    <h3 className="text-lg sm:text-2xl font-black text-gray-950 dark:text-gray-50 mb-2 break-words">
-                      {new Date(menu.date).toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-black border-2 ${menu.isPublished ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'}`}>
+                <div className="mb-4 sm:mb-6">
+                  {/* 날짜 + 현재게시중 + 금액 */}
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="text-lg sm:text-2xl font-black text-gray-950 dark:text-gray-50 shrink-0">
+                        {new Date(menu.date).toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </h3>
+                      <span className={`shrink-0 px-2 sm:px-3 py-1 rounded-full text-xs font-black border-2 ${menu.isPublished ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'}`}>
                         {menu.isPublished ? '현재 게시 중' : '비공개'}
                       </span>
-                      {menu.deadline && (
-                        <span className="text-sm font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full border-2 border-gray-100 dark:border-gray-700 min-w-0">
-                          <Clock className="w-4 h-4 shrink-0 text-blue-500 dark:text-blue-400" /> <span className="break-words">마감: {new Date(menu.deadline).toLocaleString('ko-KR', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        </span>
-                      )}
                     </div>
+                    <span className="shrink-0 text-2xl sm:text-4xl font-black text-blue-700 dark:text-blue-400">${menu.price}</span>
                   </div>
-                  <div className="flex items-center gap-4 sm:gap-6">
-                    <span className="text-3xl sm:text-4xl font-black text-blue-700 dark:text-blue-400">${menu.price}</span>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => handleEdit(menu)}
-                        className="flex items-center justify-center gap-1 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-2 border-gray-300 dark:border-gray-600 shadow-sm"
-                      >
-                        <Edit2 className="w-4 h-4" /> 수정
-                      </button>
-                      {menu.isPublished && (
-                        <button
-                          onClick={() => handleUnpublish(menu)}
-                          className="flex items-center justify-center gap-1 px-4 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors border-2 border-red-200 dark:border-red-800 shadow-sm"
-                        >
-                          <Lock className="w-4 h-4" /> 게시 해제
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteRequest(menu)}
-                        className="flex items-center justify-center gap-1 px-4 py-2 bg-red-600 dark:bg-red-700 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-red-800 transition-colors border-2 border-red-700 dark:border-red-800 shadow-sm"
-                      >
-                        <Trash2 className="w-4 h-4" /> 삭제
-                      </button>
-                    </div>
+                  {/* 마감일자 */}
+                  {menu.deadline && (
+                    <span className="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 inline-flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-2 sm:px-3 py-1 rounded-full border-2 border-gray-100 dark:border-gray-700 whitespace-nowrap">
+                      <Clock className="w-3.5 h-3.5 shrink-0 text-blue-500 dark:text-blue-400" /> 마감: {new Date(menu.deadline).toLocaleString('ko-KR', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 sm:p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700 mb-4 sm:mb-6 text-center">
+                  <div>
+                    <p className="text-xs sm:text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">메인 메뉴</p>
+                    <p className="text-base sm:text-xl font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.mainItems || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">디저트</p>
+                    <p className="text-base sm:text-xl font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.dessertItems || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">음료수</p>
+                    <p className="text-base sm:text-xl font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.beverageItems || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-black text-yellow-500 dark:text-yellow-400 uppercase tracking-widest mb-1">매점 특식</p>
+                    <p className="text-base sm:text-xl font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.specialItems || "-"}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700 mt-auto">
-                  <div>
-                    <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">메인 메뉴</p>
-                    <p className="text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.mainItems || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">디저트</p>
-                    <p className="text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.dessertItems || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">음료수</p>
-                    <p className="text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.beverageItems || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-yellow-500 dark:text-yellow-400 uppercase tracking-widest mb-1">매점 특식</p>
-                    <p className="text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.specialItems || "-"}</p>
-                  </div>
+                {/* 버튼 행 */}
+                <div className="flex gap-2 mt-auto">
+                  <button
+                    onClick={() => handleEdit(menu)}
+                    className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-2 border-gray-300 dark:border-gray-600 shadow-sm"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 수정
+                  </button>
+                  {menu.isPublished && (
+                    <button
+                      onClick={() => handleUnpublish(menu)}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors border-2 border-red-200 dark:border-red-800 shadow-sm"
+                    >
+                      <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시 해제
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteRequest(menu)}
+                    className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-red-600 dark:bg-red-700 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-red-800 transition-colors border-2 border-red-700 dark:border-red-800 shadow-sm"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 삭제
+                  </button>
                 </div>
               </div>
             </div>

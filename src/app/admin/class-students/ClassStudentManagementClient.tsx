@@ -152,25 +152,35 @@ export default function ClassStudentManagementClient() {
   return (
     <div className="max-w-[1400px] mx-auto space-y-10 pb-20 animate-in fade-in duration-700">
       {/* Header */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-6">
-        <div className="flex items-center gap-5">
-          <div className="p-4 bg-blue-600 rounded-3xl shadow-md">
-            <Users className="w-8 h-8 text-white" />
+      <div className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800">
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md shrink-0">
+            <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <div>
-            <h1 className="text-3xl font-black text-gray-950 dark:text-gray-50">학급 학생 관리</h1>
-            <p className="text-sm font-bold text-gray-400 mt-1">{activeYear} 학사연도 학급 배정을 관리합니다.</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50 shrink-0">학급 학생 관리</h1>
+              <div className="hidden xl:flex gap-2 ml-2">
+                <button onClick={downloadTemplate} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+                  <Download className="w-3.5 h-3.5" /> 양식 다운로드
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-blue-600 dark:bg-gray-700 text-white rounded-xl hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95">
+                  <Upload className="w-3.5 h-3.5" /> 엑셀 대량 등록
+                </button>
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">{activeYear} 학사연도 학급 배정을 관리합니다.</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
-          <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 text-gray-700 rounded-2xl font-black border-2 border-gray-100 hover:bg-gray-100 transition-all active:scale-95">
-            <Download className="w-5 h-5" /> 양식 다운로드
+        <div className="flex gap-2 mt-4 xl:hidden">
+          <button onClick={downloadTemplate} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+            <Download className="w-4 h-4" /> 양식 다운로드
           </button>
-          <button onClick={() => fileInputRef.current?.click()} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
-            <Upload className="w-5 h-5" /> 엑셀 대량 등록
+          <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-blue-600 dark:bg-gray-700 text-white rounded-2xl hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
+            <Upload className="w-4 h-4" /> 엑셀 대량 등록
           </button>
-          <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
         </div>
+        <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
