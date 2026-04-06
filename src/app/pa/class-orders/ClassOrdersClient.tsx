@@ -94,7 +94,7 @@ export default function ClassOrdersClient() {
           >
             {menus.map((m) => (
               <option key={m.id} value={m.id}>
-                {new Date(m.date).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })} 점심
+                {new Date(m.date).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}
               </option>
             ))}
           </select>

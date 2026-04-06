@@ -29,15 +29,16 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { 
-      date, 
-      mainItems, 
-      dessertItems, 
-      beverageItems, 
-      imageUrl, 
-      price, 
-      isPublished, 
-      deadline 
+    const {
+      date,
+      mainItems,
+      dessertItems,
+      beverageItems,
+      specialItems,
+      imageUrl,
+      price,
+      isPublished,
+      deadline
     } = await req.json();
 
     // 날짜를 자정(UTC 00:00:00)으로 정규화하여 중복 저장을 방지하고 정확한 비교를 보장함
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
       mainItems,
       dessertItems,
       beverageItems,
+      specialItems,
       imageUrl,
       price: parseFloat(price),
       isPublished: isPublished ?? false,
@@ -83,5 +85,24 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: "메뉴 등록 중 오류가 발생했습니다." }, { status: 500 });
+  }
+}
+
+// 메뉴 삭제
+export async function DELETE(req: Request) {
+  const session = await auth();
+  if (!session || !(session.user as any).roles.some((r: string) => ["PA", "ADMIN"].includes(r))) {
+    return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
+  }
+
+  try {
+    const { id } = await req.json();
+    if (!id) return NextResponse.json({ message: "메뉴 ID가 필요합니다." }, { status: 400 });
+
+    await prisma.menu.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: "메뉴 삭제 중 오류가 발생했습니다." }, { status: 500 });
   }
 }

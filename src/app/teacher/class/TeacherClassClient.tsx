@@ -110,7 +110,7 @@ export default function TeacherClassClient() {
           >
             {menus.map((menu) => (
               <option key={menu.id} value={menu.id}>
-                {new Date(menu.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })} 점심
+                {new Date(menu.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })}
               </option>
             ))}
           </select>
@@ -119,14 +119,17 @@ export default function TeacherClassClient() {
         {currentMenu && (
           <div className="lg:col-span-2 grid grid-cols-3 gap-2">
             {[
-              { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "Main", value: currentMenu.mainItems },
-              { icon: <IceCream className="w-4 h-4" />, bg: "bg-pink-50 dark:bg-pink-900/20", border: "border-pink-100 dark:border-pink-800", color: "text-pink-600 dark:text-pink-400", label: "Dessert", value: currentMenu.dessertItems },
-              { icon: <Beer className="w-4 h-4" />, bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-cyan-100 dark:border-cyan-800", color: "text-cyan-600 dark:text-cyan-400", label: "Beverage", value: currentMenu.beverageItems },
+              { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "메인 메뉴", value: currentMenu.mainItems },
+              { icon: <IceCream className="w-4 h-4" />, bg: "bg-pink-50 dark:bg-pink-900/20", border: "border-pink-100 dark:border-pink-800", color: "text-pink-600 dark:text-pink-400", label: "디저트", value: currentMenu.dessertItems },
+              { icon: <Beer className="w-4 h-4" />, bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-cyan-100 dark:border-cyan-800", color: "text-cyan-600 dark:text-cyan-400", label: "음료수", value: currentMenu.beverageItems },
+
             ].map((item, i) => (
-              <div key={i} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
-                <span className={item.color}>{item.icon}</span>
-                <p className={`text-[10px] font-black uppercase tracking-widest ${item.color} opacity-70`}>{item.label}</p>
-                <p className="text-xs font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
+              <div key={i} className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
+                <div className={`flex items-center gap-1.5 ${item.color}`}>
+                  {item.icon}
+                  <p className="text-xs font-black">{item.label}</p>
+                </div>
+                <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
               </div>
             ))}
           </div>

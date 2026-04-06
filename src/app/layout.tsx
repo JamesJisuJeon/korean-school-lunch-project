@@ -14,13 +14,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "한국학교 점심 관리 시스템",
-  description: "한국학교 학부모회 제공 점심 및 매점 운영 관리 시스템",
+  title: "동남한국학교 스낵관리 시스템",
+  description: "동남한국학교 학부모회 제공 스낵 및 매점 운영 관리 시스템",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/icon-192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "점심관리",
+    title: "동남스낵",
   },
 };
 

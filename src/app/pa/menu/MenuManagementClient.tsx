@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Coffee, Calendar, Globe, Lock, Clock, Utensils, IceCream, Beer, Upload, X, Check, Edit2 } from "lucide-react";
+import { Coffee, Calendar, Lock, Clock, Utensils, IceCream, Beer, Star, Upload, X, Check, Edit2, Trash2 } from "lucide-react";
 
 interface Menu {
   id: string;
@@ -9,6 +9,7 @@ interface Menu {
   mainItems: string | null;
   dessertItems: string | null;
   beverageItems: string | null;
+  specialItems: string | null;
   imageUrl: string | null;
   price: number;
   isPublished: boolean;
@@ -22,6 +23,7 @@ export default function MenuManagementClient() {
     mainItems: "",
     dessertItems: "",
     beverageItems: "",
+    specialItems: "",
     imageUrl: "",
     price: 7,
     isPublished: false,
@@ -29,6 +31,8 @@ export default function MenuManagementClient() {
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Menu | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => {
     fetchMenus();
@@ -85,13 +89,24 @@ export default function MenuManagementClient() {
     if (res.ok) setMenus(await res.json());
   };
 
+  // UTC ISO 문자열을 브라우저 로컬 시간 기준의 datetime-local 입력값으로 변환
+  const toLocalInputString = (utcStr: string) => {
+    const d = new Date(utcStr);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   const addMenu = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     const res = await fetch("/api/pa/menu", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMenu),
+      // deadline은 브라우저 로컬(NZ) 시간 → UTC ISO 문자열로 변환 후 전송
+      body: JSON.stringify({
+        ...newMenu,
+        deadline: newMenu.deadline ? new Date(newMenu.deadline).toISOString() : null,
+      }),
     });
 
     if (res.ok) {
@@ -100,6 +115,7 @@ export default function MenuManagementClient() {
         mainItems: "",
         dessertItems: "",
         beverageItems: "",
+        specialItems: "",
         imageUrl: "",
         price: 7,
         isPublished: false,
@@ -120,10 +136,11 @@ export default function MenuManagementClient() {
       mainItems: menu.mainItems || "",
       dessertItems: menu.dessertItems || "",
       beverageItems: menu.beverageItems || "",
+      specialItems: menu.specialItems || "",
       imageUrl: menu.imageUrl || "",
       price: menu.price,
       isPublished: menu.isPublished,
-      deadline: menu.deadline ? menu.deadline.slice(0, 16) : ""
+      deadline: menu.deadline ? toLocalInputString(menu.deadline) : ""
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -161,9 +178,41 @@ export default function MenuManagementClient() {
     setIsLoading(false);
   };
 
+  const handleDeleteRequest = (menu: Menu) => {
+    setDeleteTarget(menu);
+    setDeleteConfirmText("");
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    if (!confirm(`정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/pa/menu", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleteTarget.id }),
+      });
+
+      if (res.ok) {
+        setDeleteTarget(null);
+        fetchMenus();
+        alert("메뉴가 삭제되었습니다.");
+      } else {
+        const data = await res.json();
+        alert(data.message || "삭제 중 오류가 발생했습니다.");
+      }
+    } catch {
+      alert("서버 통신 중 오류가 발생했습니다.");
+    }
+    setIsLoading(false);
+  };
+
   const inputClassName = "mt-1 block w-full min-w-0 max-w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-bold focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/30 sm:text-sm py-2.5 px-3 bg-white dark:bg-gray-800 outline-none transition-all";
 
   return (
+    <>
     <div className="space-y-12">
       <section className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800">
         <h2 className="text-xl sm:text-2xl font-black mb-6 sm:mb-8 flex items-center gap-3 text-green-700 dark:text-green-400">
@@ -200,7 +249,7 @@ export default function MenuManagementClient() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border-2 border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border-2 border-gray-200 dark:border-gray-700">
             <div>
               <label className="block text-sm font-black text-orange-700 dark:text-orange-400 flex items-center gap-1 mb-1"><Utensils className="w-4 h-4" /> 메인 메뉴</label>
               <input required className={inputClassName} placeholder="예: 김밥, 불고기" value={newMenu.mainItems} onChange={(e) => setNewMenu({ ...newMenu, mainItems: e.target.value })} />
@@ -212,6 +261,10 @@ export default function MenuManagementClient() {
             <div>
               <label className="block text-sm font-black text-blue-700 dark:text-blue-400 flex items-center gap-1 mb-1"><Beer className="w-4 h-4" /> 음료수</label>
               <input className={inputClassName} placeholder="예: 주스, 식혜" value={newMenu.beverageItems} onChange={(e) => setNewMenu({ ...newMenu, beverageItems: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-sm font-black text-yellow-700 dark:text-yellow-400 flex items-center gap-1 mb-1"><Star className="w-4 h-4" /> 매점 특식</label>
+              <input className={inputClassName} placeholder="예: 떡볶이, 순대" value={newMenu.specialItems} onChange={(e) => setNewMenu({ ...newMenu, specialItems: e.target.value })} />
             </div>
           </div>
 
@@ -285,11 +338,17 @@ export default function MenuManagementClient() {
                           <Lock className="w-4 h-4" /> 게시 해제
                         </button>
                       )}
+                      <button
+                        onClick={() => handleDeleteRequest(menu)}
+                        className="flex items-center justify-center gap-1 px-4 py-2 bg-red-600 dark:bg-red-700 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-red-800 transition-colors border-2 border-red-700 dark:border-red-800 shadow-sm"
+                      >
+                        <Trash2 className="w-4 h-4" /> 삭제
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700 mt-auto">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700 mt-auto">
                   <div>
                     <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">메인 메뉴</p>
                     <p className="text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.mainItems || "-"}</p>
@@ -301,6 +360,10 @@ export default function MenuManagementClient() {
                   <div>
                     <p className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">음료수</p>
                     <p className="text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.beverageItems || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-yellow-500 dark:text-yellow-400 uppercase tracking-widest mb-1">매점 특식</p>
+                    <p className="text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">{menu.specialItems || "-"}</p>
                   </div>
                 </div>
               </div>
@@ -314,5 +377,50 @@ export default function MenuManagementClient() {
         </div>
       </section>
     </div>
+
+    {/* 삭제 확인 모달 */}
+    {deleteTarget && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border-2 border-red-200 dark:border-red-800 p-8 max-w-md w-full">
+          <div className="flex items-center gap-3 mb-4">
+            <Trash2 className="w-7 h-7 text-red-600 dark:text-red-400 shrink-0" />
+            <h3 className="text-xl font-black text-gray-900 dark:text-gray-50">메뉴 삭제</h3>
+          </div>
+          <p className="text-gray-700 dark:text-gray-300 font-bold mb-2">
+            아래 메뉴를 삭제하려고 합니다:
+          </p>
+          <p className="text-blue-700 dark:text-blue-400 font-black mb-4">
+            {new Date(deleteTarget.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            삭제를 확인하려면 아래에 <span className="font-black text-red-600 dark:text-red-400">삭제</span>를 입력하세요.
+          </p>
+          <input
+            type="text"
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder="삭제"
+            className="mt-1 block w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-bold focus:border-red-500 dark:focus:border-red-400 focus:ring-4 focus:ring-red-50 dark:focus:ring-red-900/30 sm:text-sm py-2.5 px-3 bg-white dark:bg-gray-800 outline-none transition-all mb-6"
+          />
+          <div className="flex gap-3">
+            <button
+              onClick={() => setDeleteTarget(null)}
+              className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border-2 border-gray-200 dark:border-gray-700"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleDeleteConfirm}
+              disabled={deleteConfirmText !== "삭제" || isLoading}
+              className="flex-1 py-3 bg-red-600 dark:bg-red-700 text-white font-black rounded-xl hover:bg-red-700 dark:hover:bg-red-800 transition-colors border-2 border-red-700 dark:border-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "삭제 중..." : "삭제 확인"}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
+

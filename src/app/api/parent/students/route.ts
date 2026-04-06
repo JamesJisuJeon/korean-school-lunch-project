@@ -11,6 +11,7 @@ export async function GET() {
   try {
     const students = await prisma.student.findMany({
       where: {
+        isActive: true,
         parents: {
           some: { id: session.user.id }
         }

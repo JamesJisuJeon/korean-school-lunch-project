@@ -60,6 +60,11 @@ export async function GET() {
             { sortOrder: "asc" },
             { name: "asc" },
           ],
+          include: {
+            assistants: {
+              include: { user: { select: { id: true, name: true, email: true } } },
+            },
+          },
         },
       },
       orderBy: { name: "desc" },
