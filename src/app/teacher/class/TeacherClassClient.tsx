@@ -64,9 +64,16 @@ export default function TeacherClassClient() {
   if (!classData && isLoading) return <div className="text-center py-20 text-gray-500 dark:text-gray-400 font-bold">정보를 불러오는 중...</div>;
   if (!classData) return <div className="text-center py-20 text-gray-500 dark:text-gray-400 font-bold italic">배정된 학급 정보가 없습니다.</div>;
 
-  const totalStudents = classData.students.length;
-  const orderedCount = classData.students.filter(s => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length;
-  const paidCount = classData.students.filter(s => s.orders.length > 0 && s.orders[0].isPaid).length;
+  const students = [...classData.students].sort((a, b) => {
+    for (let i = 0; i < Math.min(a.name.length, b.name.length); i++) {
+      const diff = a.name.charCodeAt(i) - b.name.charCodeAt(i);
+      if (diff !== 0) return diff;
+    }
+    return a.name.length - b.name.length;
+  });
+  const totalStudents = students.length;
+  const orderedCount = students.filter(s => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length;
+  const paidCount = students.filter(s => s.orders.length > 0 && s.orders[0].isPaid).length;
   const currentMenu = menus.find(m => m.id === selectedMenuId);
 
   return (
@@ -148,7 +155,7 @@ export default function TeacherClassClient() {
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
-            {classData.students.map((student, index) => {
+            {students.map((student, index) => {
               const order = student.orders[0];
               const isOrdered = !!order;
               const status = order?.status;
