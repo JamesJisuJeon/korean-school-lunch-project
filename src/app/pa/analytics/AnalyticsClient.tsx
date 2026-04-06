@@ -13,6 +13,7 @@ interface ClassStat {
   className: string;
   totalStudents: number;
   orderedCount: number;
+  confirmedCount: number;
   paidCount: number;
   unpaidCount: number;
   waitingCount: number;
@@ -21,6 +22,7 @@ interface ClassStat {
   paidAmount: number;
   unpaidAmount: number;
   couponAmount: number;
+  couponUnpaidAmount: number;
 }
 
 interface Analytics {
@@ -43,6 +45,7 @@ interface Analytics {
   totalPaidAmount: number;
   couponSaleAmount: number;
   couponSaleUnpaidAmount: number;
+  totalRevenue: number;
   classSummary: ClassStat[];
 }
 
@@ -67,10 +70,10 @@ function StatCard({
     orange: "bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300",
   };
   return (
-    <div className={`rounded-2xl border-2 p-5 flex flex-col gap-1 ${colorMap[color]}`}>
-      <p className="text-xs font-bold text-gray-500 dark:text-gray-400">{label}</p>
-      <p className={`text-3xl font-black ${colorMap[color].split(" ").slice(2).join(" ")}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{sub}</p>}
+    <div className={`rounded-xl sm:rounded-2xl border sm:border-2 p-2.5 sm:p-5 flex flex-col gap-0.5 sm:gap-1 ${colorMap[color]}`}>
+      <p className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 leading-tight min-h-[2.5em] sm:min-h-0">{label}</p>
+      <p className={`text-lg sm:text-3xl font-black leading-tight ${colorMap[color].split(" ").slice(2).join(" ")}`}>{value}</p>
+      {sub && <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
     </div>
   );
 }
@@ -99,7 +102,7 @@ export default function AnalyticsClient() {
       .catch(() => setIsLoading(false));
   }, [selectedMenuId]);
 
-  const fmt = (n: number) => `$${n.toFixed(2)}`;
+  const fmt = (n: number) => `$${Math.round(n)}`;
 
   return (
     <div className="space-y-8">
@@ -129,34 +132,34 @@ export default function AnalyticsClient() {
           <div>
             <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">신청/수납 현황</h2>
             {/* 1열: 신청 관련 */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 mb-4">
-              <StatCard label="총 인원" value={`${data.totalStudents}명`} color="gray" />
-              <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} sub="취소 포함" color="blue" />
-              <StatCard label="사전 신청 학부모회 자녀" value={`${data.preOrderPAChildCount}명`} sub="취소 포함" color="purple" />
-              <StatCard label="총 사전 신청" value={`${data.totalPreOrders}명`} sub="취소 포함" color="blue" />
+            <div className="grid grid-cols-5 gap-2 sm:gap-4 mb-3 sm:mb-4">
+              <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} color="blue" />
+              <StatCard label="사전 신청 PA자녀" value={`${data.preOrderPAChildCount}명`} color="purple" />
+              <StatCard label="총 사전 신청" value={`${data.totalPreOrders}명`} color="blue" />
               <StatCard label="사전 신청 취소" value={`${data.preOrderCancelledCount}명`} color="red" />
               <StatCard label="현장 신청" value={`${data.onSiteCount}명`} color="orange" />
-              <StatCard label="최종 신청 인원" value={`${data.finalOrderCount}명`} sub="후납 포함" color="green" />
             </div>
             {/* 2열: 수납 관련 */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-5 gap-2 sm:gap-4">
+              <StatCard label="최종 신청 인원" value={`${data.finalOrderCount}명`} color="green" />
+              <StatCard label="최종 확정 인원" value={`${data.finalConfirmedCount}명`} color="green" />
               <StatCard label="수납 대기" value={`${data.waitingCount}명`} color="gray" />
               <StatCard label="납부 / 후납-납부" value={`${data.paidConfirmedCount}명`} color="green" />
               <StatCard label="후납" value={`${data.unpaidCount}명`} color="yellow" />
-              <StatCard label="최종 확정 인원" value={`${data.finalConfirmedCount}명`} sub="납부+후납 합계" color="green" />
             </div>
           </div>
 
           {/* 금액 집계 */}
           <div>
             <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">금액 현황</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
-              <StatCard label="점심 납부 총액" value={fmt(data.totalPaidAmount)} sub="사전+현장" color="green" />
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4">
+              <StatCard label="총 매출" value={fmt(data.totalRevenue)} color="blue" />
+              <StatCard label="점심 납부 총액" value={fmt(data.totalPaidAmount)} color="green" />
               <StatCard label="사전 신청 납부" value={fmt(data.preOrderPaidAmount)} color="green" />
               <StatCard label="사전 신청 후납" value={fmt(data.preOrderUnpaidAmount)} color="yellow" />
               <StatCard label="현장 신청 납부" value={fmt(data.onSitePaidAmount)} color="green" />
               <StatCard label="현장 신청 후납" value={fmt(data.onSiteUnpaidAmount)} color="yellow" />
-              <StatCard label="쿠폰 판매 금액" value={fmt(data.couponSaleAmount)} sub="당일 매점 쿠폰" color="green" />
+              <StatCard label="쿠폰 납부 금액" value={fmt(data.couponSaleAmount)} color="green" />
               <StatCard label="쿠폰 판매 후납" value={fmt(data.couponSaleUnpaidAmount)} color="yellow" />
             </div>
           </div>
@@ -164,20 +167,22 @@ export default function AnalyticsClient() {
           {/* 반별 통계 */}
           <div>
             <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">반별 통계</h2>
-            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-x-auto">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-auto max-h-[70vh]">
               <table className="min-w-[640px] w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800/50">
+                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-black text-gray-500 dark:text-gray-400">반</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">총인원</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">신청</th>
+                    <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">확정</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">수납완료</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">후납</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">수납대기</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">취소</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">PA자녀</th>
                     <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">납부금액</th>
-                    <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">쿠폰금액</th>
+                    <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">쿠폰납부</th>
+                    <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">쿠폰후납</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -186,7 +191,18 @@ export default function AnalyticsClient() {
                       <td className="px-4 py-3 font-black text-gray-950 dark:text-gray-100">{cls.className}</td>
                       <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400 font-bold">{cls.totalStudents}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className="font-black text-blue-700 dark:text-blue-400">{cls.orderedCount}</span>
+                        <span className={`font-black ${
+                          cls.confirmedCount !== cls.orderedCount && cls.orderedCount > 0
+                            ? "text-white bg-orange-500 dark:bg-orange-600 px-2 py-0.5 rounded-full text-xs"
+                            : "text-blue-700 dark:text-blue-400"
+                        }`}>{cls.orderedCount}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`font-black ${
+                          cls.confirmedCount === cls.orderedCount && cls.orderedCount > 0
+                            ? "text-white bg-indigo-600 dark:bg-indigo-500 px-2 py-0.5 rounded-full text-xs"
+                            : "text-indigo-700 dark:text-indigo-400"
+                        }`}>{cls.confirmedCount}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="font-black text-green-700 dark:text-green-400">{cls.paidCount}</span>
@@ -204,8 +220,11 @@ export default function AnalyticsClient() {
                         <span className="font-black text-purple-600 dark:text-purple-400">{cls.paChildCount}</span>
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-gray-700 dark:text-gray-300">{fmt(cls.paidAmount)}</td>
-                      <td className="px-4 py-3 text-right font-bold text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 text-right font-bold text-green-700 dark:text-green-400">
                         {cls.couponAmount > 0 ? fmt(cls.couponAmount) : <span className="text-gray-300 dark:text-gray-700">-</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-yellow-700 dark:text-yellow-400">
+                        {cls.couponUnpaidAmount > 0 ? fmt(cls.couponUnpaidAmount) : <span className="text-gray-300 dark:text-gray-700">-</span>}
                       </td>
                     </tr>
                   ))}
@@ -219,6 +238,9 @@ export default function AnalyticsClient() {
                     </td>
                     <td className="px-4 py-3 text-center font-black text-blue-700 dark:text-blue-400">
                       {data.classSummary.reduce((s, c) => s + c.orderedCount, 0)}
+                    </td>
+                    <td className="px-4 py-3 text-center font-black text-indigo-700 dark:text-indigo-400">
+                      {data.classSummary.reduce((s, c) => s + c.confirmedCount, 0)}
                     </td>
                     <td className="px-4 py-3 text-center font-black text-green-700 dark:text-green-400">
                       {data.classSummary.reduce((s, c) => s + c.paidCount, 0)}
@@ -238,8 +260,11 @@ export default function AnalyticsClient() {
                     <td className="px-4 py-3 text-right font-black text-gray-900 dark:text-gray-100">
                       {fmt(data.classSummary.reduce((s, c) => s + c.paidAmount, 0))}
                     </td>
-                    <td className="px-4 py-3 text-right font-black text-gray-900 dark:text-gray-100">
+                    <td className="px-4 py-3 text-right font-black text-green-700 dark:text-green-400">
                       {fmt(data.classSummary.reduce((s, c) => s + c.couponAmount, 0))}
+                    </td>
+                    <td className="px-4 py-3 text-right font-black text-yellow-700 dark:text-yellow-400">
+                      {fmt(data.classSummary.reduce((s, c) => s + c.couponUnpaidAmount, 0))}
                     </td>
                   </tr>
                 </tfoot>
