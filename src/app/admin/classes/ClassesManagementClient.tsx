@@ -10,6 +10,12 @@ interface Teacher {
   email: string;
 }
 
+interface Assistant {
+  id: string;
+  userId: string;
+  user: { id: string; name: string | null; email: string };
+}
+
 interface Class {
   id: string;
   name: string;
@@ -17,6 +23,7 @@ interface Class {
   teacherName: string | null;
   teacherId: string | null;
   sortOrder: number | null;
+  assistants: Assistant[];
   academicYear: {
     id: string;
     name: string;
@@ -53,6 +60,12 @@ export default function ClassesManagementClient() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [importResult, setImportResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [assistantPanelId, setAssistantPanelId] = useState<string | null>(null);
+  const [assistantSearch, setAssistantSearch] = useState("");
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string | null; email: string }[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newClassAssistants, setNewClassAssistants] = useState<{ id: string; name: string | null; email: string }[]>([]);
+  const [newClassAssistantSearch, setNewClassAssistantSearch] = useState("");
   const [sortKey, setSortKey] = useState<"sortOrder" | "academicYear" | "grade" | "name" | "teacherName">("sortOrder");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +76,7 @@ export default function ClassesManagementClient() {
   useEffect(() => {
     fetchData();
     fetchTeachers();
+    fetchAllUsers();
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -91,8 +105,8 @@ export default function ClassesManagementClient() {
 
       const all: Class[] = [];
       yearsData.forEach((y: AcademicYear) => {
-        y.classes.forEach(c => {
-          all.push({ ...c, academicYear: { id: y.id, name: y.name, isActive: y.isActive } });
+        y.classes.forEach((c: any) => {
+          all.push({ ...c, assistants: c.assistants ?? [], academicYear: { id: y.id, name: y.name, isActive: y.isActive } });
         });
       });
       setAllClasses(all);
@@ -108,6 +122,36 @@ export default function ClassesManagementClient() {
   const fetchTeachers = async () => {
     const res = await fetch("/api/admin/teachers");
     if (res.ok) setTeachers(await res.json());
+  };
+
+  const fetchAllUsers = async () => {
+    const res = await fetch("/api/admin/users");
+    if (res.ok) setAllUsers(await res.json());
+  };
+
+  const addAssistant = async (classId: string, userId: string) => {
+    const res = await fetch("/api/admin/classes/assistants", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ classId, userId }),
+    });
+    if (res.ok) {
+      setAssistantSearch("");
+      fetchData();
+    } else {
+      const data = await res.json();
+      alert(data.message || "보조교사 추가 중 오류가 발생했습니다.");
+    }
+  };
+
+  const removeAssistant = async (userId: string) => {
+    const res = await fetch("/api/admin/classes/assistants", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    if (res.ok) fetchData();
+    else alert("보조교사 제거 중 오류가 발생했습니다.");
   };
 
   const applyFilters = () => {
@@ -167,18 +211,29 @@ export default function ClassesManagementClient() {
     const res = await fetch("/api/admin/classes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...newClass, academicYearId: selectedYearId }),
+      body: JSON.stringify({
+        ...newClass,
+        academicYearId: selectedYearId,
+        assistantIds: newClassAssistants.map(u => u.id),
+      }),
     });
     if (res.ok) {
       setNewClass({ name: "", grade: "", teacherName: "", teacherId: "", sortOrder: "" });
       setTeacherSearchQuery("");
+      setNewClassAssistants([]);
+      setNewClassAssistantSearch("");
+      setShowAddForm(false);
       fetchData();
+    } else {
+      const data = await res.json();
+      alert(data.message || "학급 등록 중 오류가 발생했습니다.");
     }
     setIsLoading(false);
   };
 
-  const deleteClass = async (id: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
+  const deleteClass = async (id: string, name: string) => {
+    if (!confirm(`"${name}" 학급을 삭제하시겠습니까?`)) return;
+    if (!confirm("정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) return;
     const res = await fetch("/api/admin/classes", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -195,12 +250,21 @@ export default function ClassesManagementClient() {
     });
     if (res.ok) {
       setEditingId(null);
+      setAssistantPanelId(null);
+      setAssistantSearch("");
       fetchData();
+    } else {
+      const data = await res.json();
+      alert(data.message || "학급 수정 중 오류가 발생했습니다.");
     }
   };
 
   const downloadTemplate = () => {
-    const data = [{ "순서": 1, "학사연도": "2026", "학년": "유치1", "학급이름": "무궁화반", "담임선생님": "홍길동" }];
+    const data = [
+      { "순서": 1, "학사연도": "2026", "학년": "유치1", "학급이름": "무궁화반", "담임이메일": "teacher1@example.com", "보조교사이메일": "assistant1@example.com,assistant2@example.com" },
+      { "순서": 2, "학사연도": "2026", "학년": "초등1", "학급이름": "장미반", "담임이메일": "teacher2@example.com", "보조교사이메일": "assistant3@example.com" },
+      { "순서": 3, "학사연도": "2026", "학년": "초등2", "학급이름": "민들레반", "담임이메일": "", "보조교사이메일": "" },
+    ];
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
@@ -226,6 +290,8 @@ export default function ClassesManagementClient() {
           grade: item["학년"] || item["학년(Grade)"] || item["grade"] || "",
           name: item["학급이름"] || item["학급이름(ClassName)"] || item["name"] || "",
           teacherName: item["담임선생님"] || item["담임선생님(TeacherName)"] || item["teacherName"] || "",
+          teacherEmail: item["담임이메일"] || item["teacherEmail"] || "",
+          assistantEmails: item["보조교사이메일"] || item["assistantEmails"] || "",
         })).filter(item => item.yearName && item.name);
 
         console.log("파싱된 데이터:", formattedData);
@@ -306,73 +372,133 @@ export default function ClassesManagementClient() {
         {/* 좌측: 등록 폼 */}
         <div className="xl:col-span-3 space-y-6">
           <section className="bg-white dark:bg-gray-900 p-7 rounded-[2.5rem] shadow-sm border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg font-black mb-6 flex items-center gap-2 text-blue-600 dark:text-blue-400">
-              <Plus className="w-5 h-5" /> 학급 신규 등록
-            </h2>
-            <form onSubmit={addClass} className="space-y-5">
-              <div>
-                <label className={labelStyles}>학사연도 선택</label>
-                <select required className={inputStyles} value={selectedYearId} onChange={e => setSelectedYearId(e.target.value)}>
-                  <option value="">선택해주세요</option>
-                  {years.map(y => <option key={y.id} value={y.id}>{y.name} 학사연도 {y.isActive ? '(현재 활성)' : ''}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-black flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                <Plus className="w-5 h-5" /> 학급 신규 등록
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(v => !v)}
+                className={`text-sm font-black px-4 py-2 rounded-xl transition-all active:scale-95 ${showAddForm ? "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+              >
+                {showAddForm ? "닫기" : "등록하기"}
+              </button>
+            </div>
+            {showAddForm && (
+              <form onSubmit={addClass} className="space-y-5">
                 <div>
-                  <label className={labelStyles}>순서</label>
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" className={inputStyles} placeholder="1" value={newClass.sortOrder} onChange={e => setNewClass({ ...newClass, sortOrder: e.target.value.replace(/[^0-9]/g, "") })} />
+                  <label className={labelStyles}>학사연도 선택</label>
+                  <select required className={inputStyles} value={selectedYearId} onChange={e => setSelectedYearId(e.target.value)}>
+                    <option value="">선택해주세요</option>
+                    {years.map(y => <option key={y.id} value={y.id}>{y.name} 학사연도 {y.isActive ? '(현재 활성)' : ''}</option>)}
+                  </select>
                 </div>
-                <div>
-                  <label className={labelStyles}>학년</label>
-                  <input className={inputStyles} placeholder="초등1" value={newClass.grade} onChange={e => setNewClass({ ...newClass, grade: e.target.value })} />
-                </div>
-                <div>
-                  <label className={labelStyles}>학급명</label>
-                  <input required className={inputStyles} placeholder="1반" value={newClass.name} onChange={e => setNewClass({ ...newClass, name: e.target.value })} />
-                </div>
-              </div>
-
-              <div className="relative" ref={newClassSearchRef}>
-                <label className={labelStyles}>담임선생님 지정</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    required
-                    autoComplete="off"
-                    className={`${inputStyles} pl-12`}
-                    placeholder="성함으로 검색..."
-                    value={teacherSearchQuery}
-                    onFocus={() => setShowTeacherSuggestions(true)}
-                    onChange={e => {
-                      setTeacherSearchQuery(e.target.value);
-                      setNewClass({ ...newClass, teacherName: e.target.value, teacherId: "" });
-                      setShowTeacherSuggestions(true);
-                    }}
-                  />
-                </div>
-                {showTeacherSuggestions && (
-                  <div className="absolute z-30 left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[2rem] shadow-md max-h-60 overflow-y-auto p-2 animate-in slide-in-from-top-1 duration-200">
-                    {teachers.filter(t => t.name.includes(teacherSearchQuery)).map(t => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        className="w-full p-4 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl transition-colors group"
-                        onClick={() => {
-                          setNewClass({ ...newClass, teacherName: t.name, teacherId: t.id });
-                          setTeacherSearchQuery(t.name);
-                          setShowTeacherSuggestions(false);
-                        }}
-                      >
-                        <p className="font-black text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">{t.name}</p>
-                        <p className="text-xs font-bold text-gray-400 dark:text-gray-500">{t.email}</p>
-                      </button>
-                    ))}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className={labelStyles}>순서</label>
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" className={inputStyles} placeholder="1" value={newClass.sortOrder} onChange={e => setNewClass({ ...newClass, sortOrder: e.target.value.replace(/[^0-9]/g, "") })} />
                   </div>
-                )}
-              </div>
+                  <div>
+                    <label className={labelStyles}>학년</label>
+                    <input className={inputStyles} placeholder="초등1" value={newClass.grade} onChange={e => setNewClass({ ...newClass, grade: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className={labelStyles}>학급명</label>
+                    <input required className={inputStyles} placeholder="1반" value={newClass.name} onChange={e => setNewClass({ ...newClass, name: e.target.value })} />
+                  </div>
+                </div>
 
-              <button type="submit" className="w-full bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 transition-all active:scale-95">학급 등록 완료</button>
-            </form>
+                <div className="relative" ref={newClassSearchRef}>
+                  <label className={labelStyles}>담임선생님 지정</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      required
+                      autoComplete="off"
+                      className={`${inputStyles} pl-12`}
+                      placeholder="성함으로 검색..."
+                      value={teacherSearchQuery}
+                      onFocus={() => setShowTeacherSuggestions(true)}
+                      onChange={e => {
+                        setTeacherSearchQuery(e.target.value);
+                        setNewClass({ ...newClass, teacherName: e.target.value, teacherId: "" });
+                        setShowTeacherSuggestions(true);
+                      }}
+                    />
+                  </div>
+                  {showTeacherSuggestions && (
+                    <div className="absolute z-30 left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[2rem] shadow-md max-h-60 overflow-y-auto p-2 animate-in slide-in-from-top-1 duration-200">
+                      {teachers.filter(t => t.name.includes(teacherSearchQuery)).map(t => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          className="w-full p-4 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl transition-colors group"
+                          onClick={() => {
+                            setNewClass({ ...newClass, teacherName: t.name, teacherId: t.id });
+                            setTeacherSearchQuery(t.name);
+                            setShowTeacherSuggestions(false);
+                          }}
+                        >
+                          <p className="font-black text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">{t.name}</p>
+                          <p className="text-xs font-bold text-gray-400 dark:text-gray-500">{t.email}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className={labelStyles}>보조교사 등록 (선택)</label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      className={`${inputStyles} pl-11`}
+                      placeholder="이름 또는 이메일 검색..."
+                      value={newClassAssistantSearch}
+                      onChange={e => setNewClassAssistantSearch(e.target.value)}
+                    />
+                  </div>
+                  {newClassAssistantSearch && (
+                    <div className="mt-2 bg-white dark:bg-gray-800 rounded-2xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-32 overflow-y-auto shadow-md">
+                      {allUsers
+                        .filter(u =>
+                          !newClassAssistants.some(a => a.id === u.id) &&
+                          ((u.name?.toLowerCase() || "").includes(newClassAssistantSearch.toLowerCase()) || u.email.toLowerCase().includes(newClassAssistantSearch.toLowerCase()))
+                        )
+                        .slice(0, 5)
+                        .map(u => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => { setNewClassAssistants([...newClassAssistants, u]); setNewClassAssistantSearch(""); }}
+                            className="w-full px-3 py-2 text-left text-sm font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-800 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 last:border-0 flex justify-between items-center"
+                          >
+                            <span>{u.name || "이름없음"}</span>
+                            <span className="text-gray-400 text-xs">{u.email}</span>
+                          </button>
+                        ))}
+                      {allUsers.filter(u => !newClassAssistants.some(a => a.id === u.id) && ((u.name?.toLowerCase() || "").includes(newClassAssistantSearch.toLowerCase()) || u.email.toLowerCase().includes(newClassAssistantSearch.toLowerCase()))).length === 0 && (
+                        <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
+                      )}
+                    </div>
+                  )}
+                  {newClassAssistants.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {newClassAssistants.map(u => (
+                        <span key={u.id} className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 text-xs font-bold text-purple-700 dark:text-purple-400 px-2.5 py-1.5 rounded-xl border border-purple-200 dark:border-purple-700">
+                          {u.name || u.email}
+                          <button type="button" onClick={() => setNewClassAssistants(newClassAssistants.filter(a => a.id !== u.id))} className="text-red-400 hover:text-red-600 ml-0.5"><X className="w-3 h-3" /></button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50">학급 등록 완료</button>
+              </form>
+            )}
           </section>
         </div>
 
@@ -468,51 +594,157 @@ export default function ClassesManagementClient() {
                           </div>
                         )}
                       </div>
+                      {/* 보조교사 관리 (수정 모드) */}
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-3 border border-purple-100 dark:border-purple-800 space-y-2">
+                        <p className="text-xs font-black text-purple-700 dark:text-purple-400 flex items-center gap-1">
+                          <GraduationCap className="w-3.5 h-3.5" /> 보조교사
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {cls.assistants.map(a => (
+                            <span key={a.userId} className="flex items-center gap-1 bg-white dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-300 px-2 py-1 rounded-lg border border-purple-200 dark:border-purple-700">
+                              {a.user.name || a.user.email}
+                              <button type="button" onClick={() => removeAssistant(a.userId)} className="text-red-400 hover:text-red-600 ml-0.5"><X className="w-3 h-3" /></button>
+                            </span>
+                          ))}
+                          {cls.assistants.length === 0 && <span className="text-xs text-gray-400 italic">등록된 보조교사 없음</span>}
+                        </div>
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                          <input
+                            className="w-full pl-7 pr-3 py-2 text-xs font-bold rounded-xl border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-purple-500"
+                            placeholder="이름 또는 이메일 검색..."
+                            value={assistantPanelId === cls.id ? assistantSearch : ""}
+                            onFocus={() => { setAssistantPanelId(cls.id); }}
+                            onChange={e => { setAssistantPanelId(cls.id); setAssistantSearch(e.target.value); }}
+                          />
+                        </div>
+                        {assistantPanelId === cls.id && assistantSearch && (
+                          <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-32 overflow-y-auto">
+                            {allUsers
+                              .filter(u =>
+                                !cls.assistants.some(a => a.userId === u.id) &&
+                                ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))
+                              )
+                              .slice(0, 5)
+                              .map(u => (
+                                <button key={u.id} type="button" onClick={() => { addAssistant(cls.id, u.id); setAssistantSearch(""); }} className="w-full px-3 py-2 text-left text-xs font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-800 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700 last:border-0 flex justify-between items-center">
+                                  <span>{u.name || "이름없음"}</span>
+                                  <span className="text-gray-400 text-[10px]">{u.email}</span>
+                                </button>
+                              ))}
+                            {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))).length === 0 && (
+                              <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex gap-2 justify-end pt-1">
                         <button onClick={() => saveEdit(cls.id, cls.academicYear.id)} className="flex items-center gap-1.5 px-4 py-2.5 bg-green-500 text-white rounded-xl font-black text-sm">
                           <Check className="w-4 h-4" /> 저장
                         </button>
-                        <button onClick={() => setEditingId(null)} className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-black text-sm">
+                        <button onClick={() => { setEditingId(null); setAssistantPanelId(null); setAssistantSearch(""); }} className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-black text-sm">
                           <X className="w-4 h-4" /> 취소
                         </button>
                       </div>
                     </div>
                   ) : (
                     /* 일반 카드 뷰 */
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`px-3 py-1 rounded-xl text-[10px] font-black tracking-tighter ${cls.academicYear.isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
-                            {cls.academicYear.name}
-                          </span>
-                          {cls.sortOrder && <span className="text-xs font-black text-gray-400 dark:text-gray-500">#{cls.sortOrder}</span>}
-                        </div>
-                        <p className="text-base font-black text-gray-950 dark:text-gray-50">{cls.name}</p>
-                        {cls.grade && <p className="text-sm font-bold text-gray-500 dark:text-gray-400">{cls.grade}</p>}
-                        {cls.teacherName && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-xs">
-                              {cls.teacherName[0]}
-                            </div>
-                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{cls.teacherName}</span>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className={`px-3 py-1 rounded-xl text-[10px] font-black tracking-tighter ${cls.academicYear.isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
+                              {cls.academicYear.name}
+                            </span>
+                            {cls.sortOrder && <span className="text-xs font-black text-gray-400 dark:text-gray-500">#{cls.sortOrder}</span>}
                           </div>
-                        )}
+                          <p className="text-base font-black text-gray-950 dark:text-gray-50">{cls.name}</p>
+                          {cls.grade && <p className="text-sm font-bold text-gray-500 dark:text-gray-400">{cls.grade}</p>}
+                          {cls.teacherName && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-xs">
+                                {cls.teacherName[0]}
+                              </div>
+                              <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{cls.teacherName}</span>
+                            </div>
+                          )}
+                          {cls.assistants.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {cls.assistants.map(a => (
+                                <span key={a.userId} className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 text-[10px] font-bold text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-700">
+                                  <GraduationCap className="w-2.5 h-2.5" />{a.user.name || a.user.email}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => { setAssistantPanelId(assistantPanelId === cls.id ? null : cls.id); setAssistantSearch(""); }}
+                            className="p-2.5 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all"
+                            title="보조교사 관리"
+                          >
+                            <GraduationCap className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingId(cls.id);
+                              setEditFormData({ name: cls.name, grade: cls.grade || "", teacherName: cls.teacherName || "", teacherId: cls.teacherId || "", sortOrder: cls.sortOrder?.toString() ?? "" });
+                              setEditTeacherSearch(cls.teacherName || "");
+                            }}
+                            className="p-2.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => deleteClass(cls.id, cls.name)} className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => {
-                            setEditingId(cls.id);
-                            setEditFormData({ name: cls.name, grade: cls.grade || "", teacherName: cls.teacherName || "", teacherId: cls.teacherId || "", sortOrder: cls.sortOrder?.toString() ?? "" });
-                            setEditTeacherSearch(cls.teacherName || "");
-                          }}
-                          className="p-2.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => deleteClass(cls.id)} className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {/* 보조교사 패널 */}
+                      {assistantPanelId === cls.id && (
+                        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-2xl p-3 border border-purple-100 dark:border-purple-800 space-y-2">
+                          <p className="text-xs font-black text-purple-700 dark:text-purple-400 flex items-center gap-1"><GraduationCap className="w-3.5 h-3.5" /> 보조교사</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {cls.assistants.map(a => (
+                              <span key={a.userId} className="flex items-center gap-1 bg-white dark:bg-gray-800 text-xs font-bold text-gray-700 dark:text-gray-300 px-2 py-1 rounded-lg border border-purple-200 dark:border-purple-700">
+                                {a.user.name || a.user.email}
+                                <button onClick={() => removeAssistant(a.userId)} className="text-red-400 hover:text-red-600 ml-0.5"><X className="w-3 h-3" /></button>
+                              </span>
+                            ))}
+                            {cls.assistants.length === 0 && <span className="text-xs text-gray-400 italic">등록된 보조교사 없음</span>}
+                          </div>
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                            <input
+                              className="w-full pl-7 pr-3 py-2 text-xs font-bold rounded-xl border border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-purple-500"
+                              placeholder="이름 또는 이메일 검색..."
+                              value={assistantSearch}
+                              onChange={e => setAssistantSearch(e.target.value)}
+                            />
+                          </div>
+                          {assistantSearch && (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-32 overflow-y-auto">
+                              {allUsers
+                                .filter(u =>
+                                  !cls.assistants.some(a => a.userId === u.id) &&
+                                  ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))
+                                )
+                                .slice(0, 5)
+                                .map(u => (
+                                  <button key={u.id} onClick={() => addAssistant(cls.id, u.id)} className="w-full px-3 py-2 text-left text-xs font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-800 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700 last:border-0 flex justify-between items-center">
+                                    <span>{u.name || "이름없음"}</span>
+                                    <span className="text-gray-400 text-[10px]">{u.email}</span>
+                                  </button>
+                                ))}
+                              {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))).length === 0 && (
+                                <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -534,6 +766,7 @@ export default function ClassesManagementClient() {
                     <th className="px-8 py-6"><button onClick={() => handleSort("grade")} className="flex items-center gap-1 text-xs font-black text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"><span>학년</span><SortIcon col="grade" /></button></th>
                     <th className="px-8 py-6"><button onClick={() => handleSort("name")} className="flex items-center gap-1 text-xs font-black text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"><span>학급 이름</span><SortIcon col="name" /></button></th>
                     <th className="px-8 py-6"><button onClick={() => handleSort("teacherName")} className="flex items-center gap-1 text-xs font-black text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"><span>담임교사</span><SortIcon col="teacherName" /></button></th>
+                    <th className="px-8 py-6 text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">보조교사</th>
                     <th className="px-8 py-6 text-right text-xs font-black text-gray-400 uppercase tracking-widest">관리</th>
                   </tr>
                 </thead>
@@ -578,6 +811,7 @@ export default function ClassesManagementClient() {
                               )}
                             </div>
                           </td>
+                          <td className="px-8 py-6"></td>
                           <td className="px-8 py-6 text-right">
                              <div className="flex justify-end gap-2">
                                <button onClick={() => saveEdit(cls.id, cls.academicYear.id)} className="p-3 bg-green-500 text-white rounded-xl shadow-sm"><Check className="w-5 h-5" /></button>
@@ -605,6 +839,50 @@ export default function ClassesManagementClient() {
                               <span className="font-black text-gray-800 dark:text-gray-200">{cls.teacherName}</span>
                             </div>
                           </td>
+                          <td className="px-8 py-6">
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap gap-1">
+                                {cls.assistants.map(a => (
+                                  <span key={a.userId} className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 text-xs font-bold text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-700">
+                                    {a.user.name || a.user.email}
+                                    <button onClick={() => removeAssistant(a.userId)} className="text-red-400 hover:text-red-600"><X className="w-3 h-3" /></button>
+                                  </span>
+                                ))}
+                              </div>
+                              {assistantPanelId === cls.id ? (
+                                <div className="space-y-1">
+                                  <div className="relative">
+                                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+                                    <input
+                                      className="w-full pl-6 pr-2 py-1.5 text-xs font-bold rounded-lg border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none"
+                                      placeholder="이름/이메일 검색..."
+                                      value={assistantSearch}
+                                      onChange={e => setAssistantSearch(e.target.value)}
+                                      autoFocus
+                                    />
+                                  </div>
+                                  {assistantSearch && (
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-28 overflow-y-auto shadow-lg">
+                                      {allUsers
+                                        .filter(u => !cls.assistants.some(a => a.userId === u.id) && ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase())))
+                                        .slice(0, 5)
+                                        .map(u => (
+                                          <button key={u.id} onClick={() => { addAssistant(cls.id, u.id); setAssistantPanelId(null); }} className="w-full px-3 py-1.5 text-left text-xs font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-800 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700 last:border-0 flex justify-between">
+                                            <span>{u.name || "이름없음"}</span>
+                                            <span className="text-gray-400">{u.email}</span>
+                                          </button>
+                                        ))}
+                                    </div>
+                                  )}
+                                  <button onClick={() => { setAssistantPanelId(null); setAssistantSearch(""); }} className="text-[10px] text-gray-400 hover:text-gray-600">닫기</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => { setAssistantPanelId(cls.id); setAssistantSearch(""); }} className="text-[10px] font-black text-purple-500 hover:text-purple-700 flex items-center gap-0.5">
+                                  <Plus className="w-3 h-3" /> 보조교사 추가
+                                </button>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-8 py-6 text-right">
                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                               <button
@@ -617,7 +895,7 @@ export default function ClassesManagementClient() {
                               >
                                 <Edit2 className="w-5 h-5" />
                               </button>
-                              <button onClick={() => deleteClass(cls.id)} className="p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all"><Trash2 className="w-5 h-5" /></button>
+                              <button onClick={() => deleteClass(cls.id, cls.name)} className="p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all"><Trash2 className="w-5 h-5" /></button>
                             </div>
                           </td>
                         </>
@@ -626,7 +904,7 @@ export default function ClassesManagementClient() {
                   ))}
                   {filteredClasses.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-8 py-32 text-center text-gray-400 dark:text-gray-500 font-black italic text-lg">
+                      <td colSpan={7} className="px-8 py-32 text-center text-gray-400 dark:text-gray-500 font-black italic text-lg">
                         등록된 학급 정보가 없습니다.
                       </td>
                     </tr>

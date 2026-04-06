@@ -34,7 +34,7 @@ export default async function Navbar() {
       <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl px-4 py-2.5">
         <Link href="/dashboard" className="flex items-center gap-2">
           <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-600 dark:text-blue-400">
-            한국학교 점심관리
+            동남한국학교 스낵관리
           </span>
         </Link>
         <div className="flex items-center gap-3 lg:order-2">

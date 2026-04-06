@@ -37,6 +37,7 @@ model User {
   students           Student[] @relation("StudentToParent")
   classesAsTeacher   Class[]   @relation("TeacherClasses")
   substitutes        Substitute[]
+  assistantIn        ClassAssistant?
 }
 
 model AcademicYear {
@@ -62,6 +63,15 @@ model Class {
 
   students       Student[]
   substitutes    Substitute[]
+  assistants     ClassAssistant[]
+}
+
+model ClassAssistant {
+  id      String @id @default(cuid())
+  classId String
+  class   Class  @relation(fields: [classId], references: [id])
+  userId  String @unique  // 1인은 최대 1개 학급에만 보조교사로 등록 가능
+  user    User   @relation(fields: [userId], references: [id])
 }
 
 model Student {
@@ -71,6 +81,7 @@ model Student {
   classId      String?
   class        Class?       @relation(fields: [classId], references: [id])
   isPAChild    Boolean      @default(false)
+  isActive     Boolean      @default(true)
 
   orders       Order[]
   couponSales  CouponSale[]
@@ -94,6 +105,7 @@ model Menu {
   mainItems     String?  // Main Menu
   dessertItems  String?  // Dessert
   beverageItems String?  // Beverage
+  specialItems  String?  // 매점 특식
   imageUrl      String?  // Announcement image URL
   price         Float    @default(7.0)
   isPublished   Boolean  @default(false)

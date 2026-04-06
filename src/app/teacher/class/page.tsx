@@ -20,9 +20,9 @@ export default async function TeacherClassPage() {
   });
 
   // 2. 선생님인 경우 담당 학급 여부 확인
-  const activeClass = user.roles.includes("TEACHER") 
+  const activeClass = user.roles.includes("TEACHER")
     ? await prisma.class.findFirst({
-        where: { 
+        where: {
           academicYear: { isActive: true },
           OR: [
             { teacherId: user.id },
@@ -32,16 +32,22 @@ export default async function TeacherClassPage() {
       })
     : null;
 
-  if (!substitute && !user.roles.includes("TEACHER")) {
+  // 3. 보조교사 여부 확인
+  const assistantRecord = await (prisma as any).classAssistant.findUnique({
+    where: { userId: user.id },
+    include: { class: true },
+  });
+
+  if (!substitute && !activeClass && !assistantRecord) {
     redirect("/dashboard");
   }
 
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-50">
-        {substitute ? "보결 학급 명단 확인" : "우리 반 점심 신청 명단"}
+        {substitute ? "보결 학급 명단 확인" : "우리 반 스낵 신청 명단"}
       </h1>
-      {substitute || activeClass ? (
+      {substitute || activeClass || assistantRecord ? (
         <TeacherClassClient />
       ) : (
         <div className="bg-orange-50/50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 text-orange-600 dark:text-orange-400 p-12 rounded-[2rem] text-center shadow-sm">

@@ -9,7 +9,34 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { name, grade, teacherName, teacherId, academicYearId, sortOrder } = await req.json();
+    const { name, grade, teacherName, teacherId, academicYearId, sortOrder, assistantIds } = await req.json();
+
+    if (teacherId) {
+      const conflict = await prisma.class.findFirst({
+        where: { academicYearId, teacherId },
+      });
+      if (conflict) {
+        return NextResponse.json(
+          { message: `해당 교사는 이미 같은 학사연도의 "${conflict.name}" 학급에 배정되어 있습니다.` },
+          { status: 409 }
+        );
+      }
+    }
+
+    // 보조교사 중복 체크 (학급 생성 전)
+    if (Array.isArray(assistantIds) && assistantIds.length > 0) {
+      const conflicts = await prisma.classAssistant.findMany({
+        where: { userId: { in: assistantIds } },
+        include: { user: true, class: true },
+      });
+      if (conflicts.length > 0) {
+        const names = conflicts.map(c => `${c.user.name || c.user.email} (${c.class.name})`).join(", ");
+        return NextResponse.json(
+          { message: `이미 다른 학급에 보조교사로 등록된 사용자가 있습니다: ${names}` },
+          { status: 409 }
+        );
+      }
+    }
 
     const newClass = await prisma.class.create({
       data: {
@@ -21,6 +48,13 @@ export async function POST(req: Request) {
         sortOrder: sortOrder !== undefined && sortOrder !== "" ? Number(sortOrder) : null,
       } as any,
     });
+
+    // 보조교사 등록
+    if (Array.isArray(assistantIds) && assistantIds.length > 0) {
+      for (const userId of assistantIds) {
+        await prisma.classAssistant.create({ data: { classId: newClass.id, userId } });
+      }
+    }
 
     return NextResponse.json(newClass);
   } catch (error) {
@@ -36,6 +70,18 @@ export async function PUT(req: Request) {
 
   try {
     const { id, name, grade, teacherName, teacherId, academicYearId, sortOrder } = await req.json();
+
+    if (teacherId) {
+      const conflict = await prisma.class.findFirst({
+        where: { academicYearId, teacherId, NOT: { id } },
+      });
+      if (conflict) {
+        return NextResponse.json(
+          { message: `해당 교사는 이미 같은 학사연도의 "${conflict.name}" 학급에 배정되어 있습니다.` },
+          { status: 409 }
+        );
+      }
+    }
 
     const updatedClass = await prisma.class.update({
       where: { id },
@@ -64,7 +110,10 @@ export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
 
-    // 혹시라도 학생이 연결되어 있을 경우 처리 필요 (CASCADE 미지정 시)
+    // 보조교사 레코드 먼저 삭제 (FK 제약)
+    await prisma.classAssistant.deleteMany({ where: { classId: id } });
+
+    // 학생 연결 해제
     await prisma.student.updateMany({
       where: { classId: id },
       data: { classId: null }

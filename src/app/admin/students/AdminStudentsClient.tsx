@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { UserPlus, Users, GraduationCap, Key, Trash2, Search, X, CheckCircle2, Filter } from "lucide-react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { UserPlus, GraduationCap, Key, Trash2, Search, X, CheckCircle2, PowerOff, Power, Download, Upload } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface Class {
   id: string;
@@ -22,6 +23,7 @@ interface Student {
   id: string;
   name: string;
   isPAChild: boolean;
+  isActive: boolean;
   class?: Class;
   classId?: string | null;
   parents: Parent[];
@@ -52,6 +54,9 @@ export default function AdminStudentsClient() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [studentListSearch, setStudentListSearch] = useState("");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const [importResult, setImportResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchData();
@@ -87,11 +92,17 @@ export default function AdminStudentsClient() {
   }, [years]);
 
   const sortedStudents = useMemo(() => {
-    let result = [...students.filter(s => 
-      s.name.toLowerCase().includes(studentListSearch.toLowerCase()) || 
-      (s.class?.name || "").toLowerCase().includes(studentListSearch.toLowerCase()) ||
-      s.parents.some(p => (p.name || "").toLowerCase().includes(studentListSearch.toLowerCase()))
-    )];
+    let result = [...students.filter(s => {
+      const matchesSearch =
+        s.name.toLowerCase().includes(studentListSearch.toLowerCase()) ||
+        (s.class?.name || "").toLowerCase().includes(studentListSearch.toLowerCase()) ||
+        s.parents.some(p => (p.name || "").toLowerCase().includes(studentListSearch.toLowerCase()));
+      const matchesFilter =
+        activeFilter === 'all' ||
+        (activeFilter === 'active' && s.isActive) ||
+        (activeFilter === 'inactive' && !s.isActive);
+      return matchesSearch && matchesFilter;
+    })];
 
     if (sortConfig) {
       result.sort((a, b) => {
@@ -115,7 +126,7 @@ export default function AdminStudentsClient() {
       });
     }
     return result;
-  }, [students, studentListSearch, sortConfig]);
+  }, [students, studentListSearch, sortConfig, activeFilter]);
 
   const filteredParents = useMemo(() => {
     if (!parentSearch) return [];
@@ -193,6 +204,91 @@ export default function AdminStudentsClient() {
     }
   };
 
+  const handleToggleActive = async (student: Student) => {
+    const next = !student.isActive;
+    const label = next ? "활성화" : "비활성화";
+    if (!confirm(`${student.name} 학생을 ${label}하시겠습니까?`)) return;
+
+    const res = await fetch("/api/admin/students", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: student.id, isActive: next }),
+    });
+    if (res.ok) {
+      fetchData();
+    } else {
+      alert("상태 변경 중 오류가 발생했습니다.");
+    }
+  };
+
+  const downloadTemplate = () => {
+    const activeYear = years.find(y => y.isActive);
+    const classNames = activeYear ? activeYear.classes.map(c => c.name) : [];
+    const data = [
+      { "학생이름(Name)": "홍길동", "학급(Class)": classNames[0] ?? "무궁화반", "학부모이메일(ParentEmails)": "parent1@example.com" },
+      { "학생이름(Name)": "김영희", "학급(Class)": classNames[1] ?? "해바라기반", "학부모이메일(ParentEmails)": "parent2@example.com,parent3@example.com" },
+    ];
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 40 }];
+    XLSX.utils.sheet_add_aoa(ws, [
+      [`※ 학급: 활성 학사연도(${activeYear?.name ?? "설정 필요"})의 학급명과 정확히 일치해야 합니다.`],
+      ["※ 학부모이메일: 이미 등록된 계정 이메일, 복수일 경우 쉼표로 구분 (예: a@b.com,c@d.com)"],
+    ], { origin: `A${data.length + 2}` });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students");
+    XLSX.writeFile(wb, "student_registration_template.xlsx");
+  };
+
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(evt.target?.result, { type: "binary" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw: any[] = XLSX.utils.sheet_to_json(ws);
+
+        const parsed = raw
+          .filter(row => row["학생이름(Name)"] || row["학생이름"] || row["name"])
+          .map(row => ({
+            name: row["학생이름(Name)"] || row["학생이름"] || row["name"] || "",
+            className: row["학급(Class)"] || row["학급"] || row["class"] || "",
+            parentEmails: row["학부모이메일(ParentEmails)"] || row["학부모이메일"] || row["parentEmails"] || "",
+          }));
+
+        if (parsed.length === 0) {
+          setImportResult({ type: "error", message: "유효한 데이터가 없습니다. 양식을 확인해주세요." });
+          return;
+        }
+
+        setIsLoading(true);
+        const res = await fetch("/api/admin/students/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ students: parsed }),
+        });
+
+        const result = await res.json();
+        const hasErrors = result.errors?.length > 0;
+        let msg = result.message;
+        if (hasErrors) {
+          msg += "\n\n오류:\n" + result.errors.slice(0, 5).map((e: any) => `- ${e.row}행 ${e.name}: ${e.error}`).join("\n");
+          if (result.errors.length > 5) msg += `\n... 외 ${result.errors.length - 5}건`;
+        }
+        setImportResult({ type: hasErrors && result.successCount === 0 ? "error" : "success", message: msg });
+        fetchData();
+      } catch (err) {
+        setImportResult({ type: "error", message: `파일 읽기 오류: ${err}` });
+      } finally {
+        setIsLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const toggleParent = (parentId: string) => {
     if (selectedParentIds.includes(parentId)) {
       setSelectedParentIds(selectedParentIds.filter(id => id !== parentId));
@@ -205,27 +301,65 @@ export default function AdminStudentsClient() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
-      {/* 액션 바 */}
+      {/* 헤더 액션 바 (대량 등록) */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 gap-4">
+        <div>
+          <h2 className="text-base font-black text-gray-700 dark:text-gray-300">엑셀 대량 등록</h2>
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-0.5">활성 학사연도 학급명 · 학부모 이메일(쉼표 구분)을 입력해 한 번에 등록합니다.</p>
+        </div>
+        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
+          <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-black border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 text-sm">
+            <Download className="w-4 h-4" /> 양식 다운로드
+          </button>
+          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-black hover:bg-blue-700 transition-all active:scale-95 shadow-md disabled:opacity-50 text-sm">
+            <Upload className="w-4 h-4" /> 엑셀 대량 등록
+          </button>
+          <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
+        </div>
+      </div>
+
+      {/* 대량 등록 결과 */}
+      {importResult && (
+        <div className={`p-5 rounded-2xl border-2 flex items-start justify-between gap-4 ${importResult.type === "success" ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"}`}>
+          <p className={`text-sm font-bold whitespace-pre-wrap ${importResult.type === "success" ? "text-green-800 dark:text-green-300" : "text-red-800 dark:text-red-300"}`}>{importResult.message}</p>
+          <button onClick={() => setImportResult(null)} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
+        </div>
+      )}
+
+      {/* 검색/필터 바 */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            className="pl-12 pr-10 w-full rounded-xl border-gray-200 dark:border-gray-700 bg-transparent text-base py-3 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 transition-all outline-none font-bold"
-            placeholder="학생, 학급, 학부모 검색..."
-            value={studentListSearch}
-            onChange={(e) => setStudentListSearch(e.target.value)}
-          />
-          {studentListSearch && (
-            <button 
-              onClick={() => setStudentListSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:max-w-2xl">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              className="pl-12 pr-10 w-full rounded-xl border-gray-200 dark:border-gray-700 bg-transparent text-base py-3 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 transition-all outline-none font-bold"
+              placeholder="학생, 학급, 학부모 검색..."
+              value={studentListSearch}
+              onChange={(e) => setStudentListSearch(e.target.value)}
+            />
+            {studentListSearch && (
+              <button
+                onClick={() => setStudentListSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0 self-center">
+            {(['all', 'active', 'inactive'] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`px-4 py-2 text-xs font-black transition-colors ${activeFilter === f ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+              >
+                {f === 'all' ? '전체' : f === 'active' ? '활성' : '비활성'}
+              </button>
+            ))}
+          </div>
         </div>
         {!showAddForm && (
-          <button 
+          <button
             onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="w-full md:w-auto px-8 py-3.5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 transition-all text-base"
           >
@@ -345,12 +479,15 @@ export default function AdminStudentsClient() {
         {/* 모바일 카드 레이아웃 */}
         <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
           {sortedStudents.map((student) => (
-            <div key={student.id} className="p-4 space-y-2">
+            <div key={student.id} className={`p-4 space-y-2 ${!student.isActive ? 'opacity-60' : ''}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-base font-black text-gray-900 dark:text-gray-100">{student.name}</p>
                     {student.isPAChild && <span className="text-[9px] px-1.5 py-0.5 bg-yellow-400 text-white rounded-md font-black">PA</span>}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-black ${student.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                      {student.isActive ? '활성' : '비활성'}
+                    </span>
                   </div>
                   {student.class ? (
                     <span className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2.5 py-0.5 rounded-full text-xs font-bold inline-block mt-1">
@@ -368,6 +505,13 @@ export default function AdminStudentsClient() {
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleToggleActive(student)}
+                    title={student.isActive ? '비활성화' : '활성화'}
+                    className={`p-2.5 rounded-xl transition-all active:scale-90 ${student.isActive ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-100' : 'text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100'}`}
+                  >
+                    {student.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                  </button>
                   <button
                     onClick={() => handleEdit(student)}
                     className="p-2.5 text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-all active:scale-90"
@@ -425,15 +569,20 @@ export default function AdminStudentsClient() {
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-900">
               {sortedStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors group">
+                <tr key={student.id} className={`hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors group ${!student.isActive ? 'opacity-60' : ''}`}>
                   <td className="px-8 py-5 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                         <GraduationCap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <div className="font-black text-base text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {student.name}
-                        {student.isPAChild && <span className="ml-2 text-[8px] px-1.5 py-0.5 bg-yellow-400 text-white rounded-md font-black">PA</span>}
+                      <div>
+                        <div className="font-black text-base text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {student.name}
+                          {student.isPAChild && <span className="ml-2 text-[8px] px-1.5 py-0.5 bg-yellow-400 text-white rounded-md font-black">PA</span>}
+                        </div>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-black ${student.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                          {student.isActive ? '활성' : '비활성'}
+                        </span>
                       </div>
                     </div>
                   </td>
@@ -459,6 +608,13 @@ export default function AdminStudentsClient() {
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-center">
                     <div className="flex justify-center gap-3">
+                      <button
+                        onClick={() => handleToggleActive(student)}
+                        title={student.isActive ? '비활성화' : '활성화'}
+                        className={`p-3 rounded-xl transition-all active:scale-90 ${student.isActive ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-100' : 'text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100'}`}
+                      >
+                        {student.isActive ? <PowerOff className="w-5 h-5" /> : <Power className="w-5 h-5" />}
+                      </button>
                       <button
                         onClick={() => handleEdit(student)}
                         className="p-3 text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-90"
