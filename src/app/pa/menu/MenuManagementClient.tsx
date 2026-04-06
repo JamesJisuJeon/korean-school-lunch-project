@@ -31,8 +31,18 @@ export default function MenuManagementClient() {
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Menu | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  const emptyMenu = { date: "", mainItems: "", dessertItems: "", beverageItems: "", specialItems: "", imageUrl: "", price: 7, isPublished: false, deadline: "" };
+
+  const cancelForm = () => {
+    setEditingId(null);
+    setShowForm(false);
+    setNewMenu(emptyMenu);
+  };
 
   useEffect(() => {
     fetchMenus();
@@ -105,22 +115,15 @@ export default function MenuManagementClient() {
       // deadline은 브라우저 로컬(NZ) 시간 → UTC ISO 문자열로 변환 후 전송
       body: JSON.stringify({
         ...newMenu,
+        id: editingId ?? undefined,
         deadline: newMenu.deadline ? new Date(newMenu.deadline).toISOString() : null,
       }),
     });
 
     if (res.ok) {
-      setNewMenu({
-        date: "",
-        mainItems: "",
-        dessertItems: "",
-        beverageItems: "",
-        specialItems: "",
-        imageUrl: "",
-        price: 7,
-        isPublished: false,
-        deadline: ""
-      });
+      setEditingId(null);
+      setShowForm(false);
+      setNewMenu(emptyMenu);
       fetchMenus();
       alert("메뉴가 성공적으로 저장되었습니다.");
     } else {
@@ -131,6 +134,8 @@ export default function MenuManagementClient() {
   };
 
   const handleEdit = (menu: Menu) => {
+    setEditingId(menu.id);
+    setShowForm(true);
     setNewMenu({
       date: menu.date.split('T')[0],
       mainItems: menu.mainItems || "",
@@ -215,10 +220,33 @@ export default function MenuManagementClient() {
     <>
     <div className="space-y-12">
       <section className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800">
-        <h2 className="text-xl sm:text-2xl font-black mb-6 sm:mb-8 flex items-center gap-3 text-green-700 dark:text-green-400">
-          <Calendar className="w-8 h-8" /> 주간 메뉴 등록 및 이미지 업로드
-        </h2>
-        <form onSubmit={addMenu} className="space-y-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-black flex items-center gap-3 text-green-700 dark:text-green-400">
+            <Calendar className="w-8 h-8" />
+            {editingId ? "주간 메뉴 수정 중" : "주간 메뉴 등록"}
+          </h2>
+          <div className="flex gap-2">
+            {showForm ? (
+              <button
+                type="button"
+                onClick={cancelForm}
+                className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-black rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-sm"
+              >
+                <X className="w-4 h-4" /> {editingId ? "수정 취소" : "등록 취소"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 transition-all text-sm"
+              >
+                <Calendar className="w-4 h-4" /> 메뉴 등록
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showForm && <form onSubmit={addMenu} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="min-w-0">
               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">배식 날짜 (토요일)</label>
@@ -289,7 +317,7 @@ export default function MenuManagementClient() {
           <button type="submit" disabled={isLoading || isUploading} className="w-full py-5 bg-green-700 dark:bg-green-600 text-white font-black text-xl rounded-2xl hover:bg-green-800 dark:hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-all border-b-4 border-green-900 dark:border-green-800 active:border-b-0 active:translate-y-1">
             {isLoading ? "처리 중..." : "메뉴 데이터 및 이미지 저장 완료"}
           </button>
-        </form>
+        </form>}
       </section>
 
       <section className="space-y-6">
