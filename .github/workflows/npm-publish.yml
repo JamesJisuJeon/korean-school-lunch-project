@@ -13,7 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm install
-      - run: npm run build
 
   deploy:
     needs: build
@@ -29,7 +28,6 @@ jobs:
           rsync -av --exclude '.git' * /root/lunch/main-$TIMESTAMP
           cd /root/lunch/main-$TIMESTAMP
           npm install
-          npm run build
       - name: Set .env
         run: |
           cd /root/lunch/main-$TIMESTAMP
@@ -40,7 +38,10 @@ jobs:
           echo "NEXTAUTH_URL=https://lunch.uniwiz.click/" >> .env
           echo "AUTH_TRUST_HOST=https://lunch.uniwiz.click/" >> .env
           echo "PORT=3000" >> .env
-
+      - name: Build
+        run: |
+          cd /root/lunch/main-$TIMESTAMP
+          npm run build
       - name: Set Default
         run: |
           rm -f /root/lunch/default
