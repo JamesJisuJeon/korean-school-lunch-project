@@ -28,4 +28,4 @@ build/
 .vscode/
 .idea/
 docs/
-public/uploads/
+# public/uploads/
