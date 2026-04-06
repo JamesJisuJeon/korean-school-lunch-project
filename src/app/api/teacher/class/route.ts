@@ -26,11 +26,12 @@ export async function GET(req: Request) {
 
     let targetClass;
     if (substitute) {
+      // 1순위: 오늘 보결로 배정된 학급
       targetClass = substitute.class;
     } else if (user.roles.includes("TEACHER")) {
-      // 2. 선생님의 활성 학년도 담당 학급 확인
+      // 2순위: 담임 교사로 배정된 활성 학급
       targetClass = await prisma.class.findFirst({
-        where: { 
+        where: {
           academicYear: { isActive: true },
           OR: [
             { teacherId: user.id },
@@ -42,12 +43,23 @@ export async function GET(req: Request) {
     }
 
     if (!targetClass) {
-      return NextResponse.json({ message: "담당하거나 배정된 보결 학급이 없습니다." }, { status: 403 });
+      // 3순위: 보조교사로 등록된 학급
+      const assistantRecord = await prisma.classAssistant.findUnique({
+        where: { userId: user.id },
+        include: { class: { include: { academicYear: true } } },
+      });
+      if (assistantRecord) {
+        targetClass = assistantRecord.class;
+      }
+    }
+
+    if (!targetClass) {
+      return NextResponse.json({ message: "담당하거나 배정된 학급이 없습니다." }, { status: 403 });
     }
 
     // 3. 해당 반의 모든 학생과 선택한 메뉴의 주문 내역 가져오기
     const students = await prisma.student.findMany({
-      where: { classId: targetClass.id },
+      where: { classId: targetClass.id, isActive: true },
       include: {
         orders: {
           where: menuId ? { menuId } : undefined,

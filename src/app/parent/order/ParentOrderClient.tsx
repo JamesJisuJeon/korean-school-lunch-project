@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShoppingCart, CheckCircle, Clock, Utensils, IceCream, Beer, ImageIcon, X } from "lucide-react";
+import { ShoppingCart, CheckCircle, Clock, Utensils, IceCream, Beer, Star, ImageIcon, X } from "lucide-react";
 
 interface Student {
   id: string;
@@ -15,6 +15,7 @@ interface Menu {
   mainItems: string | null;
   dessertItems: string | null;
   beverageItems: string | null;
+  specialItems: string | null;
   imageUrl: string | null;
   price: number;
   isPublished: boolean;
@@ -223,16 +224,19 @@ export default function ParentOrderClient() {
           <div className="p-4 sm:p-6 flex flex-col gap-3">
             {/* 상세 메뉴 */}
             {selectedMenu && (
-              <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
-                  { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "Main", value: selectedMenu.mainItems },
-                  { icon: <IceCream className="w-4 h-4" />, bg: "bg-pink-50 dark:bg-pink-900/20", border: "border-pink-100 dark:border-pink-800", color: "text-pink-600 dark:text-pink-400", label: "Dessert", value: selectedMenu.dessertItems },
-                  { icon: <Beer className="w-4 h-4" />, bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-cyan-100 dark:border-cyan-800", color: "text-cyan-600 dark:text-cyan-400", label: "Beverage", value: selectedMenu.beverageItems },
+                  { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "메인 메뉴", value: selectedMenu.mainItems },
+                  { icon: <IceCream className="w-4 h-4" />, bg: "bg-pink-50 dark:bg-pink-900/20", border: "border-pink-100 dark:border-pink-800", color: "text-pink-600 dark:text-pink-400", label: "디저트", value: selectedMenu.dessertItems },
+                  { icon: <Beer className="w-4 h-4" />, bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-cyan-100 dark:border-cyan-800", color: "text-cyan-600 dark:text-cyan-400", label: "음료수", value: selectedMenu.beverageItems },
+                  { icon: <Star className="w-4 h-4" />, bg: "bg-yellow-50 dark:bg-yellow-900/20", border: "border-yellow-100 dark:border-yellow-800", color: "text-yellow-600 dark:text-yellow-400", label: "매점 특식", value: selectedMenu.specialItems },
                 ].map((item, i) => (
-                  <div key={i} className={`flex flex-col items-center gap-1 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
-                    <span className={item.color}>{item.icon}</span>
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${item.color} opacity-70`}>{item.label}</p>
-                    <p className="text-xs font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
+                  <div key={i} className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
+                    <div className={`flex items-center gap-1.5 ${item.color}`}>
+                      {item.icon}
+                      <p className="text-xs font-black">{item.label}</p>
+                    </div>
+                    <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
                   </div>
                 ))}
               </div>

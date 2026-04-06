@@ -93,8 +93,9 @@ export default function UserManagementClient() {
     setIsLoading(false);
   };
 
-  const deleteUser = async (userId: string) => {
-    if (!confirm("해당 사용자를 정말 삭제하시겠습니까?")) return;
+  const deleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`"${userName}" 사용자를 삭제하시겠습니까?`)) return;
+    if (!confirm(`정말로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
     const res = await fetch("/api/admin/users", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -115,11 +116,15 @@ export default function UserManagementClient() {
 
   const downloadTemplate = () => {
     const data = [
-      { "이름(Name)": "홍길동", "이메일(Email)": "hong@example.com", "권한(Role)": "PARENT" },
-      { "이름(Name)": "김선생", "이메일(Email)": "kim@example.com", "권한(Role)": "TEACHER" },
+      { "이름(Name)": "홍길동", "이메일(Email)": "hong@example.com", "권한(Roles)": "PARENT" },
+      { "이름(Name)": "김선생", "이메일(Email)": "kim@example.com", "권한(Roles)": "TEACHER" },
+      { "이름(Name)": "이학부모선생", "이메일(Email)": "lee@example.com", "권한(Roles)": "PARENT,TEACHER" },
+      { "이름(Name)": "박PA관리자", "이메일(Email)": "park@example.com", "권한(Roles)": "PA,ADMIN" },
     ];
     const ws = XLSX.utils.json_to_sheet(data);
-    ws["!cols"] = [{ wch: 14 }, { wch: 26 }, { wch: 16 }];
+    ws["!cols"] = [{ wch: 16 }, { wch: 28 }, { wch: 24 }];
+    // 안내 메모를 A6에 추가
+    XLSX.utils.sheet_add_aoa(ws, [["※ 권한(Roles): PARENT / TEACHER / PA / ADMIN 중 하나 이상, 쉼표로 구분 (예: PARENT,TEACHER)"]], { origin: "A6" });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Users");
     XLSX.writeFile(wb, "user_registration_template.xlsx");
@@ -136,11 +141,15 @@ export default function UserManagementClient() {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const raw: any[] = XLSX.utils.sheet_to_json(ws);
 
-        const parsed = raw.map(row => ({
-          name: row["이름(Name)"] || row["이름"] || row["name"] || "",
-          email: row["이메일(Email)"] || row["이메일"] || row["email"] || "",
-          roles: [row["권한(Role)"] || row["권한"] || row["role"] || "PARENT"],
-        })).filter(r => r.email);
+        const parsed = raw.map(row => {
+          const rawRoles: string = row["권한(Roles)"] || row["권한(Role)"] || row["권한"] || row["roles"] || row["role"] || "PARENT";
+          const roles = String(rawRoles).split(",").map((r: string) => r.trim().toUpperCase()).filter(Boolean);
+          return {
+            name: row["이름(Name)"] || row["이름"] || row["name"] || "",
+            email: row["이메일(Email)"] || row["이메일"] || row["email"] || "",
+            roles: roles.length > 0 ? roles : ["PARENT"],
+          };
+        }).filter(r => r.email);
 
         if (parsed.length === 0) {
           setImportResult({ type: "error", message: "유효한 데이터가 없습니다. 양식을 확인해주세요." });
@@ -334,7 +343,7 @@ export default function UserManagementClient() {
                   <button onClick={() => { setEditingUser(u); setShowAddForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} title="정보 수정" className="p-2.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 transition-all active:scale-90">
                     <Shield className="w-4 h-4" />
                   </button>
-                  <button onClick={() => deleteUser(u.id)} title="삭제" className="p-2.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl hover:bg-red-100 transition-all active:scale-90">
+                  <button onClick={() => deleteUser(u.id, u.name || u.email)} title="삭제" className="p-2.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl hover:bg-red-100 transition-all active:scale-90">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -393,7 +402,7 @@ export default function UserManagementClient() {
                       <button onClick={() => { setEditingUser(u); setShowAddForm(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} title="정보 수정" className="p-3 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all active:scale-90">
                         <Shield className="w-5 h-5" />
                       </button>
-                      <button onClick={() => deleteUser(u.id)} title="사용자 삭제" className="p-3 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-90">
+                      <button onClick={() => deleteUser(u.id, u.name || u.email)} title="사용자 삭제" className="p-3 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-90">
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>

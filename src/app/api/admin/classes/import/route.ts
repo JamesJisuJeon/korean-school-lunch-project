@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { Role } from "@prisma/client";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -27,79 +26,93 @@ export async function POST(req: Request) {
         const classNameStr = item.name?.toString().trim();
         const gradeStr = item.grade?.toString().trim() || "";
         const teacherNameStr = item.teacherName?.toString().trim() || "";
+        const teacherEmailStr = item.teacherEmail?.toString().trim() || "";
+        const assistantEmailsStr = item.assistantEmails?.toString().trim() || "";
         const sortOrderVal = item.sortOrder !== undefined && item.sortOrder !== "" ? Number(item.sortOrder) : null;
-        
+
         if (!yearNameStr || !classNameStr) continue;
 
         // 학사연도 조회 또는 생성
-        let year = await prisma.academicYear.findUnique({
-          where: { name: yearNameStr }
-        });
-
+        let year = await prisma.academicYear.findUnique({ where: { name: yearNameStr } });
         if (!year) {
-          // 숫자만 추출 (예: 2024-2025 -> 2024)
           const yearDigits = yearNameStr.match(/\d{4}/)?.[0] || new Date().getFullYear().toString();
-          
           year = await prisma.academicYear.create({
             data: {
               name: yearNameStr,
               startDate: new Date(`${yearDigits}-01-01T00:00:00Z`),
               endDate: new Date(`${yearDigits}-12-31T23:59:59Z`),
-              isActive: yearNameStr === new Date().getFullYear().toString()
-            }
+              isActive: yearNameStr === new Date().getFullYear().toString(),
+            },
           });
         }
 
-        // 교사 조회
-        let teacherId = null;
-        if (teacherNameStr) {
-          const teacher = await prisma.user.findFirst({
-            where: { 
-              name: teacherNameStr,
-              roles: { has: Role.TEACHER }
-            }
-          });
+        // 담임 교사 조회 — 이메일 우선, 없으면 이름으로
+        let teacherId: string | null = null;
+        let resolvedTeacherName = teacherNameStr;
+        if (teacherEmailStr) {
+          const teacher = await prisma.user.findUnique({ where: { email: teacherEmailStr } });
+          if (teacher) { teacherId = teacher.id; resolvedTeacherName = teacher.name || teacherNameStr; }
+        } else if (teacherNameStr) {
+          const teacher = await prisma.user.findFirst({ where: { name: teacherNameStr } });
           if (teacher) teacherId = teacher.id;
         }
 
-        // 중복 체크 (같은 연도에 같은 이름의 반이 있는지)
-        const existingClass = await prisma.class.findFirst({
-          where: {
-            name: classNameStr,
-            academicYearId: year.id
+        // 보조교사 중복 체크 (학급 처리 전)
+        if (assistantEmailsStr) {
+          const emails = assistantEmailsStr.split(",").map((e: string) => e.trim()).filter(Boolean);
+          for (const email of emails) {
+            const user = await prisma.user.findUnique({ where: { email } });
+            if (user) {
+              const existing = await prisma.classAssistant.findUnique({
+                where: { userId: user.id },
+                include: { class: true },
+              });
+              if (existing) {
+                throw new Error(`보조교사 "${user.name || email}"은(는) 이미 "${existing.class.name}" 학급에 등록되어 있습니다.`);
+              }
+            }
           }
+        }
+
+        // 학급 중복 체크
+        const existingClass = await prisma.class.findFirst({
+          where: { name: classNameStr, academicYearId: year.id },
         });
 
+        let targetClassId: string;
         if (existingClass) {
-          // 이미 존재하면 업데이트
-          // Update class with new data
-          const dataToUpdate: any = {
-            grade: gradeStr || (existingClass as any).grade,
-            sortOrder: sortOrderVal,
-          };
-          if (teacherNameStr) {
+          const dataToUpdate: any = { grade: gradeStr || (existingClass as any).grade, sortOrder: sortOrderVal };
+          if (teacherEmailStr || teacherNameStr) {
             dataToUpdate.teacherId = teacherId;
-            dataToUpdate.teacherName = teacherId ? teacherNameStr : null;
+            dataToUpdate.teacherName = teacherId ? resolvedTeacherName : null;
           }
-
-          const updatedClass = await (prisma.class.update as any)({
-            where: { id: existingClass.id },
-            data: dataToUpdate
-          });
-          results.push(updatedClass);
+          const updated = await (prisma.class.update as any)({ where: { id: existingClass.id }, data: dataToUpdate });
+          results.push(updated);
+          targetClassId = existingClass.id;
         } else {
-          // 신규 생성
           const newClass = await (prisma.class.create as any)({
             data: {
               name: classNameStr,
               grade: gradeStr,
-              teacherName: teacherId ? teacherNameStr : null,
-              teacherId: teacherId,
+              teacherName: teacherId ? resolvedTeacherName : null,
+              teacherId,
               academicYearId: year.id,
               sortOrder: sortOrderVal,
-            }
+            },
           });
           results.push(newClass);
+          targetClassId = newClass.id;
+        }
+
+        // 보조교사 등록
+        if (assistantEmailsStr) {
+          const emails = assistantEmailsStr.split(",").map((e: string) => e.trim()).filter(Boolean);
+          for (const email of emails) {
+            const user = await prisma.user.findUnique({ where: { email } });
+            if (user) {
+              await prisma.classAssistant.create({ data: { classId: targetClassId, userId: user.id } });
+            }
+          }
         }
       } catch (e: any) {
         console.error("Error importing item:", item, e);

@@ -80,7 +80,7 @@ export async function PUT(req: Request) {
 
   try {
     const { id, name, classId, parentIds } = await req.json();
-    
+
     if (!id || !parentIds || parentIds.length === 0) {
       return NextResponse.json({ message: "정보가 부족합니다." }, { status: 400 });
     }
@@ -111,6 +111,31 @@ export async function PUT(req: Request) {
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: "학생 수정 중 오류가 발생했습니다." }, { status: 500 });
+  }
+}
+
+// 활성/비활성 토글
+export async function PATCH(req: Request) {
+  const session = await auth();
+  if (!session || !(session.user as any).roles.includes("ADMIN")) {
+    return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
+  }
+
+  try {
+    const { id, isActive } = await req.json();
+    if (!id || typeof isActive !== "boolean") {
+      return NextResponse.json({ message: "정보가 부족합니다." }, { status: 400 });
+    }
+
+    const student = await prisma.student.update({
+      where: { id },
+      data: { isActive },
+    });
+
+    return NextResponse.json(student);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ message: "상태 변경 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
 
