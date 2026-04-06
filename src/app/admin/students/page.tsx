@@ -16,10 +16,6 @@ export default async function AdminStudentsPage() {
   return (
     <main className="p-4 sm:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-gray-50">학생 관리</h1>
-          <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">학생 정보를 등록하고 학부모 계정과 연결합니다.</p>
-        </div>
         <AdminStudentsClient />
       </div>
     </main>

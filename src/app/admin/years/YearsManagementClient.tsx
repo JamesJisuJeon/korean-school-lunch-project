@@ -52,7 +52,7 @@ export default function YearsManagementClient() {
 
       <section className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-2xl border border-blue-50 dark:border-blue-900/30">
         <h2 className="text-xl font-black mb-6 text-gray-800 dark:text-gray-100">새 학사연도 정의</h2>
-        <form onSubmit={addYear} className="flex flex-col md:flex-row gap-4 items-end">
+        <form onSubmit={addYear} className="flex gap-4 items-end">
           <div className="flex-1">
             <label className="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 ml-1">운영 연도 (Year)</label>
             <input
@@ -67,7 +67,7 @@ export default function YearsManagementClient() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full md:w-auto bg-blue-600 dark:bg-blue-500 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-blue-600 shadow-xl shadow-blue-100 dark:shadow-blue-900/30 active:scale-95 transition-all"
+            className="shrink-0 bg-blue-600 dark:bg-blue-500 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-blue-600 shadow-xl shadow-blue-100 dark:shadow-blue-900/30 active:scale-95 transition-all"
           >
             등록 완료
           </button>
@@ -81,19 +81,16 @@ export default function YearsManagementClient() {
           {years.map((year) => (
             <div key={year.id} className={`p-6 rounded-3xl border-2 flex justify-between items-center transition-all ${year.isActive ? 'border-blue-600 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 ring-4 ring-blue-50 dark:ring-blue-900/20' : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm'}`}>
               <div className="flex items-center gap-6">
-                <div className={`p-4 rounded-2xl ${year.isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/40' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
-                  <Calendar className="w-8 h-8" />
+                <div className={`p-2.5 sm:p-4 rounded-2xl ${year.isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/40' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
+                  <Calendar className="w-5 h-5 sm:w-8 sm:h-8" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-gray-900 dark:text-gray-50">{year.name} 학사연도</h3>
-                  <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">
-                    {new Date(year.startDate).toLocaleDateString()} ~ {new Date(year.endDate).toLocaleDateString()}
-                  </p>
+                  <h3 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-gray-50">{year.name} 학사연도</h3>
                 </div>
               </div>
               {year.isActive && (
                 <div className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full font-black text-xs shadow-lg shadow-blue-200 dark:shadow-blue-900/40">
-                  <CheckCircle className="w-4 h-4" /> 현재 활성 상태
+                  <CheckCircle className="w-4 h-4" /> 활성
                 </div>
               )}
             </div>

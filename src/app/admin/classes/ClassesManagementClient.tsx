@@ -340,25 +340,37 @@ export default function ClassesManagementClient() {
   return (
     <div className="space-y-10 pb-20 max-w-[1400px] mx-auto animate-in fade-in duration-700">
       {/* Header */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800 gap-4 sm:gap-6">
+      <div className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-[2.5rem] shadow-md dark:shadow-none border border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-4 sm:gap-5">
-          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md">
+          <div className="p-3 sm:p-4 bg-blue-600 rounded-3xl shadow-md shrink-0">
             <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50">학급 운영 관리</h1>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50 shrink-0">학급 운영 관리</h1>
+              {/* 데스크탑 버튼: 제목 오른쪽 */}
+              <div className="hidden xl:flex gap-2 ml-2">
+                <button onClick={downloadTemplate} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+                  <Download className="w-3.5 h-3.5" /> 양식 다운로드
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-blue-600 dark:bg-gray-700 text-white rounded-xl hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95">
+                  <Upload className="w-3.5 h-3.5" /> 엑셀 대량 등록
+                </button>
+              </div>
+            </div>
             <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">학사연도별 학급과 담임 선생님을 배정하고 관리합니다.</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto">
-          <button onClick={downloadTemplate} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-black border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
-            <Download className="w-5 h-5" /> 양식 다운로드
+        {/* 모바일 버튼: 현재 위치 유지, 크기 축소 */}
+        <div className="flex gap-2 mt-4 xl:hidden">
+          <button onClick={downloadTemplate} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+            <Download className="w-4 h-4" /> 양식 다운로드
           </button>
-          <button onClick={() => fileInputRef.current?.click()} className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 dark:bg-gray-700 text-white rounded-2xl font-black hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
-            <Upload className="w-5 h-5" /> 엑셀 대량 등록
+          <button onClick={() => fileInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-blue-600 dark:bg-gray-700 text-white rounded-2xl hover:bg-blue-700 dark:hover:bg-gray-600 transition-all active:scale-95 shadow-md dark:shadow-none">
+            <Upload className="w-4 h-4" /> 엑셀 대량 등록
           </button>
-          <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
         </div>
+        <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
       </div>
 
       {importResult && (
@@ -650,57 +662,66 @@ export default function ClassesManagementClient() {
                     </div>
                   ) : (
                     /* 일반 카드 뷰 */
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-2">
+                    <div>
+                      {/* 상단: 학사연도 + 순서 */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${cls.academicYear.isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
+                          {cls.academicYear.name}{cls.academicYear.isActive ? ' 활성' : ''}
+                        </span>
+                        {cls.sortOrder && <span className="text-xs font-black text-gray-300 dark:text-gray-600">#{cls.sortOrder}</span>}
+                      </div>
+                      {/* 중단: 학급명 + 학년 + 담임 */}
+                      <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className={`px-3 py-1 rounded-xl text-[10px] font-black tracking-tighter ${cls.academicYear.isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500'}`}>
-                              {cls.academicYear.name}
-                            </span>
-                            {cls.sortOrder && <span className="text-xs font-black text-gray-400 dark:text-gray-500">#{cls.sortOrder}</span>}
-                          </div>
-                          <p className="text-base font-black text-gray-950 dark:text-gray-50">{cls.name}</p>
-                          {cls.grade && <p className="text-sm font-bold text-gray-500 dark:text-gray-400">{cls.grade}</p>}
-                          {cls.teacherName && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-xs">
-                                {cls.teacherName[0]}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-xl font-black text-gray-950 dark:text-gray-50 leading-tight shrink-0">{cls.name}</p>
+                            {cls.grade && (
+                              <span className="text-xs font-black text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full shrink-0">{cls.grade}</span>
+                            )}
+                            {cls.teacherName && (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-[10px] shrink-0">
+                                  {cls.teacherName[0]}
+                                </div>
+                                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{cls.teacherName}</span>
                               </div>
-                              <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{cls.teacherName}</span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                           {cls.assistants.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
+                            <div className="flex flex-wrap gap-1 mt-2">
                               {cls.assistants.map(a => (
-                                <span key={a.userId} className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 text-[10px] font-bold text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-lg border border-purple-200 dark:border-purple-700">
+                                <span key={a.userId} className="flex items-center gap-1 bg-purple-50 dark:bg-purple-900/20 text-[10px] font-bold text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-700">
                                   <GraduationCap className="w-2.5 h-2.5" />{a.user.name || a.user.email}
                                 </span>
                               ))}
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button
-                            onClick={() => { setAssistantPanelId(assistantPanelId === cls.id ? null : cls.id); setAssistantSearch(""); }}
-                            className="p-2.5 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all"
-                            title="보조교사 관리"
-                          >
-                            <GraduationCap className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingId(cls.id);
-                              setEditFormData({ name: cls.name, grade: cls.grade || "", teacherName: cls.teacherName || "", teacherId: cls.teacherId || "", sortOrder: cls.sortOrder?.toString() ?? "" });
-                              setEditTeacherSearch(cls.teacherName || "");
-                            }}
-                            className="p-2.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => deleteClass(cls.id, cls.name)} className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                      </div>
+                      {/* 하단: 액션 버튼 */}
+                      <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                        <button
+                          onClick={() => {
+                            setEditingId(cls.id);
+                            setEditFormData({ name: cls.name, grade: cls.grade || "", teacherName: cls.teacherName || "", teacherId: cls.teacherId || "", sortOrder: cls.sortOrder?.toString() ?? "" });
+                            setEditTeacherSearch(cls.teacherName || "");
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl transition-all"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" /> 수정
+                        </button>
+                        <button
+                          onClick={() => { setAssistantPanelId(assistantPanelId === cls.id ? null : cls.id); setAssistantSearch(""); }}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-xl transition-all"
+                        >
+                          <GraduationCap className="w-3.5 h-3.5" /> 보조교사
+                        </button>
+                        <button
+                          onClick={() => deleteClass(cls.id, cls.name)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-black text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-xl transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> 삭제
+                        </button>
                       </div>
                       {/* 보조교사 패널 */}
                       {assistantPanelId === cls.id && (
