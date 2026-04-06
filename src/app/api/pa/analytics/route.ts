@@ -19,17 +19,12 @@ export async function GET(req: Request) {
   const menu = await prisma.menu.findUnique({ where: { id: menuId } });
   if (!menu) return NextResponse.json({ message: "메뉴를 찾을 수 없습니다." }, { status: 404 });
 
-  // 메뉴 날짜(토요일) 기준으로 쿠폰 판매 조회
-  const menuDateStart = new Date(menu.date);
-  menuDateStart.setHours(0, 0, 0, 0);
-  const menuDateEnd = new Date(menuDateStart.getTime() + 24 * 60 * 60 * 1000);
-
   const students = await prisma.student.findMany({
     where: { class: { academicYearId: activeYear.id } },
     include: {
       class: true,
       orders: { where: { menuId } },
-      couponSales: { where: { date: { gte: menuDateStart, lt: menuDateEnd } } },
+      couponSales: { where: { menuId } },
     },
     orderBy: [{ class: { name: "asc" } }, { name: "asc" }],
   });
@@ -74,7 +69,10 @@ export async function GET(req: Request) {
   const onSiteUnpaid = onSiteOrders.filter((o) => o.status === "UNPAID");
 
   const allCoupons = students.flatMap((s) => s.couponSales);
-  const couponSaleAmount = allCoupons.reduce((sum, c) => sum + c.amount, 0);
+  const couponPaidStatuses = ["PAID", "POST_PAID"];
+  const couponSaleAmount = allCoupons
+    .filter((c) => couponPaidStatuses.includes(c.paymentStatus))
+    .reduce((sum, c) => sum + c.amount, 0);
   const couponSaleUnpaidAmount = allCoupons
     .filter((c) => c.paymentStatus === "UNPAID")
     .reduce((sum, c) => sum + c.amount, 0);
@@ -93,6 +91,7 @@ export async function GET(req: Request) {
     className: string;
     totalStudents: number;
     orderedCount: number;
+    confirmedCount: number;
     paidCount: number;
     unpaidCount: number;
     waitingCount: number;
@@ -101,6 +100,7 @@ export async function GET(req: Request) {
     paidAmount: number;
     unpaidAmount: number;
     couponAmount: number;
+    couponUnpaidAmount: number;
   };
 
   const classMap = new Map<string, ClassStat>();
@@ -112,6 +112,7 @@ export async function GET(req: Request) {
         className,
         totalStudents: 0,
         orderedCount: 0,
+        confirmedCount: 0,
         paidCount: 0,
         unpaidCount: 0,
         waitingCount: 0,
@@ -120,6 +121,7 @@ export async function GET(req: Request) {
         paidAmount: 0,
         unpaidAmount: 0,
         couponAmount: 0,
+        couponUnpaidAmount: 0,
       });
     }
     const cls = classMap.get(className)!;
@@ -133,9 +135,11 @@ export async function GET(req: Request) {
         cls.orderedCount++;
         if (paidStatuses.includes(order.status)) {
           cls.paidCount++;
+          cls.confirmedCount++;
           cls.paidAmount += order.amount;
         } else if (order.status === "UNPAID") {
           cls.unpaidCount++;
+          cls.confirmedCount++;
           cls.unpaidAmount += order.amount;
         } else {
           cls.waitingCount++;
@@ -145,7 +149,11 @@ export async function GET(req: Request) {
     }
 
     for (const coupon of student.couponSales) {
-      cls.couponAmount += coupon.amount;
+      if (couponPaidStatuses.includes(coupon.paymentStatus)) {
+        cls.couponAmount += coupon.amount;
+      } else if (coupon.paymentStatus === "UNPAID") {
+        cls.couponUnpaidAmount += coupon.amount;
+      }
     }
   }
 
@@ -175,6 +183,10 @@ export async function GET(req: Request) {
       onSitePaid.reduce((sum, o) => sum + o.amount, 0),
     couponSaleAmount,
     couponSaleUnpaidAmount,
+    totalRevenue:
+      preOrderPaid.reduce((sum, o) => sum + o.amount, 0) +
+      onSitePaid.reduce((sum, o) => sum + o.amount, 0) +
+      couponSaleAmount,
     classSummary: Array.from(classMap.values()).sort((a, b) => {
       const aOrder = classSortOrderMap.get(a.className) ?? Infinity;
       const bOrder = classSortOrderMap.get(b.className) ?? Infinity;
