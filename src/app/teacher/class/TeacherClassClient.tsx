@@ -166,11 +166,11 @@ export default function TeacherClassClient() {
                     {isOrdered ? (
                       status === "CANCELLED" ? (
                         <span className="inline-flex items-center justify-center gap-2 text-red-500 dark:text-red-400 font-black text-sm">
-                          신청취소
+                          취소
                         </span>
                       ) : (
                         <span className="inline-flex items-center justify-center gap-2 text-blue-700 dark:text-blue-400 font-black text-sm">
-                          <CheckCircle className="w-5 h-5" /> 신청완료
+                          <CheckCircle className="w-5 h-5" /> 신청
                         </span>
                       )
                     ) : (
