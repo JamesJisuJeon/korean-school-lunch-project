@@ -169,9 +169,9 @@ export default function AnalyticsClient() {
             <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">반별 통계</h2>
             <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-auto max-h-[70vh]">
               <table className="min-w-[640px] w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-20">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-black text-gray-500 dark:text-gray-400">반</th>
+                    <th className="px-4 py-3 text-left text-xs font-black text-gray-500 dark:text-gray-400 sticky left-0 z-30 bg-gray-50 dark:bg-gray-800 whitespace-nowrap">반</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">총인원</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">신청</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">확정</th>
@@ -187,8 +187,8 @@ export default function AnalyticsClient() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {data.classSummary.map((cls) => (
-                    <tr key={cls.className} className="hover:bg-gray-50/60 dark:hover:bg-gray-800/30 transition-colors">
-                      <td className="px-4 py-3 font-black text-gray-950 dark:text-gray-100">{cls.className}</td>
+                    <tr key={cls.className} className="group hover:bg-gray-50/60 dark:hover:bg-gray-800/30 transition-colors">
+                      <td className="px-4 py-3 font-black text-gray-950 dark:text-gray-100 sticky left-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50/60 dark:group-hover:bg-gray-800/30 transition-colors whitespace-nowrap">{cls.className}</td>
                       <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400 font-bold">{cls.totalStudents}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`font-black ${
@@ -232,7 +232,7 @@ export default function AnalyticsClient() {
                 {/* 합계 행 */}
                 <tfoot className="bg-gray-50 dark:bg-gray-800/50 border-t-2 border-gray-200 dark:border-gray-700">
                   <tr>
-                    <td className="px-4 py-3 text-xs font-black text-gray-500 dark:text-gray-400">합계</td>
+                    <td className="px-4 py-3 text-xs font-black text-gray-500 dark:text-gray-400 sticky left-0 z-10 bg-gray-50 dark:bg-gray-800/50">합계</td>
                     <td className="px-4 py-3 text-center font-black text-gray-900 dark:text-gray-100">
                       {data.classSummary.reduce((s, c) => s + c.totalStudents, 0)}
                     </td>

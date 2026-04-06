@@ -155,11 +155,10 @@ export default function ClassOrdersClient() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
             <thead className="bg-gray-50 dark:bg-gray-800/50">
               <tr>
-                <th className="px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16">번호</th>
-                <th className="px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-32">이름</th>
-                <th className="px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400">특이사항</th>
-                <th className="px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-28">신청상태</th>
-                <th className="px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-28">수납상태</th>
+                <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-10 md:w-16">번호</th>
+                <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400">이름</th>
+                <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">신청상태</th>
+                <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">수납상태</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
@@ -173,16 +172,16 @@ export default function ClassOrdersClient() {
                     key={student.id}
                     className={`${!isOrdered ? "bg-gray-50/50 dark:bg-gray-800/20" : "hover:bg-green-50/30 dark:hover:bg-green-900/10"} transition-colors`}
                   >
-                    <td className="px-4 py-5 whitespace-nowrap text-center text-sm font-black text-gray-400 dark:text-gray-500">
+                    <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center text-sm font-black text-gray-400 dark:text-gray-500">
                       {String(index + 1).padStart(2, "0")}
                     </td>
-                    <td className="px-4 py-5 whitespace-nowrap text-center text-sm font-black text-gray-950 dark:text-gray-100">
-                      {student.name}
+                    <td className="px-2 md:px-4 py-5 text-center">
+                      <p className="text-sm font-black text-gray-950 dark:text-gray-100 whitespace-nowrap">{student.name}</p>
+                      {order?.notes && (
+                        <p className="text-xs font-bold text-red-600 dark:text-red-400 italic mt-0.5">{order.notes}</p>
+                      )}
                     </td>
-                    <td className="px-4 py-5 text-center text-sm font-bold text-red-600 dark:text-red-400 italic">
-                      {order?.notes || "-"}
-                    </td>
-                    <td className="px-4 py-5 whitespace-nowrap text-center">
+                    <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
                       {isOrdered ? (
                         status === "CANCELLED" ? (
                           <span className="inline-flex items-center justify-center gap-2 text-red-500 dark:text-red-400 font-black text-sm">
@@ -199,7 +198,7 @@ export default function ClassOrdersClient() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-5 whitespace-nowrap text-center">
+                    <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
                       {isOrdered ? (
                         status === "PAID" || status === "POST_PAID" ? (
                           <span className="px-4 py-1.5 text-xs font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border-2 border-green-200 dark:border-green-800 shadow-sm">수납완료</span>
@@ -219,7 +218,7 @@ export default function ClassOrdersClient() {
               })}
               {students.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-20 text-center text-gray-300 dark:text-gray-600 font-bold italic">
+                  <td colSpan={4} className="py-20 text-center text-gray-300 dark:text-gray-600 font-bold italic">
                     이 학급에 배정된 학생이 없습니다.
                   </td>
                 </tr>

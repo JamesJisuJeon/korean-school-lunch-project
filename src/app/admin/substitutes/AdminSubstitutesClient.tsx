@@ -152,7 +152,7 @@ export default function AdminSubstitutesClient() {
     </span>
   );
 
-  const inputClass = "w-full rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3.5 text-base font-black focus:bg-white dark:focus:bg-gray-700 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/30 transition-all outline-none text-gray-900 dark:text-gray-100";
+  const inputClass = "w-full min-w-0 max-w-full rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3.5 text-base font-black focus:bg-white dark:focus:bg-gray-700 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/30 transition-all outline-none text-gray-900 dark:text-gray-100";
 
   return (
     <div className="space-y-8">
@@ -205,14 +205,29 @@ export default function AdminSubstitutesClient() {
 
           <form onSubmit={handleAddSubstitute} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="block text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">보결 일자</label>
                 <input
                   type="date"
                   required
                   className={inputClass}
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    const dateStr = e.target.value;
+                    if (!dateStr) return;
+                    const selected = new Date(dateStr);
+                    const dayOfWeek = selected.getDay();
+                    if (dayOfWeek !== 6) {
+                      const daysToSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+                      selected.setDate(selected.getDate() + daysToSaturday);
+                      const y = selected.getFullYear();
+                      const m = String(selected.getMonth() + 1).padStart(2, '0');
+                      const d = String(selected.getDate()).padStart(2, '0');
+                      setDate(`${y}-${m}-${d}`);
+                    } else {
+                      setDate(dateStr);
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-1.5">
