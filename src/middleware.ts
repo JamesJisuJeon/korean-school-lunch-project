@@ -6,7 +6,13 @@ export default auth((req) => {
   const { nextUrl } = req;
 
   const isAuthRoute = nextUrl.pathname === "/login";
-  const isPublicRoute = nextUrl.pathname === "/" || nextUrl.pathname.startsWith("/api/auth");
+  const isPublicRoute =
+    nextUrl.pathname === "/" ||
+    nextUrl.pathname.startsWith("/api/auth") ||
+    nextUrl.pathname === "/manifest.json" ||
+    nextUrl.pathname === "/sw.js" ||
+    nextUrl.pathname.startsWith("/uploads/") ||
+    /\.(png|ico|svg|webp|jpg|jpeg)$/.test(nextUrl.pathname);
 
   if (isAuthRoute) {
     if (isLoggedIn) {
