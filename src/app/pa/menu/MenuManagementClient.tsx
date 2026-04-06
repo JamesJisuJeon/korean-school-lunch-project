@@ -37,13 +37,23 @@ export default function MenuManagementClient() {
   const handleDateChange = (dateStr: string) => {
     if (!dateStr) return;
     const selectedDate = new Date(dateStr);
+    // 토요일(6)이 아니면 다음 토요일로 자동 보정
+    const dayOfWeek = selectedDate.getDay();
+    if (dayOfWeek !== 6) {
+      const daysToSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+      selectedDate.setDate(selectedDate.getDate() + daysToSaturday);
+    }
+    const satYear = selectedDate.getFullYear();
+    const satMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const satDay = String(selectedDate.getDate()).padStart(2, '0');
+    const saturdayStr = `${satYear}-${satMonth}-${satDay}`;
     const thursday = new Date(selectedDate);
     thursday.setDate(selectedDate.getDate() - 2);
     const year = thursday.getFullYear();
     const month = String(thursday.getMonth() + 1).padStart(2, '0');
     const day = String(thursday.getDate()).padStart(2, '0');
     const defaultDeadline = `${year}-${month}-${day}T12:00`;
-    setNewMenu({ ...newMenu, date: dateStr, deadline: defaultDeadline });
+    setNewMenu({ ...newMenu, date: saturdayStr, deadline: defaultDeadline });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,7 +161,7 @@ export default function MenuManagementClient() {
     setIsLoading(false);
   };
 
-  const inputClassName = "mt-1 block w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-bold focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/30 sm:text-sm py-2.5 px-3 bg-white dark:bg-gray-800 outline-none transition-all";
+  const inputClassName = "mt-1 block w-full min-w-0 max-w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-bold focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/30 sm:text-sm py-2.5 px-3 bg-white dark:bg-gray-800 outline-none transition-all";
 
   return (
     <div className="space-y-12">
@@ -161,7 +171,7 @@ export default function MenuManagementClient() {
         </h2>
         <form onSubmit={addMenu} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
+            <div className="min-w-0">
               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">배식 날짜 (토요일)</label>
               <input type="date" required className={inputClassName} value={newMenu.date} onChange={(e) => handleDateChange(e.target.value)} />
             </div>
@@ -206,7 +216,7 @@ export default function MenuManagementClient() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end border-t pt-8 border-gray-100 dark:border-gray-800">
-            <div>
+            <div className="min-w-0">
               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 flex items-center gap-1 mb-1"><Clock className="w-4 h-4" /> 신청 마감 일시</label>
               <input type="datetime-local" required className={inputClassName} value={newMenu.deadline} onChange={(e) => setNewMenu({ ...newMenu, deadline: e.target.value })} />
             </div>
