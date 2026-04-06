@@ -75,7 +75,13 @@ export default function ClassOrdersClient() {
       .catch(() => setIsLoading(false));
   }, [selectedMenuId, selectedClassId]);
 
-  const students = classData?.students ?? [];
+  const students = [...(classData?.students ?? [])].sort((a, b) => {
+    for (let i = 0; i < Math.min(a.name.length, b.name.length); i++) {
+      const diff = a.name.charCodeAt(i) - b.name.charCodeAt(i);
+      if (diff !== 0) return diff;
+    }
+    return a.name.length - b.name.length;
+  });
   const totalStudents = students.length;
   const orderedCount = students.filter((s) => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length;
   const paidCount = students.filter((s) => s.orders.length > 0 && s.orders[0].isPaid).length;
