@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, RefreshCw } from "lucide-react";
 
 interface Menu {
   id: string;
@@ -93,13 +93,17 @@ export default function AnalyticsClient() {
       });
   }, []);
 
-  useEffect(() => {
+  const fetchData = () => {
     if (!selectedMenuId) return;
     setIsLoading(true);
     fetch(`/api/pa/analytics?menuId=${selectedMenuId}`)
       .then((r) => r.json())
       .then((d) => { setData(d); setIsLoading(false); })
       .catch(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [selectedMenuId]);
 
   const fmt = (n: number) => `$${Math.round(n)}`;
@@ -130,7 +134,10 @@ export default function AnalyticsClient() {
         <>
           {/* 신청/수납 현황 */}
           <div>
-            <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">신청/수납 현황</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">신청/수납 현황</h2>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className="w-4 h-4" /></button>
+            </div>
             {/* 1열: 신청 관련 */}
             <div className="grid grid-cols-5 gap-2 sm:gap-4 mb-3 sm:mb-4">
               <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} color="blue" />
@@ -151,7 +158,10 @@ export default function AnalyticsClient() {
 
           {/* 금액 집계 */}
           <div>
-            <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">금액 현황</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">금액 현황</h2>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className="w-4 h-4" /></button>
+            </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4">
               <StatCard label="총 매출" value={fmt(data.totalRevenue)} color="blue" />
               <StatCard label="점심 납부 총액" value={fmt(data.totalPaidAmount)} color="green" />
@@ -166,7 +176,10 @@ export default function AnalyticsClient() {
 
           {/* 반별 통계 */}
           <div>
-            <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">반별 통계</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">반별 통계</h2>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className="w-4 h-4" /></button>
+            </div>
             <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-auto max-h-[70vh]">
               <table className="min-w-[640px] w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-20">

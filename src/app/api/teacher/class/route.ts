@@ -80,3 +80,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ message: "데이터 조회 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
+  }
+
+  try {
+    const { orderId, isServed } = await req.json();
+    if (!orderId || typeof isServed !== "boolean") {
+      return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: { isServed },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    return NextResponse.json({ message: "업데이트 중 오류가 발생했습니다." }, { status: 500 });
+  }
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Search, DollarSign, ShoppingBag, Filter, UserPlus, X, Check, Calendar, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Search, DollarSign, ShoppingBag, Filter, UserPlus, X, Check, Calendar, ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw } from "lucide-react";
 
 interface StudentWithOrder {
   id: string;
@@ -371,6 +371,13 @@ export default function SalesManagementClient() {
                   </button>
                 </>
               )}
+              <button
+                onClick={fetchStudents}
+                className="hidden md:flex shrink-0 items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-700 ml-2"
+                title="새로고침"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
               <div className="md:hidden w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0" />
               <button
                 onClick={() => handleSort("class")}
@@ -387,6 +394,13 @@ export default function SalesManagementClient() {
                 }`}
               >
                 이름 <SortIcon col="name" />
+              </button>
+              <button
+                onClick={fetchStudents}
+                className="md:hidden shrink-0 flex items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-200 dark:border-gray-700"
+                title="새로고침"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
               </button>
             </div>
             <span className="shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500">
