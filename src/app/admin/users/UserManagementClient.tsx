@@ -46,7 +46,12 @@ export default function UserManagementClient() {
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
     if (filterRoles.length > 0) {
-      list = list.filter(u => filterRoles.every(r => u.roles.includes(r)));
+      const roleFilters = filterRoles.filter(r => r !== "NONE");
+      const noRoleFilter = filterRoles.includes("NONE");
+      list = list.filter(u =>
+        (noRoleFilter && u.roles.length === 0) ||
+        (roleFilters.length > 0 && roleFilters.every(r => u.roles.includes(r)))
+      );
     }
     if (sortConfig) {
       list = [...list].sort((a, b) => {
@@ -277,24 +282,27 @@ export default function UserManagementClient() {
           >
             전체
           </button>
-          {["PARENT", "TEACHER", "PA", "ADMIN"].map(role => {
+          {["PARENT", "TEACHER", "PA", "ADMIN", "NONE"].map(role => {
             const active = filterRoles.includes(role);
             const colorActive =
               role === "ADMIN"   ? "bg-red-500 text-white border-red-500" :
               role === "PA"      ? "bg-green-500 text-white border-green-500" :
               role === "TEACHER" ? "bg-orange-500 text-white border-orange-500" :
+              role === "NONE"    ? "bg-gray-500 text-white border-gray-500" :
                                    "bg-blue-500 text-white border-blue-500";
             return (
               <button
                 key={role}
-                onClick={() => setFilterRoles(prev =>
-                  prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
-                )}
+                onClick={() => setFilterRoles(prev => {
+                  if (prev.includes(role)) return prev.filter(r => r !== role);
+                  if (role === "NONE") return ["NONE"];
+                  return [...prev.filter(r => r !== "NONE"), role];
+                })}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-black border transition-all ${
                   active ? colorActive : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
                 }`}
               >
-                {role}
+                {role === "NONE" ? "권한없음" : role}
               </button>
             );
           })}
