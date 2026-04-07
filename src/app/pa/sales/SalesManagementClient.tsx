@@ -376,7 +376,7 @@ export default function SalesManagementClient() {
                 className="hidden md:flex shrink-0 items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-700 ml-2"
                 title="새로고침"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
               </button>
               <div className="md:hidden w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0" />
               <button
@@ -400,7 +400,7 @@ export default function SalesManagementClient() {
                 className="md:hidden shrink-0 flex items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-200 dark:border-gray-700"
                 title="새로고침"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
               </button>
             </div>
             <span className="shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500">
