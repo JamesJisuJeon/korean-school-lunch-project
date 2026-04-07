@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, CheckCircle, Calendar, Filter } from "lucide-react";
+import { Users, CheckCircle, Calendar, Filter, RefreshCw } from "lucide-react";
 
 interface Menu {
   id: string;
@@ -65,14 +65,18 @@ export default function ClassOrdersClient() {
       });
   }, [selectedMenuId]);
 
-  // 학급 + 메뉴 선택 시 학생 목록 로드
-  useEffect(() => {
+  const fetchClassData = () => {
     if (!selectedMenuId || !selectedClassId) return;
     setIsLoading(true);
     fetch(`/api/pa/class-orders?menuId=${selectedMenuId}&classId=${selectedClassId}`)
       .then((r) => r.json())
       .then((data) => { setClassData(data); setIsLoading(false); })
       .catch(() => setIsLoading(false));
+  };
+
+  // 학급 + 메뉴 선택 시 학생 목록 로드
+  useEffect(() => {
+    fetchClassData();
   }, [selectedMenuId, selectedClassId]);
 
   const students = [...(classData?.students ?? [])].sort((a, b) => {
@@ -84,7 +88,7 @@ export default function ClassOrdersClient() {
   });
   const totalStudents = students.length;
   const orderedCount = students.filter((s) => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length;
-  const paidCount = students.filter((s) => s.orders.length > 0 && s.orders[0].isPaid).length;
+  const paidCount = students.filter((s) => s.orders.length > 0 && ["PAID", "UNPAID", "POST_PAID"].includes(s.orders[0].status)).length;
   const currentMenu = menus.find((m) => m.id === selectedMenuId);
 
   return (
@@ -124,27 +128,36 @@ export default function ClassOrdersClient() {
 
       {/* 반 요약 */}
       {classData?.className && (
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-5">
-            <div className="p-4 bg-green-600 rounded-2xl shadow-lg shadow-green-100 dark:shadow-green-900/40">
-              <Users className="w-8 h-8 text-white" />
+        <div className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-8">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="p-3 sm:p-4 bg-green-600 rounded-2xl shadow-md dark:shadow-none">
+              <Users className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
             </div>
-            <div>
-              <h2 className="text-2xl font-black text-gray-950 dark:text-gray-50">{classData.className}</h2>
-              <p className="text-gray-500 dark:text-gray-400 font-bold tracking-tighter uppercase">{classData.academicYear} ACADEMIC YEAR</p>
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-3">
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-950 dark:text-gray-50">{classData.className}</h2>
+                <button
+                  onClick={fetchClassData}
+                  className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                  title="새로고침"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 font-bold tracking-tighter uppercase">{classData.academicYear} ACADEMIC YEAR</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-4">
-            <div className="text-center px-6 py-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700">
+          <div className="flex justify-center gap-4">
+            <div className="text-center w-20 md:w-24 py-3 bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700">
               <p className="text-xs font-black text-gray-400 dark:text-gray-500 mb-1">전체</p>
               <p className="text-2xl font-black text-gray-900 dark:text-gray-50">{totalStudents}</p>
             </div>
-            <div className="text-center px-6 py-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl border-2 border-blue-100 dark:border-blue-800">
+            <div className="text-center w-20 md:w-24 py-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl border-2 border-blue-100 dark:border-blue-800">
               <p className="text-xs font-black text-blue-400 dark:text-blue-500 mb-1">신청</p>
               <p className="text-2xl font-black text-blue-700 dark:text-blue-400">{orderedCount}</p>
             </div>
-            <div className="text-center px-6 py-3 bg-green-50 dark:bg-green-900/30 rounded-2xl border-2 border-green-100 dark:border-green-800">
-              <p className="text-xs font-black text-green-400 dark:text-green-500 mb-1">수납완료</p>
+            <div className="text-center w-20 md:w-24 py-3 bg-green-50 dark:bg-green-900/30 rounded-2xl border-2 border-green-100 dark:border-green-800">
+              <p className="text-xs font-black text-green-400 dark:text-green-500 mb-1">배식확정</p>
               <p className="text-2xl font-black text-green-700 dark:text-green-400">{paidCount}</p>
             </div>
           </div>
@@ -190,30 +203,30 @@ export default function ClassOrdersClient() {
                     <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
                       {isOrdered ? (
                         status === "CANCELLED" ? (
-                          <span className="inline-flex items-center justify-center gap-2 text-red-500 dark:text-red-400 font-black text-sm">
+                          <span className="inline-flex items-center justify-center gap-1 text-red-500 dark:text-red-400 font-black text-xs md:text-sm">
                             취소
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center gap-2 text-blue-700 dark:text-blue-400 font-black text-sm">
-                            <CheckCircle className="w-5 h-5" /> 신청
+                          <span className="inline-flex items-center justify-center gap-1 text-blue-700 dark:text-blue-400 font-black text-xs md:text-sm">
+                            <CheckCircle className="w-3.5 h-3.5 md:w-5 md:h-5" /> 신청
                           </span>
                         )
                       ) : (
-                        <span className="inline-flex items-center justify-center gap-2 text-gray-300 dark:text-gray-600 font-bold text-sm italic">
+                        <span className="inline-flex items-center justify-center text-gray-300 dark:text-gray-600 font-bold text-xs md:text-sm italic">
                           미신청
                         </span>
                       )}
                     </td>
-                    <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
+                    <td className="px-2 md:px-4 py-5 whitespace-nowrap text-center">
                       {isOrdered ? (
                         status === "PAID" || status === "POST_PAID" ? (
-                          <span className="px-4 py-1.5 text-xs font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border-2 border-green-200 dark:border-green-800 shadow-sm">수납완료</span>
+                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border border-green-200 dark:border-green-800">수납완료</span>
                         ) : status === "UNPAID" ? (
-                          <span className="px-4 py-1.5 text-xs font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border-2 border-blue-200 dark:border-blue-800 shadow-sm">후납</span>
+                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800">후납</span>
                         ) : status === "CANCELLED" ? (
-                          <span className="px-4 py-1.5 text-xs font-black bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full border-2 border-red-200 dark:border-red-800 shadow-sm">취소</span>
+                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full border border-red-200 dark:border-red-800">취소</span>
                         ) : (
-                          <span className="px-4 py-1.5 text-xs font-black bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full border-2 border-yellow-200 dark:border-yellow-800 shadow-sm">수납대기</span>
+                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full border border-yellow-200 dark:border-yellow-800">수납대기</span>
                         )
                       ) : (
                         <span className="text-gray-200 dark:text-gray-700 font-black">-</span>

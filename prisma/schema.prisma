@@ -126,6 +126,7 @@ model Order {
   amount      Float
   paymentDate DateTime?
   status      String    @default("WAITING") // WAITING, PAID, UNPAID, POST_PAID, CANCELLED
+  isServed    Boolean   @default(false)
   notes       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
