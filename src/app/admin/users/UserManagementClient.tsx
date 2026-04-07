@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { UserPlus, Search, Shield, Key, Trash2, X, Download, Upload, Users } from "lucide-react";
+import { UserPlus, Search, Shield, Key, Trash2, X, Download, Upload, Users, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import * as XLSX from "xlsx";
 
 interface User {
@@ -21,6 +21,7 @@ export default function UserManagementClient() {
   const [editingUser, setEditingUser] = useState<any>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: "asc" | "desc" } | null>(null);
+  const [filterRoles, setFilterRoles] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,6 +45,9 @@ export default function UserManagementClient() {
       u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    if (filterRoles.length > 0) {
+      list = list.filter(u => filterRoles.every(r => u.roles.includes(r)));
+    }
     if (sortConfig) {
       list = [...list].sort((a, b) => {
         const av = (a[sortConfig.key] || "").toString();
@@ -52,7 +56,14 @@ export default function UserManagementClient() {
       });
     }
     return list;
-  }, [users, searchTerm, sortConfig]);
+  }, [users, searchTerm, sortConfig, filterRoles]);
+
+  const SortIcon = ({ col }: { col: keyof User }) => {
+    if (sortConfig?.key !== col) return <ChevronsUpDown className="w-3 h-3 ml-0.5 text-gray-400" />;
+    return sortConfig.direction === "asc"
+      ? <ChevronUp className="w-3 h-3 ml-0.5 text-blue-500" />
+      : <ChevronDown className="w-3 h-3 ml-0.5 text-blue-500" />;
+  };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,30 +236,89 @@ export default function UserManagementClient() {
         </div>
       )}
 
-      {/* 검색 + 신규 등록 버튼 */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-          <input
-            className="pl-12 pr-10 w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-base py-3 px-4 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 dark:focus:border-blue-400 transition-all outline-none font-bold text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
-            placeholder="이름 또는 이메일로 검색..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 dark:text-gray-500 transition-colors">
-              <X className="w-4 h-4" />
+      {/* 검색 + 필터 + 정렬 + 신규 등록 버튼 */}
+      <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-3">
+        {/* 검색 + 등록 버튼 */}
+        <div className="flex flex-col md:flex-row gap-3 items-center">
+          <div className="relative w-full md:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <input
+              className="pl-12 pr-10 w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-base py-3 px-4 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 dark:focus:border-blue-400 transition-all outline-none font-bold text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              placeholder="이름 또는 이메일로 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 dark:text-gray-500 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {!showAddForm && !editingUser && (
+            <button
+              onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              className="w-full md:w-auto px-8 py-3 bg-blue-600 dark:bg-blue-500 text-white font-black rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-blue-900/30 active:scale-95 transition-all text-sm md:text-base"
+            >
+              <UserPlus className="w-5 h-5" /> 신규 사용자 등록
             </button>
           )}
         </div>
-        {!showAddForm && !editingUser && (
+
+        {/* 권한 필터 + 모바일 정렬 */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest shrink-0">권한</span>
           <button
-            onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-            className="w-full md:w-auto px-8 py-3.5 bg-blue-600 dark:bg-blue-500 text-white font-black rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-blue-900/30 active:scale-95 transition-all text-base"
+            onClick={() => setFilterRoles([])}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-black border transition-all ${
+              filterRoles.length === 0
+                ? "bg-gray-700 text-white border-gray-700 dark:bg-gray-200 dark:text-gray-900 dark:border-gray-200"
+                : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+            }`}
           >
-            <UserPlus className="w-5 h-5" /> 신규 사용자 등록
+            전체
           </button>
-        )}
+          {["PARENT", "TEACHER", "PA", "ADMIN"].map(role => {
+            const active = filterRoles.includes(role);
+            const colorActive =
+              role === "ADMIN"   ? "bg-red-500 text-white border-red-500" :
+              role === "PA"      ? "bg-green-500 text-white border-green-500" :
+              role === "TEACHER" ? "bg-orange-500 text-white border-orange-500" :
+                                   "bg-blue-500 text-white border-blue-500";
+            return (
+              <button
+                key={role}
+                onClick={() => setFilterRoles(prev =>
+                  prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+                )}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-black border transition-all ${
+                  active ? colorActive : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                }`}
+              >
+                {role}
+              </button>
+            );
+          })}
+          <div className="w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0 md:hidden" />
+          <button
+            onClick={() => handleSort("name")}
+            className={`md:hidden flex items-center px-2.5 py-1 rounded-lg text-[11px] font-black border transition-all ${
+              sortConfig?.key === "name" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+            }`}
+          >
+            이름 <SortIcon col="name" />
+          </button>
+          <button
+            onClick={() => handleSort("email")}
+            className={`md:hidden flex items-center px-2.5 py-1 rounded-lg text-[11px] font-black border transition-all ${
+              sortConfig?.key === "email" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+            }`}
+          >
+            이메일 <SortIcon col="email" />
+          </button>
+          <span className="ml-auto text-[11px] font-black text-gray-400 dark:text-gray-500 shrink-0">
+            {sortedUsers.length}/{users.length}
+          </span>
+        </div>
       </div>
 
       {/* 개별 등록/수정 폼 */}
