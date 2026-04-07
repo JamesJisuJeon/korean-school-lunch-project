@@ -35,8 +35,8 @@ jobs:
           echo "DATABASE_URL=postgresql://postgres:qwer1234@10.10.1.23:5432/postgres" >> .env
           echo "DIRECT_URL=postgresql://postgres:qwer1234@10.10.1.23:5432/postgres" >> .env
           echo "NEXTAUTH_SECRET=8a7ba148-b671-4fcc-88f4-634c37852eb8" >> .env
-          echo "NEXTAUTH_URL=https://lunch.uniwiz.click/" >> .env
-          echo "AUTH_TRUST_HOST=https://lunch.uniwiz.click/" >> .env
+          echo "NEXTAUTH_URL=https://snack.uniwiz.click/" >> .env
+          echo "AUTH_TRUST_HOST=https://snack.uniwiz.click/" >> .env
           echo "PORT=3000" >> .env
       - name: Build
         run: |
@@ -46,6 +46,7 @@ jobs:
         run: |
           rm -f /root/lunch/default
           ln -s /root/lunch/main-$TIMESTAMP /root/lunch/default
+          ln -s /root/lunch/uploads /root/lunch/default/public/uploads
       - name: Start
         run: |
           cd /root/lunch/default
