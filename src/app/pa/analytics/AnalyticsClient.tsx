@@ -126,17 +126,17 @@ export default function AnalyticsClient() {
         </select>
       </div>
 
-      {isLoading && (
+      {isLoading && !data && (
         <div className="text-center py-20 text-gray-400 dark:text-gray-500 font-bold">집계 중...</div>
       )}
 
-      {!isLoading && data && (
+      {data && (
         <>
           {/* 신청/수납 현황 */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">신청/수납 현황</h2>
-              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className="w-4 h-4" /></button>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
             </div>
             {/* 1열: 신청 관련 */}
             <div className="grid grid-cols-5 gap-2 sm:gap-4 mb-3 sm:mb-4">
@@ -160,7 +160,7 @@ export default function AnalyticsClient() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">금액 현황</h2>
-              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className="w-4 h-4" /></button>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4">
               <StatCard label="총 매출" value={fmt(data.totalRevenue)} color="blue" />
@@ -178,7 +178,7 @@ export default function AnalyticsClient() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">반별 통계</h2>
-              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className="w-4 h-4" /></button>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
             </div>
             <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-auto max-h-[70vh]">
               <table className="min-w-[640px] w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">

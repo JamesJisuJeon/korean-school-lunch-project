@@ -102,7 +102,7 @@ export default function TeacherClassClient() {
                 className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
                 title="새로고침"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} />
               </button>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 font-bold tracking-tighter uppercase">{classData.academicYear} ACADEMIC YEAR</p>
