@@ -27,3 +27,13 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* iOS Safari: date/datetime-local input 네이티브 텍스트 색상 보정 */
+input[type="date"],
+input[type="datetime-local"] {
+  color-scheme: light;
+}
+.dark input[type="date"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
