@@ -93,11 +93,11 @@ export default async function DashboardPage() {
             title="학부모회 운영 (PA)"
             icon={<ClipboardList className="w-6 h-6 text-green-600 dark:text-green-400" />}
             iconBg="bg-green-50 dark:bg-green-900/30"
-            description="점심 메뉴 등록, 신청 내역 수납, 매점 쿠폰 판매를 관리합니다."
+            description="간식 메뉴 등록, 신청 내역 수납, 매점 쿠폰 판매를 관리합니다."
             links={[
               { label: "주간 메뉴 및 신청 관리", href: "/pa/menu" },
               { label: "현장 수납/쿠폰 판매", href: "/pa/sales" },
-              { label: "반별 스낵 신청 내역", href: "/pa/class-orders" },
+              { label: "반별 간식 신청 내역", href: "/pa/class-orders" },
               { label: "운영 집계 현황", href: "/pa/analytics" },
             ]}
           />
@@ -109,9 +109,9 @@ export default async function DashboardPage() {
             title="학부모 서비스"
             icon={<Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
             iconBg="bg-purple-50 dark:bg-purple-900/30"
-            description="내 자녀의 스낵을 신청하고 신청 현황을 확인합니다."
+            description="내 자녀의 간식을 신청하고 신청 현황을 확인합니다."
             links={[
-              { label: "스낵 신청하기", href: "/parent/order" },
+              { label: "간식 신청하기", href: "/parent/order" },
             ]}
           />
         )}
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
             title={substituteToday ? "임시 학급 관리 (배정됨)" : isAssistantOnly ? "학급 관리 (보조교사)" : "학급 관리 (Teacher)"}
             icon={<BookOpen className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
             iconBg="bg-orange-50 dark:bg-orange-900/30"
-            description={substituteToday ? `${format(today, 'yyyy.MM.dd')} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 스낵 신청 명단을 확인합니다."}
+            description={substituteToday ? `${format(today, 'yyyy.MM.dd')} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
             links={[
               { label: "우리 반 명단 확인", href: "/teacher/class" },
             ]}

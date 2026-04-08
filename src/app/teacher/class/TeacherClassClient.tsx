@@ -9,6 +9,7 @@ interface Menu {
   mainItems: string | null;
   dessertItems: string | null;
   beverageItems: string | null;
+  isPublished: boolean;
 }
 
 interface Student {
@@ -51,7 +52,10 @@ export default function TeacherClassClient() {
     if (res.ok) {
       const data = await res.json();
       setMenus(data);
-      if (data.length > 0) setSelectedMenuId(data[0].id);
+      if (data.length > 0) {
+        const published = data.find((m: Menu) => m.isPublished);
+        setSelectedMenuId(published ? published.id : data[0].id);
+      }
     }
   };
 
@@ -83,7 +87,7 @@ export default function TeacherClassClient() {
   });
   const totalStudents = students.length;
   const orderedCount = students.filter(s => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length;
-  const paidCount = students.filter(s => s.orders.length > 0 && ["PAID", "UNPAID", "POST_PAID"].includes(s.orders[0].status)).length;
+  const paidCount = students.filter(s => s.orders.length > 0 && ["PAID", "UNPAID", "POST_PAID", "FREE_SNACK"].includes(s.orders[0].status)).length;
   const currentMenu = menus.find(m => m.id === selectedMenuId);
 
   return (
@@ -210,7 +214,7 @@ export default function TeacherClassClient() {
                   </td>
                   <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
                     {isOrdered ? (
-                      status === "PAID" || status === "POST_PAID" ? (
+                      status === "PAID" || status === "POST_PAID" || status === "FREE_SNACK" ? (
                         <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border border-green-200 dark:border-green-800">수납완료</span>
                       ) : status === "UNPAID" ? (
                         <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800">후납</span>

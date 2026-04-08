@@ -29,6 +29,7 @@ interface Menu {
   id: string;
   date: string;
   price: number;
+  isPublished: boolean;
 }
 
 const PAYMENT_STATUSES = [
@@ -36,7 +37,8 @@ const PAYMENT_STATUSES = [
   { value: "PAID", label: "납부", color: "bg-green-600" },
   { value: "UNPAID", label: "후납", color: "bg-yellow-600" },
   { value: "POST_PAID", label: "후납-납부", color: "bg-blue-600" },
-  { value: "CANCELLED", label: "취소", color: "bg-red-600" }
+  { value: "CANCELLED", label: "취소", color: "bg-red-600" },
+  { value: "FREE_SNACK", label: "무료간식", color: "bg-emerald-500" },
 ];
 
 type SortKey = "class" | "name";
@@ -58,6 +60,7 @@ export default function SalesManagementClient() {
   const [filterOrderType, setFilterOrderType] = useState("ALL"); // ALL | PRE_ORDER | ON_SITE | NONE
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [filterCoupon, setFilterCoupon] = useState("ALL"); // ALL | HAS | NONE
+  const [filterCouponStatus, setFilterCouponStatus] = useState("ALL"); // ALL | PAID | UNPAID | POST_PAID | FREE_COUPON
   const [filterPAChild, setFilterPAChild] = useState(false);
 
   useEffect(() => {
@@ -73,7 +76,11 @@ export default function SalesManagementClient() {
     if (res.ok) {
       const data = await res.json();
       setMenus(data);
-      if (data.length > 0) setSelectedMenuId(data[0].id);
+      if (data.length > 0) {
+        const published = data.find((m: Menu) => m.isPublished);
+        // 게시된 메뉴가 있으면 해당 메뉴, 없으면 날짜 기준 최신 메뉴(API가 date desc 정렬이므로 첫 번째)
+        setSelectedMenuId(published ? published.id : data[0].id);
+      }
     }
   };
 
@@ -84,17 +91,30 @@ export default function SalesManagementClient() {
     setIsLoading(false);
   };
 
-  const updateOrderStatus = async (orderId: string, status: string) => {
+  const updateOrderStatus = async (orderId: string, status: string, amount?: number) => {
+    const body: any = { orderId, status, isPaid: status === "PAID" || status === "POST_PAID" };
+    if (amount !== undefined) body.amount = amount;
     const res = await fetch("/api/pa/sales", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        orderId,
-        status,
-        isPaid: status === "PAID" || status === "POST_PAID"
-      }),
+      body: JSON.stringify(body),
     });
     if (res.ok) fetchStudents();
+  };
+
+  const handleOrderStatusChange = (order: StudentWithOrder["orders"][0], newStatus: string, isPAChild: boolean) => {
+    if (newStatus === "FREE_SNACK") {
+      if (!confirm("무료간식으로 변경하시겠습니까?\n간식 비용이 $0으로 처리됩니다.")) return;
+      updateOrderStatus(order.id, newStatus, 0);
+    } else if (order.status === "FREE_SNACK") {
+      const menu = menus.find(m => m.id === selectedMenuId);
+      const originalPrice = isPAChild ? 0 : (menu?.price ?? 0);
+      updateOrderStatus(order.id, newStatus, originalPrice);
+    } else if (order.orderType === "ON_SITE" && newStatus === "CANCELLED") {
+      cancelOnSiteOrder(order.id);
+    } else {
+      updateOrderStatus(order.id, newStatus);
+    }
   };
 
   const handleOnSiteOrder = async (studentId: string) => {
@@ -106,13 +126,26 @@ export default function SalesManagementClient() {
     if (res.ok) fetchStudents();
   };
 
-  const updateCouponPaymentStatus = async (studentId: string, menuId: string, couponPaymentStatus: string) => {
+  const updateCouponPaymentStatus = async (studentId: string, menuId: string, couponPaymentStatus: string, couponAmount?: number) => {
+    const body: any = { studentId, menuId, couponPaymentStatus };
+    if (couponAmount !== undefined) body.couponAmount = couponAmount;
     await fetch("/api/pa/sales", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId, menuId, couponPaymentStatus }),
+      body: JSON.stringify(body),
     });
     fetchStudents();
+  };
+
+  const handleCouponStatusChange = (studentId: string, couponSale: StudentWithOrder["couponSales"][0], newStatus: string, couponQty: number) => {
+    if (newStatus === "FREE_COUPON") {
+      if (!confirm("무료쿠폰으로 변경하시겠습니까?\n쿠폰 비용이 $0으로 처리됩니다.")) return;
+      updateCouponPaymentStatus(studentId, selectedMenuId, newStatus, 0);
+    } else if (couponSale.paymentStatus === "FREE_COUPON") {
+      updateCouponPaymentStatus(studentId, selectedMenuId, newStatus, couponQty * 5);
+    } else {
+      updateCouponPaymentStatus(studentId, selectedMenuId, newStatus);
+    }
   };
 
   const cancelOnSiteOrder = async (orderId: string) => {
@@ -210,6 +243,13 @@ export default function SalesManagementClient() {
       result = result.filter(s => s.couponSales.length === 0 || s.couponSales[0].quantity === 0);
     }
 
+    // 쿠폰비 수납 상태 필터
+    if (filterCouponStatus !== "ALL") {
+      result = result.filter(s =>
+        s.couponSales.length > 0 && s.couponSales[0].quantity > 0 && s.couponSales[0].paymentStatus === filterCouponStatus
+      );
+    }
+
     // PA 자녀 필터
     if (filterPAChild) {
       result = result.filter(s => s.isPAChild);
@@ -230,7 +270,7 @@ export default function SalesManagementClient() {
     });
 
     return result;
-  }, [students, searchTerm, filterClass, filterOrderType, filterStatus, filterCoupon, filterPAChild, sortKey, sortDir]);
+  }, [students, searchTerm, filterClass, filterOrderType, filterStatus, filterCoupon, filterCouponStatus, filterPAChild, sortKey, sortDir]);
 
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (sortKey !== col) return <ChevronsUpDown className="w-3 h-3 ml-1 text-gray-400 dark:text-gray-600" />;
@@ -244,6 +284,7 @@ export default function SalesManagementClient() {
     filterOrderType !== "ALL",
     filterStatus !== "ALL",
     filterCoupon !== "ALL",
+    filterCouponStatus !== "ALL",
     filterPAChild,
   ].filter(Boolean).length;
 
@@ -345,6 +386,13 @@ export default function SalesManagementClient() {
                 <option value="HAS">쿠폰 있음</option>
                 <option value="NONE">쿠폰 없음</option>
               </select>
+              <select className={selectClass} value={filterCouponStatus} onChange={(e) => setFilterCouponStatus(e.target.value)}>
+                <option value="ALL">전체</option>
+                <option value="PAID">납부</option>
+                <option value="UNPAID">후납</option>
+                <option value="POST_PAID">후납-납부</option>
+                <option value="FREE_COUPON">무료쿠폰</option>
+              </select>
               <button
                 onClick={() => setFilterPAChild(v => !v)}
                 className={`shrink-0 flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-xl text-[11px] md:text-xs font-black transition-all border-2 ${
@@ -358,13 +406,13 @@ export default function SalesManagementClient() {
               {activeFilterCount > 0 && (
                 <>
                   <button
-                    onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterPAChild(false); }}
+                    onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
                     className="md:hidden flex items-center justify-center w-6 h-6 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full border border-red-100 dark:border-red-800 transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
                   <button
-                    onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterPAChild(false); }}
+                    onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
                     className="hidden md:flex items-center gap-1 px-2 py-1 text-[10px] font-black text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800 transition-colors"
                   >
                     <X className="w-3 h-3" /> 초기화
@@ -404,7 +452,7 @@ export default function SalesManagementClient() {
               </button>
             </div>
             <span className="shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500">
-              {displayedStudents.length}/{students.length}
+              {displayedStudents.length}
             </span>
           </div>
         </div>
@@ -416,14 +464,16 @@ export default function SalesManagementClient() {
             const order = student.orders[0];
             const couponSale = student.couponSales[0] ?? null;
             const couponQty = couponSale?.quantity ?? 0;
+            const total = (order?.amount ?? 0) + (couponSale?.amount ?? 0);
 
             return (
               <div key={student.id} className="p-4 space-y-2.5">
-                {/* Row 1: 이름/학급 (왼쪽) · 신청유형 (오른쪽) */}
+                {/* Row 1: 이름/학급/총액 (왼쪽) · 신청유형 (오른쪽) */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <p className="text-base font-black text-gray-950 dark:text-gray-100 shrink-0">{student.name}</p>
                     <p className="text-sm font-black text-blue-500 dark:text-blue-400 shrink-0">{student.class?.name || "반미지정"}</p>
+                    <span className="shrink-0 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-200">${total}</span>
                     {student.isPAChild && (
                       <span className="text-[10px] bg-yellow-400 text-yellow-950 font-black px-2 py-0.5 rounded-md shrink-0">PA</span>
                     )}
@@ -470,13 +520,7 @@ export default function SalesManagementClient() {
                         PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
                       } bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
                       value={order.status}
-                      onChange={(e) => {
-                        if (order.orderType === "ON_SITE" && e.target.value === "CANCELLED") {
-                          cancelOnSiteOrder(order.id);
-                        } else {
-                          updateOrderStatus(order.id, e.target.value);
-                        }
-                      }}
+                      onChange={(e) => handleOrderStatusChange(order, e.target.value, student.isPAChild)}
                     >
                       {PAYMENT_STATUSES.map(status => (
                         <option key={status.value} value={status.value}>{status.label}</option>
@@ -506,11 +550,12 @@ export default function SalesManagementClient() {
                     <select
                       className="shrink-0 rounded-xl border-2 py-2 px-3 text-xs font-black appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
                       value={couponSale.paymentStatus}
-                      onChange={(e) => updateCouponPaymentStatus(student.id, selectedMenuId, e.target.value)}
+                      onChange={(e) => handleCouponStatusChange(student.id, couponSale, e.target.value, couponQty)}
                     >
                       <option value="PAID">납부</option>
                       <option value="UNPAID">후납</option>
                       <option value="POST_PAID">후납-납부</option>
+                      <option value="FREE_COUPON">무료쿠폰</option>
                     </select>
                   )}
                 </div>
@@ -550,6 +595,7 @@ export default function SalesManagementClient() {
                 <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400">특이사항</th>
                 <th className="px-4 py-5 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-36">매점 쿠폰 ($5)</th>
                 <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 w-32">쿠폰비 수납</th>
+                <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 w-24">총액</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-900">
@@ -557,6 +603,7 @@ export default function SalesManagementClient() {
                 const order = student.orders[0];
                 const couponSale = student.couponSales[0] ?? null;
                 const couponQty = couponSale?.quantity ?? 0;
+                const total = (order?.amount ?? 0) + (couponSale?.amount ?? 0);
 
                 return (
                   <tr key={student.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
@@ -600,13 +647,7 @@ export default function SalesManagementClient() {
                             PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
                           } bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none`}
                           value={order.status}
-                          onChange={(e) => {
-                            if (order.orderType === "ON_SITE" && e.target.value === "CANCELLED") {
-                              cancelOnSiteOrder(order.id);
-                            } else {
-                              updateOrderStatus(order.id, e.target.value);
-                            }
-                          }}
+                          onChange={(e) => handleOrderStatusChange(order, e.target.value, student.isPAChild)}
                         >
                           {PAYMENT_STATUSES.map(status => (
                             <option key={status.value} value={status.value}>{status.label}</option>
@@ -660,22 +701,26 @@ export default function SalesManagementClient() {
                         <select
                           className="w-28 rounded-xl border-2 py-2 px-3 text-xs font-black transition-all appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
                           value={couponSale.paymentStatus}
-                          onChange={(e) => updateCouponPaymentStatus(student.id, selectedMenuId, e.target.value)}
+                          onChange={(e) => handleCouponStatusChange(student.id, couponSale, e.target.value, couponQty)}
                         >
                           <option value="PAID">납부</option>
                           <option value="UNPAID">후납</option>
                           <option value="POST_PAID">후납-납부</option>
+                          <option value="FREE_COUPON">무료쿠폰</option>
                         </select>
                       ) : (
                         <span className="text-gray-200 dark:text-gray-700 font-bold italic">-</span>
                       )}
+                    </td>
+                    <td className="px-4 py-5 whitespace-nowrap">
+                      <span className="inline-block px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-black text-gray-900 dark:text-gray-100">${total}</span>
                     </td>
                   </tr>
                 );
               })}
               {displayedStudents.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-8 py-20 text-center text-gray-300 dark:text-gray-600 font-black italic">
+                  <td colSpan={8} className="px-8 py-20 text-center text-gray-300 dark:text-gray-600 font-black italic">
                     {students.length === 0 ? "배식 날짜를 선택해 주세요." : "조건에 맞는 학생이 없습니다."}
                   </td>
                 </tr>
