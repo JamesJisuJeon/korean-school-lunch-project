@@ -282,7 +282,7 @@ export default function MenuManagementClient() {
       </div>
     )}
     <div className="space-y-12">
-      <section className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <section className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl font-black flex items-center gap-3 text-green-700 dark:text-green-400">
             <Calendar className="w-8 h-8" />
