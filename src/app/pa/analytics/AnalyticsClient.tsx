@@ -75,8 +75,8 @@ function StatCard({
     orange: "bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300",
   };
   return (
-    <div className={`rounded-xl sm:rounded-2xl border sm:border-2 p-2.5 sm:p-5 flex flex-col gap-0.5 sm:gap-1 ${colorMap[color]}`}>
-      <p className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 leading-tight min-h-[2.5em] sm:min-h-0">{label}</p>
+    <div className={`rounded-xl sm:rounded-2xl border sm:border-2 p-2 sm:p-3 flex flex-col items-center text-center gap-0.5 sm:gap-1 ${colorMap[color]}`}>
+      <p className="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 leading-tight">{label}</p>
       <p className={`text-lg sm:text-3xl font-black leading-tight ${colorMap[color].split(" ").slice(2).join(" ")}`}>{value}</p>
       {sub && <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
     </div>
@@ -117,7 +117,7 @@ export default function AnalyticsClient() {
   const fmt = (n: number) => `$${Math.round(n)}`;
 
   return (
-    <div className="space-y-8">
+    <div>
       {/* 메뉴 선택 */}
       <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-3 max-w-xs">
         <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -139,7 +139,7 @@ export default function AnalyticsClient() {
       )}
 
       {data && (
-        <>
+        <div className="space-y-8 mt-3">
           {/* 신청/수납 현황 */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -147,7 +147,7 @@ export default function AnalyticsClient() {
               <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
             </div>
             {/* 1열: 신청 관련 */}
-            <div className="grid grid-cols-6 gap-2 sm:gap-4 mb-3 sm:mb-4">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4 mb-3 sm:mb-4">
               <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} color="blue" />
               <StatCard label="사전 신청 PA자녀" value={`${data.preOrderPAChildCount}명`} color="purple" />
               <StatCard label="총 사전 신청" value={`${data.totalPreOrders}명`} color="blue" />
@@ -156,7 +156,7 @@ export default function AnalyticsClient() {
               <StatCard label="무료쿠폰" value={`${data.freeCouponCount}명`} color="green" />
             </div>
             {/* 2열: 수납 관련 */}
-            <div className="grid grid-cols-6 gap-2 sm:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4">
               <StatCard label="최종 신청 인원" value={`${data.finalOrderCount}명`} color="green" />
               <StatCard label="최종 확정 인원" value={`${data.finalConfirmedCount}명`} color="green" />
               <StatCard label="수납 대기" value={`${data.waitingCount}명`} color="gray" />
@@ -308,7 +308,7 @@ export default function AnalyticsClient() {
               </table>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
