@@ -450,12 +450,12 @@ export default function AdminStudentsClient() {
                   <div className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                     {filteredParents.length > 0 ? (
                       filteredParents.map(p => (
-                        <button key={p.id} type="button" onClick={() => toggleParent(p.id)} className="w-full px-5 py-3 text-left hover:bg-blue-50 flex justify-between items-center transition-colors group border-b border-gray-50 last:border-0">
+                        <button key={p.id} type="button" onClick={() => toggleParent(p.id)} className="w-full px-5 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900/30 flex justify-between items-center transition-colors group border-b border-gray-50 dark:border-gray-700 last:border-0">
                           <div className="flex flex-col">
-                            <span className="font-bold text-gray-800 text-sm">{p.name || "이름없음"}</span>
-                            <span className="text-[10px] text-gray-500">{p.email}</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{p.name || "이름없음"}</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{p.email}</span>
                           </div>
-                          <CheckCircle2 className="w-4 h-4 text-transparent group-hover:text-blue-500 transition-colors" />
+                          <CheckCircle2 className="w-4 h-4 text-transparent group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
                         </button>
                       ))
                     ) : (
@@ -480,7 +480,7 @@ export default function AdminStudentsClient() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full md:w-auto px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-black rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 shadow-xl shadow-blue-200 transition-all active:scale-95"
+                className="w-full md:w-auto px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-black rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 transition-all active:scale-95"
               >
                 {isLoading ? "처리 중..." : editingStudent ? "수정 완료" : "학생 등록 완료"}
               </button>
