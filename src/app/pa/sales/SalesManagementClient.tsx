@@ -338,124 +338,121 @@ export default function SalesManagementClient() {
       {/* 검색 + 필터 */}
       <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-sm border border-gray-200 dark:border-gray-800">
         <div className="sticky top-28 xl:top-16 z-20 bg-white dark:bg-gray-900 rounded-t-[2.5rem] overflow-hidden">
-        <div className="p-3 sm:p-6 border-b border-gray-50 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 space-y-2 sm:space-y-4">
-          {/* 검색창 */}
-          <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors" />
-            <input
-              className="pl-12 w-full h-10 sm:h-14 bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-0 font-bold transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
-              placeholder="학생 또는 학급 이름 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm("")} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 dark:text-gray-500 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* 필터 + 정렬 1줄 */}
-          <div className="flex items-center gap-2">
-            <div className="hidden xl:flex items-center gap-1.5 shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              <Filter className="w-3.5 h-3.5" />
-              {activeFilterCount > 0 && (
-                <span className="w-4 h-4 flex items-center justify-center bg-blue-600 text-white rounded-full text-[9px] font-black">
-                  {activeFilterCount}
-                </span>
+          <div className="p-3 sm:p-6 border-b border-gray-50 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 space-y-2 sm:space-y-4">
+            {/* 검색창 */}
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors" />
+              <input
+                className="pl-12 w-full h-10 sm:h-14 bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700 focus:border-blue-600 dark:focus:border-blue-400 focus:ring-0 font-bold transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
+                placeholder="학생 또는 학급 이름 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-400 dark:text-gray-500 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
               )}
             </div>
-            <div className="flex items-center gap-2 flex-wrap flex-1">
-              <select className={selectClass} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
-                <option value="ALL">전체 학급</option>
-                {classList.map(cls => <option key={cls} value={cls}>{cls}</option>)}
-              </select>
-              <select className={selectClass} value={filterOrderType} onChange={(e) => setFilterOrderType(e.target.value)}>
-                <option value="ALL">전체 신청</option>
-                <option value="PRE_ORDER">사전 신청</option>
-                <option value="ON_SITE">현장 신청</option>
-                <option value="NONE">미신청</option>
-              </select>
-              <select className={selectClass} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                <option value="ALL">전체 수납</option>
-                {PAYMENT_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                <option value="NONE">미신청</option>
-              </select>
-              <select className={selectClass} value={filterCoupon} onChange={(e) => setFilterCoupon(e.target.value)}>
-                <option value="ALL">전체 쿠폰</option>
-                <option value="HAS">쿠폰 있음</option>
-                <option value="NONE">쿠폰 없음</option>
-              </select>
-              <select className={selectClass} value={filterCouponStatus} onChange={(e) => setFilterCouponStatus(e.target.value)}>
-                <option value="ALL">전체</option>
-                <option value="PAID">납부</option>
-                <option value="UNPAID">후납</option>
-                <option value="POST_PAID">후납-납부</option>
-                <option value="FREE_COUPON">무료쿠폰</option>
-              </select>
-              <button
-                onClick={() => setFilterPAChild(v => !v)}
-                className={`shrink-0 flex items-center gap-1 px-2 xl:px-3 py-1 xl:py-2 rounded-xl text-[11px] xl:text-xs font-black transition-all border-2 ${
-                  filterPAChild
+
+            {/* 필터 + 정렬 1줄 */}
+            <div className="flex items-center gap-2">
+              <div className="hidden xl:flex items-center gap-1.5 shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                <Filter className="w-3.5 h-3.5" />
+                {activeFilterCount > 0 && (
+                  <span className="w-4 h-4 flex items-center justify-center bg-blue-600 text-white rounded-full text-[9px] font-black">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap flex-1">
+                <select className={selectClass} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
+                  <option value="ALL">전체 학급</option>
+                  {classList.map(cls => <option key={cls} value={cls}>{cls}</option>)}
+                </select>
+                <select className={selectClass} value={filterOrderType} onChange={(e) => setFilterOrderType(e.target.value)}>
+                  <option value="ALL">전체 신청</option>
+                  <option value="PRE_ORDER">사전 신청</option>
+                  <option value="ON_SITE">현장 신청</option>
+                  <option value="NONE">미신청</option>
+                </select>
+                <select className={selectClass} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                  <option value="ALL">전체 수납</option>
+                  {PAYMENT_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  <option value="NONE">미신청</option>
+                </select>
+                <select className={selectClass} value={filterCoupon} onChange={(e) => setFilterCoupon(e.target.value)}>
+                  <option value="ALL">전체 쿠폰</option>
+                  <option value="HAS">쿠폰 있음</option>
+                  <option value="NONE">쿠폰 없음</option>
+                </select>
+                <select className={selectClass} value={filterCouponStatus} onChange={(e) => setFilterCouponStatus(e.target.value)}>
+                  <option value="ALL">전체</option>
+                  <option value="PAID">납부</option>
+                  <option value="UNPAID">후납</option>
+                  <option value="POST_PAID">후납-납부</option>
+                  <option value="FREE_COUPON">무료쿠폰</option>
+                </select>
+                <button
+                  onClick={() => setFilterPAChild(v => !v)}
+                  className={`shrink-0 flex items-center gap-1 px-2 xl:px-3 py-1 xl:py-2 rounded-xl text-[11px] xl:text-xs font-black transition-all border-2 ${filterPAChild
                     ? "bg-yellow-400 text-yellow-950 border-yellow-400"
                     : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-700"
-                }`}
-              >
-                PA
-              </button>
-              {activeFilterCount > 0 && (
-                <>
-                  <button
-                    onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
-                    className="xl:hidden flex items-center justify-center w-6 h-6 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full border border-red-100 dark:border-red-800 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                  <button
-                    onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
-                    className="hidden xl:flex items-center gap-1 px-2 py-1 text-[10px] font-black text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800 transition-colors"
-                  >
-                    <X className="w-3 h-3" /> 초기화
-                  </button>
-                </>
-              )}
-              <button
-                onClick={fetchStudents}
-                className="hidden xl:flex shrink-0 items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-700 ml-2"
-                title="새로고침"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
-              </button>
-              <div className="xl:hidden w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0" />
-              <button
-                onClick={() => handleSort("class")}
-                className={`xl:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${
-                  sortKey === "class" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
-                }`}
-              >
-                학급 <SortIcon col="class" />
-              </button>
-              <button
-                onClick={() => handleSort("name")}
-                className={`xl:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${
-                  sortKey === "name" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
-                }`}
-              >
-                이름 <SortIcon col="name" />
-              </button>
-              <button
-                onClick={fetchStudents}
-                className="xl:hidden shrink-0 flex items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-200 dark:border-gray-700"
-                title="새로고침"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
-              </button>
+                    }`}
+                >
+                  PA
+                </button>
+                {activeFilterCount > 0 && (
+                  <>
+                    <button
+                      onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
+                      className="xl:hidden flex items-center justify-center w-6 h-6 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full border border-red-100 dark:border-red-800 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
+                      className="hidden xl:flex items-center gap-1 px-2 py-1 text-[10px] font-black text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800 transition-colors"
+                    >
+                      <X className="w-3 h-3" /> 초기화
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={fetchStudents}
+                  className="hidden xl:flex shrink-0 items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-700 ml-2"
+                  title="새로고침"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
+                </button>
+                <div className="xl:hidden w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0" />
+                <button
+                  onClick={() => handleSort("class")}
+                  className={`xl:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${sortKey === "class" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                    }`}
+                >
+                  학급 <SortIcon col="class" />
+                </button>
+                <button
+                  onClick={() => handleSort("name")}
+                  className={`xl:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${sortKey === "name" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                    }`}
+                >
+                  이름 <SortIcon col="name" />
+                </button>
+                <button
+                  onClick={fetchStudents}
+                  className="xl:hidden shrink-0 flex items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-200 dark:border-gray-700"
+                  title="새로고침"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+              <span className="shrink-0 text-xs font-black text-gray-400 dark:text-gray-500">
+                {displayedStudents.length}
+              </span>
             </div>
-            <span className="shrink-0 text-xs font-black text-gray-400 dark:text-gray-500">
-              {displayedStudents.length}
-            </span>
           </div>
-        </div>
         </div>{/* sticky wrapper end */}
 
         {/* 모바일 카드 레이아웃 (xl 미만에서 표시) */}
@@ -465,7 +462,7 @@ export default function SalesManagementClient() {
             const couponSale = student.couponSales[0] ?? null;
             const couponQty = couponSale?.quantity ?? 0;
             const orderAmount = (order && order.status !== "CANCELLED") ? order.amount : 0;
-            const total = orderAmount + (couponSale?.amount ?? 0);
+            const total = orderAmount + ((couponSale && couponSale.paymentStatus !== "FREE_COUPON") ? couponSale.amount : 0);
 
             return (
               <div key={student.id} className="p-4 space-y-2.5">
@@ -477,11 +474,10 @@ export default function SalesManagementClient() {
                     <span className="shrink-0 px-3 flex items-center justify-center h-[38px] rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-200">${total}</span>
                   </div>
                   {order ? (
-                    <span className={`shrink-0 inline-flex items-center gap-1 px-3 h-[38px] rounded-xl text-xs font-black border-2 whitespace-nowrap ${
-                      order.orderType === "PRE_ORDER"
-                        ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
-                        : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
-                    }`}>
+                    <span className={`shrink-0 inline-flex items-center gap-1 px-3 h-[38px] rounded-xl text-xs font-black border-2 whitespace-nowrap ${order.orderType === "PRE_ORDER"
+                      ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
+                      : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
+                      }`}>
                       <Check className="w-3 h-3" />
                       {order.orderType === "PRE_ORDER" ? "사전" : "현장"} ${order.amount}
                     </span>
@@ -514,9 +510,8 @@ export default function SalesManagementClient() {
                       }}
                     />
                     <select
-                      className={`shrink-0 rounded-xl border-2 h-[38px] px-3 text-xs font-black appearance-none cursor-pointer ${
-                        PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
-                      } bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
+                      className={`shrink-0 rounded-xl border-2 h-[38px] px-3 text-xs font-black appearance-none cursor-pointer ${PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
+                        } bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
                       value={order.status}
                       onChange={(e) => handleOrderStatusChange(order, e.target.value, student.isPAChild)}
                     >
@@ -602,7 +597,7 @@ export default function SalesManagementClient() {
                 const couponSale = student.couponSales[0] ?? null;
                 const couponQty = couponSale?.quantity ?? 0;
                 const orderAmount = (order && order.status !== "CANCELLED") ? order.amount : 0;
-            const total = orderAmount + (couponSale?.amount ?? 0);
+                const total = orderAmount + ((couponSale && couponSale.paymentStatus !== "FREE_COUPON") ? couponSale.amount : 0);
 
                 return (
                   <tr key={student.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
@@ -618,14 +613,13 @@ export default function SalesManagementClient() {
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order ? (
-                        <span className={`inline-flex items-center gap-1 px-3 h-[38px] rounded-xl text-xs font-black border-2 w-fit whitespace-nowrap ${
-                            order.orderType === "PRE_ORDER"
-                              ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
-                              : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
+                        <span className={`inline-flex items-center gap-1 px-3 h-[38px] rounded-xl text-xs font-black border-2 w-fit whitespace-nowrap ${order.orderType === "PRE_ORDER"
+                          ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
+                          : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
                           }`}>
-                            <Check className="w-3 h-3" />
-                            {order.orderType === "PRE_ORDER" ? "사전 신청" : "현장 신청"} ${order.amount}
-                          </span>
+                          <Check className="w-3 h-3" />
+                          {order.orderType === "PRE_ORDER" ? "사전 신청" : "현장 신청"} ${order.amount}
+                        </span>
                       ) : (
                         <button
                           onClick={() => handleOnSiteOrder(student.id)}
@@ -638,9 +632,8 @@ export default function SalesManagementClient() {
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order ? (
                         <select
-                          className={`w-28 rounded-xl border-2 h-[38px] px-3 text-xs font-black transition-all appearance-none cursor-pointer ${
-                            PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
-                          } bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none`}
+                          className={`w-28 rounded-xl border-2 h-[38px] px-3 text-xs font-black transition-all appearance-none cursor-pointer ${PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
+                            } bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none`}
                           value={order.status}
                           onChange={(e) => handleOrderStatusChange(order, e.target.value, student.isPAChild)}
                         >
