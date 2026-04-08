@@ -471,7 +471,7 @@ export default function SalesManagementClient() {
                 {/* Row 1: 이름/학급/총액 (왼쪽) · 신청유형 (오른쪽) */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <p className={`text-base font-black shrink-0 ${student.isPAChild ? "bg-yellow-400 text-yellow-950 px-2 py-0.5 rounded-md" : "text-gray-950 dark:text-gray-100"}`}>{student.name}</p>
+                    <p className={`text-sm font-black shrink-0 ${student.isPAChild ? "bg-yellow-400 text-yellow-950 px-1.5 py-0.5 rounded-md" : "text-gray-950 dark:text-gray-100"}`}>{student.name}</p>
                     <p className="text-sm font-black text-blue-500 dark:text-blue-400 shrink-0">{student.class?.name || "반미지정"}</p>
                     <span className="shrink-0 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-200">${total}</span>
                   </div>
