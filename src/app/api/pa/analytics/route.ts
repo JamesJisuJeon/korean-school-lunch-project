@@ -97,10 +97,12 @@ export async function GET(req: Request) {
     waitingCount: number;
     cancelledCount: number;
     paChildCount: number;
+    freeLunchCount: number;
     paidAmount: number;
     unpaidAmount: number;
     couponAmount: number;
     couponUnpaidAmount: number;
+    freeCouponCount: number;
   };
 
   const classMap = new Map<string, ClassStat>();
@@ -118,10 +120,12 @@ export async function GET(req: Request) {
         waitingCount: 0,
         cancelledCount: 0,
         paChildCount: 0,
+        freeLunchCount: 0,
         paidAmount: 0,
         unpaidAmount: 0,
         couponAmount: 0,
         couponUnpaidAmount: 0,
+        freeCouponCount: 0,
       });
     }
     const cls = classMap.get(className)!;
@@ -141,6 +145,9 @@ export async function GET(req: Request) {
           cls.unpaidCount++;
           cls.confirmedCount++;
           cls.unpaidAmount += order.amount;
+        } else if (order.status === "FREE_SNACK") {
+          cls.confirmedCount++;
+          cls.freeLunchCount++;
         } else {
           cls.waitingCount++;
         }
@@ -149,7 +156,9 @@ export async function GET(req: Request) {
     }
 
     for (const coupon of student.couponSales) {
-      if (couponPaidStatuses.includes(coupon.paymentStatus)) {
+      if (coupon.paymentStatus === "FREE_COUPON") {
+        cls.freeCouponCount++;
+      } else if (couponPaidStatuses.includes(coupon.paymentStatus)) {
         cls.couponAmount += coupon.amount;
       } else if (coupon.paymentStatus === "UNPAID") {
         cls.couponUnpaidAmount += coupon.amount;
@@ -160,6 +169,8 @@ export async function GET(req: Request) {
   const waitingCount = activeOrders.filter((o) => o.status === "WAITING").length;
   const paidConfirmedCount = activeOrders.filter((o) => paidStatuses.includes(o.status)).length;
   const unpaidCount = activeOrders.filter((o) => o.status === "UNPAID").length;
+  const freeLunchCount = activeOrders.filter((o) => o.status === "FREE_SNACK").length;
+  const freeCouponCount = allCoupons.filter((c) => c.paymentStatus === "FREE_COUPON").length;
 
   return NextResponse.json({
     menu: { date: menu.date, price: menu.price },
@@ -173,7 +184,9 @@ export async function GET(req: Request) {
     waitingCount,
     paidConfirmedCount,
     unpaidCount,
-    finalConfirmedCount: paidConfirmedCount + unpaidCount,
+    freeLunchCount,
+    freeCouponCount,
+    finalConfirmedCount: paidConfirmedCount + unpaidCount + freeLunchCount,
     preOrderPaidAmount: preOrderPaid.reduce((sum, o) => sum + o.amount, 0),
     preOrderUnpaidAmount: preOrderUnpaid.reduce((sum, o) => sum + o.amount, 0),
     onSitePaidAmount: onSitePaid.reduce((sum, o) => sum + o.amount, 0),

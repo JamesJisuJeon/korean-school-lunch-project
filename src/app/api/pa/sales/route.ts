@@ -58,13 +58,15 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    const { orderId, status, notes, isPaid, studentId, menuId, couponPaymentStatus } = await req.json();
+    const { orderId, status, notes, isPaid, amount, studentId, menuId, couponPaymentStatus, couponAmount } = await req.json();
 
     // 쿠폰비 수납 상태 변경 (studentId + menuId 기준)
     if (studentId !== undefined && menuId !== undefined && couponPaymentStatus !== undefined) {
+      const couponData: any = { paymentStatus: couponPaymentStatus };
+      if (couponAmount !== undefined) couponData.amount = couponAmount;
       const couponSale = await prisma.couponSale.update({
         where: { studentId_menuId: { studentId, menuId } },
-        data: { paymentStatus: couponPaymentStatus }
+        data: couponData
       });
       return NextResponse.json(couponSale);
     }
@@ -72,6 +74,7 @@ export async function PATCH(req: Request) {
     const updateData: any = {};
     if (status !== undefined) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
+    if (amount !== undefined) updateData.amount = amount;
     if (isPaid !== undefined) {
       updateData.isPaid = isPaid;
       updateData.paymentDate = isPaid ? new Date() : null;

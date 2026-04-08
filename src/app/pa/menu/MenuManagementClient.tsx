@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Coffee, Calendar, Lock, Clock, Utensils, IceCream, Beer, Star, Upload, X, Check, Edit2, Trash2 } from "lucide-react";
+import { Coffee, Calendar, Lock, Globe, Clock, Utensils, IceCream, Beer, Star, Upload, X, Check, Edit2, Trash2 } from "lucide-react";
 
 interface Menu {
   id: string;
@@ -11,6 +11,7 @@ interface Menu {
   beverageItems: string | null;
   specialItems: string | null;
   imageUrl: string | null;
+  notice: string | null;
   price: number;
   isPublished: boolean;
   deadline: string | null;
@@ -25,6 +26,7 @@ export default function MenuManagementClient() {
     beverageItems: "",
     specialItems: "",
     imageUrl: "",
+    notice: "",
     price: 7,
     isPublished: false,
     deadline: ""
@@ -35,8 +37,9 @@ export default function MenuManagementClient() {
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Menu | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
-  const emptyMenu = { date: "", mainItems: "", dessertItems: "", beverageItems: "", specialItems: "", imageUrl: "", price: 7, isPublished: false, deadline: "" };
+  const emptyMenu = { date: "", mainItems: "", dessertItems: "", beverageItems: "", specialItems: "", imageUrl: "", notice: "", price: 7, isPublished: false, deadline: "" };
 
   const cancelForm = () => {
     setEditingId(null);
@@ -143,6 +146,7 @@ export default function MenuManagementClient() {
       beverageItems: menu.beverageItems || "",
       specialItems: menu.specialItems || "",
       imageUrl: menu.imageUrl || "",
+      notice: menu.notice || "",
       price: menu.price,
       isPublished: menu.isPublished,
       deadline: menu.deadline ? toLocalInputString(menu.deadline) : ""
@@ -159,11 +163,14 @@ export default function MenuManagementClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: menu.id,
           date: menu.date.split('T')[0],
           mainItems: menu.mainItems,
           dessertItems: menu.dessertItems,
           beverageItems: menu.beverageItems,
+          specialItems: menu.specialItems,
           imageUrl: menu.imageUrl,
+          notice: menu.notice,
           price: menu.price,
           deadline: menu.deadline,
           isPublished: false
@@ -173,6 +180,42 @@ export default function MenuManagementClient() {
       if (res.ok) {
         fetchMenus();
         alert("게시가 성공적으로 해제되었습니다.");
+      } else {
+        const data = await res.json();
+        alert(data.message || "오류가 발생했습니다.");
+      }
+    } catch (err) {
+      alert("서버 통신 중 오류가 발생했습니다.");
+    }
+    setIsLoading(false);
+  };
+
+  const handlePublish = async (menu: Menu) => {
+    if (!confirm("이 메뉴를 게시하시겠습니까? (학부모 신청 페이지에 공개됩니다.)")) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/pa/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: menu.id,
+          date: menu.date.split('T')[0],
+          mainItems: menu.mainItems,
+          dessertItems: menu.dessertItems,
+          beverageItems: menu.beverageItems,
+          specialItems: menu.specialItems,
+          imageUrl: menu.imageUrl,
+          notice: menu.notice,
+          price: menu.price,
+          deadline: menu.deadline,
+          isPublished: true
+        }),
+      });
+
+      if (res.ok) {
+        fetchMenus();
+        alert("메뉴가 게시되었습니다.");
       } else {
         const data = await res.json();
         alert(data.message || "오류가 발생했습니다.");
@@ -218,6 +261,26 @@ export default function MenuManagementClient() {
 
   return (
     <>
+    {/* 이미지 확대 모달 */}
+    {zoomImageUrl && (
+      <div
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out"
+        onClick={() => setZoomImageUrl(null)}
+      >
+        <button
+          className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+          onClick={() => setZoomImageUrl(null)}
+        >
+          <X className="w-6 h-6" />
+        </button>
+        <img
+          src={zoomImageUrl}
+          alt="메뉴 이미지"
+          className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+          onClick={e => e.stopPropagation()}
+        />
+      </div>
+    )}
     <div className="space-y-12">
       <section className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-6 sm:mb-8">
@@ -306,6 +369,17 @@ export default function MenuManagementClient() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">공지사항</label>
+            <textarea
+              className={`${inputClassName} resize-none`}
+              rows={2}
+              placeholder="공지사항을 입력하세요. (선택)"
+              value={newMenu.notice}
+              onChange={(e) => setNewMenu({ ...newMenu, notice: e.target.value })}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
             <div className="min-w-0">
               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 flex items-center gap-1 mb-1"><Clock className="w-4 h-4" /> 신청 마감 일시</label>
@@ -335,8 +409,14 @@ export default function MenuManagementClient() {
           {menus.map((menu) => (
             <div key={menu.id} className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl overflow-hidden border-2 border-gray-200 dark:border-gray-800 flex flex-col md:flex-row hover:shadow-2xl transition-shadow group">
               {menu.imageUrl && (
-                <div className="md:w-1/3 h-48 sm:h-56 md:h-auto border-b-2 md:border-b-0 md:border-r-2 border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div
+                  className="md:w-1/3 h-48 sm:h-56 md:h-auto border-b-2 md:border-b-0 md:border-r-2 border-gray-100 dark:border-gray-800 overflow-hidden relative group cursor-zoom-in"
+                  onClick={() => setZoomImageUrl(menu.imageUrl)}
+                >
                   <img src={menu.imageUrl} alt="메뉴 안내" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs font-black px-3 py-1.5 rounded-full">클릭하여 확대</span>
+                  </div>
                 </div>
               )}
               <div className="flex-1 p-4 sm:p-8 flex flex-col">
@@ -380,6 +460,14 @@ export default function MenuManagementClient() {
                   </div>
                 </div>
 
+                {/* 공지사항 */}
+                {menu.notice && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3 mb-4 sm:mb-6">
+                    <p className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">공지사항</p>
+                    <p className="text-sm font-bold text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{menu.notice}</p>
+                  </div>
+                )}
+
                 {/* 버튼 행 */}
                 <div className="flex gap-2 mt-auto">
                   <button
@@ -388,12 +476,22 @@ export default function MenuManagementClient() {
                   >
                     <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 수정
                   </button>
-                  {menu.isPublished && (
+                  {menu.isPublished ? (
                     <button
                       onClick={() => handleUnpublish(menu)}
+                      disabled={isLoading}
                       className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors border-2 border-red-200 dark:border-red-800 shadow-sm"
                     >
                       <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시 해제
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handlePublish(menu)}
+                      disabled={isLoading || new Date() >= new Date(menu.date)}
+                      title={new Date() >= new Date(menu.date) ? "배식일자가 지난 메뉴는 게시할 수 없습니다." : undefined}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border-2 border-blue-200 dark:border-blue-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-50 dark:disabled:hover:bg-blue-900/30"
+                    >
+                      <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시
                     </button>
                   )}
                   <button

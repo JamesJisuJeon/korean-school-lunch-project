@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       beverageItems,
       specialItems,
       imageUrl,
+      notice,
       price,
       isPublished,
       deadline
@@ -55,6 +56,13 @@ export async function POST(req: Request) {
           { status: 409 }
         );
       }
+    }
+
+    // 배식일자가 지난 메뉴는 게시 불가 (해제는 허용)
+    if (isPublished && new Date() >= menuDate) {
+      return NextResponse.json({
+        message: "배식일자가 지난 메뉴는 게시할 수 없습니다."
+      }, { status: 400 });
     }
 
     const existingPublishedMenu = await prisma.menu.findFirst({
@@ -79,6 +87,7 @@ export async function POST(req: Request) {
       beverageItems,
       specialItems,
       imageUrl,
+      notice: notice ?? null,
       price: parseFloat(price),
       isPublished: isPublished ?? false,
       deadline: deadline ? new Date(deadline) : null
