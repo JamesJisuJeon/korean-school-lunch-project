@@ -1,6 +1,7 @@
 # 한국학교 점심 관리 시스템 개발 현황 및 로드맵
 
 ## 📋 현재 진행 상태 (2026-04-08 기준 최신) - 완료 🎉
+- [x] **iOS Safari date input 오버플로우 수정 (배식일자·마감일시 필드가 카드 영역을 벗어나는 버그)** (2026-04-08)
 - [x] **운영 집계 현황 무료간식·무료쿠폰 카드 및 반별 통계 컬럼 추가** (2026-04-08)
 - [x] **전체 화면 스낵→간식 문구 일괄 변경** (2026-04-08)
 - [x] **운영 집계 현황 모바일 UI 개선 (3열 배치·카드 높이 축소·배식일자 마진 조정)** (2026-04-08)
@@ -169,6 +170,14 @@
   - `Menu` 생성 시 폐기된 `items` 필드 → `mainItems / dessertItems / beverageItems` 분리 필드로 교체.
 - **`src/auth.ts`:** JWT 콜백에서 `user.id` 타입 `string | undefined` → `user.id ?? ""` 로 안전하게 처리.
 - **빌드 결과:** `npm run build` 37개 라우트 정상 컴파일 확인.
+
+### 32. iOS Safari date input 오버플로우 수정 (2026-04-08)
+
+- **현상:** 아이폰에서 주간 메뉴 등록 폼의 "배식 날짜(토요일)" 및 "신청 마감 일시" 입력 필드가 주간 메뉴 등록 카드 영역 밖으로 삐져나오는 레이아웃 오버플로우. (안드로이드·데스크탑 브라우저에서는 정상)
+- **원인:** iOS Safari가 `input[type="date"]` / `input[type="datetime-local"]`를 네이티브 UI로 렌더링할 때 CSS `width: 100%` 제약을 무시하고 자체 최소 너비로 확장하여 컨테이너를 벗어남.
+- **수정:**
+  - `MenuManagementClient.tsx` — 주간 메뉴 등록 `<section>`에 `overflow-hidden` 추가. 자식 요소가 카드 경계를 벗어날 경우 클리핑 처리.
+  - `globals.css` — 기존 date input 규칙에 `max-width: 100%; min-width: 0; box-sizing: border-box;` 추가하여 iOS UA 스타일시트를 명시적으로 오버라이드.
 
 ### 31. iOS Safari date input 텍스트 미표시 버그 수정 (2026-04-08)
 
