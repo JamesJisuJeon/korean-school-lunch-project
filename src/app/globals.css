@@ -28,10 +28,13 @@ body {
   display: none;
 }
 
-/* iOS Safari: date/datetime-local input 네이티브 텍스트 색상 보정 */
+/* iOS Safari: date/datetime-local input 보정 */
 input[type="date"],
 input[type="datetime-local"] {
   color-scheme: light;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .dark input[type="date"],
 .dark input[type="datetime-local"] {
