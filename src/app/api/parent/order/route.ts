@@ -120,14 +120,14 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
     }
 
-    // 마감 여부 확인
-    if (order.menu.deadline && new Date() > new Date(order.menu.deadline)) {
-      return NextResponse.json({ message: "신청 마감 시간이 지난 신청은 취소할 수 없습니다." }, { status: 400 });
+    // 수납대기 상태인지 확인
+    if (order.status !== "WAITING") {
+      return NextResponse.json({ message: "수납대기 상태인 신청만 취소할 수 있습니다." }, { status: 400 });
     }
 
-    // 이미 결제된 경우 취소 불가 (정책에 따라 다름, 여기서는 수납 전만 취소 가능으로 설정)
-    if (order.isPaid) {
-      return NextResponse.json({ message: "이미 수납된 신청은 관리자에게 문의하여 취소해 주세요." }, { status: 400 });
+    // 배식일자 경과 여부 확인
+    if (new Date() >= new Date(order.menu.date)) {
+      return NextResponse.json({ message: "배식일자가 지난 신청은 취소할 수 없습니다." }, { status: 400 });
     }
 
     await prisma.order.delete({

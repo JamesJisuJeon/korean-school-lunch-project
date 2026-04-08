@@ -107,6 +107,7 @@ model Menu {
   beverageItems String?  // Beverage
   specialItems  String?  // 매점 특식
   imageUrl      String?  // Announcement image URL
+  notice        String?  // 공지사항
   price         Float    @default(7.0)
   isPublished   Boolean  @default(false)
   deadline      DateTime?

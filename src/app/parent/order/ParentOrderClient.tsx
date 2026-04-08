@@ -17,6 +17,7 @@ interface Menu {
   beverageItems: string | null;
   specialItems: string | null;
   imageUrl: string | null;
+  notice: string | null;
   price: number;
   isPublished: boolean;
   deadline: string | null;
@@ -198,15 +199,15 @@ export default function ParentOrderClient() {
         <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] min-h-[320px]">
 
           {/* 좌: 메뉴 이미지 */}
-          <div className="relative bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center p-4 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800">
+          <div className="relative bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center p-4 md:p-0 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800">
             {selectedMenu?.imageUrl ? (
-              <div className="relative group cursor-zoom-in w-full" onClick={() => setZoomImage(true)}>
+              <div className="relative group cursor-zoom-in w-full md:absolute md:inset-0" onClick={() => setZoomImage(true)}>
                 <img
                   src={selectedMenu.imageUrl}
                   alt="메뉴 이미지"
-                  className="w-full h-full object-contain max-h-[400px]"
+                  className="w-full object-contain max-h-[400px] md:h-full md:max-h-none"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-2xl flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs font-black px-3 py-1.5 rounded-full">
                     클릭하여 확대
                   </span>
@@ -239,6 +240,12 @@ export default function ParentOrderClient() {
                     <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
                   </div>
                 ))}
+              </div>
+            )}
+            {selectedMenu?.notice && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3">
+                <p className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">공지사항</p>
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{selectedMenu.notice}</p>
               </div>
             )}
             <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">자녀 선택</p>
@@ -333,14 +340,13 @@ export default function ParentOrderClient() {
           <h2 className="text-lg sm:text-xl font-black flex items-center gap-3 text-gray-900 dark:text-white">
             <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" /> 나의 신청 내역
           </h2>
-          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-1">마감 전까지 변경 및 취소가 가능합니다.</p>
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-1">배식일자 전, 수납대기 상태에서만 취소가 가능합니다.</p>
         </div>
 
         {/* 모바일 카드 레이아웃 */}
         <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800">
           {orders.map(order => {
-            const menu = menus.find(m => m.id === order.menuId);
-            const canCancel = menu?.isPublished && (!menu.deadline || new Date() < new Date(menu.deadline));
+            const canCancel = order.status === "WAITING" && new Date() < new Date(order.menu.date);
             return (
               <div key={order.id} className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
@@ -354,6 +360,8 @@ export default function ParentOrderClient() {
                     <span className="text-base font-black text-blue-700 dark:text-blue-400">${order.amount}</span>
                     {order.status === "PAID" || order.status === "POST_PAID" ? (
                       <span className="px-2.5 py-1 text-[10px] font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border border-green-200 dark:border-green-800">수납완료</span>
+                    ) : order.status === "FREE_SNACK" ? (
+                      <span className="px-2.5 py-1 text-[10px] font-black bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-800">무료간식</span>
                     ) : order.status === "UNPAID" ? (
                       <span className="px-2.5 py-1 text-[10px] font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800">후납</span>
                     ) : order.status === "CANCELLED" ? (
@@ -428,8 +436,7 @@ export default function ParentOrderClient() {
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {orders.map(order => {
-                const menu = menus.find(m => m.id === order.menuId);
-                const canCancel = menu?.isPublished && (!menu.deadline || new Date() < new Date(menu.deadline));
+                const canCancel = order.status === "WAITING" && new Date() < new Date(order.menu.date);
                 return (
                   <tr key={order.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
                     <td className="px-6 py-5 whitespace-nowrap text-sm font-black text-gray-900 dark:text-gray-100">
@@ -472,6 +479,8 @@ export default function ParentOrderClient() {
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order.status === "PAID" || order.status === "POST_PAID" ? (
                         <span className="px-2.5 py-1 text-[10px] font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border border-green-200 dark:border-green-800">수납완료</span>
+                      ) : order.status === "FREE_SNACK" ? (
+                        <span className="px-2.5 py-1 text-[10px] font-black bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-800">무료간식</span>
                       ) : order.status === "UNPAID" ? (
                         <span className="px-2.5 py-1 text-[10px] font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800">후납</span>
                       ) : order.status === "CANCELLED" ? (
