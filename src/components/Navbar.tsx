@@ -59,7 +59,7 @@ export default async function Navbar() {
           )}
 
           {isParent && (
-            <MobileShortcut href="/parent/order" icon={<ShoppingCart className="w-5 h-5" />} label="점심신청" />
+            <MobileShortcut href="/parent/order" icon={<ShoppingCart className="w-5 h-5" />} label="간식신청" />
           )}
 
           {isTeacher && (
