@@ -473,10 +473,10 @@ export default function SalesManagementClient() {
                   <div className="flex items-center gap-2 min-w-0">
                     <p className={`text-sm font-black shrink-0 ${student.isPAChild ? "bg-yellow-400 text-yellow-950 px-1.5 py-0.5 rounded-md" : "text-gray-950 dark:text-gray-100"}`}>{student.name}</p>
                     <p className="text-sm font-black text-blue-500 dark:text-blue-400 shrink-0">{student.class?.name || "반미지정"}</p>
-                    <span className="shrink-0 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-200">${total}</span>
+                    <span className="shrink-0 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-200">${total}</span>
                   </div>
                   {order ? (
-                    <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border ${
+                    <span className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black border-2 whitespace-nowrap ${
                       order.orderType === "PRE_ORDER"
                         ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
                         : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
@@ -617,17 +617,14 @@ export default function SalesManagementClient() {
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order ? (
-                        <div className="flex flex-col gap-1">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border w-fit ${
+                        <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black border-2 w-fit whitespace-nowrap ${
                             order.orderType === "PRE_ORDER"
                               ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
                               : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
                           }`}>
                             <Check className="w-3 h-3" />
-                            {order.orderType === "PRE_ORDER" ? "사전 신청" : "현장 신청"}
+                            {order.orderType === "PRE_ORDER" ? "사전 신청" : "현장 신청"} ${order.amount}
                           </span>
-                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500">${order.amount}</span>
-                        </div>
                       ) : (
                         <button
                           onClick={() => handleOnSiteOrder(student.id)}
