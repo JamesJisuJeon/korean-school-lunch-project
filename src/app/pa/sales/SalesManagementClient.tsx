@@ -103,15 +103,15 @@ export default function SalesManagementClient() {
   };
 
   const handleOrderStatusChange = (order: StudentWithOrder["orders"][0], newStatus: string, isPAChild: boolean) => {
-    if (newStatus === "FREE_SNACK") {
+    if (order.orderType === "ON_SITE" && newStatus === "CANCELLED") {
+      cancelOnSiteOrder(order.id);
+    } else if (newStatus === "FREE_SNACK") {
       if (!confirm("무료간식으로 변경하시겠습니까?\n간식 비용이 $0으로 처리됩니다.")) return;
       updateOrderStatus(order.id, newStatus, 0);
     } else if (order.status === "FREE_SNACK") {
       const menu = menus.find(m => m.id === selectedMenuId);
       const originalPrice = isPAChild ? 0 : (menu?.price ?? 0);
       updateOrderStatus(order.id, newStatus, originalPrice);
-    } else if (order.orderType === "ON_SITE" && newStatus === "CANCELLED") {
-      cancelOnSiteOrder(order.id);
     } else {
       updateOrderStatus(order.id, newStatus);
     }
@@ -288,39 +288,39 @@ export default function SalesManagementClient() {
     filterPAChild,
   ].filter(Boolean).length;
 
-  const selectClass = "rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-[11px] md:text-xs font-black text-gray-700 dark:text-gray-200 py-1 md:py-2 px-2 md:px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 appearance-none cursor-pointer transition-all";
+  const selectClass = "rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-[11px] xl:text-xs font-black text-gray-700 dark:text-gray-200 py-1 xl:py-2 px-2 xl:px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 appearance-none cursor-pointer transition-all";
 
   return (
     <div className="space-y-8">
       {/* 통계 섹션 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-2 bg-gray-100 dark:bg-gray-900 p-4 md:p-6 rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-800 flex justify-around items-center">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+        <div className="xl:col-span-2 bg-gray-100 dark:bg-gray-900 p-4 xl:p-6 rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-800 flex justify-around items-center">
           <div className="text-center">
             <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">식사 신청 합계</p>
-            <h3 className="text-3xl md:text-4xl font-black text-gray-950 dark:text-white">
+            <h3 className="text-3xl xl:text-4xl font-black text-gray-950 dark:text-white">
               {students.filter(s => s.orders.length > 0 && s.orders[0].status !== "CANCELLED").length}
               <span className="text-sm"> 명</span>
             </h3>
           </div>
-          <div className="w-px h-8 md:h-10 bg-gray-300 dark:bg-gray-700" />
+          <div className="w-px h-8 xl:h-10 bg-gray-300 dark:bg-gray-700" />
           <div className="text-center">
             <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">쿠폰 판매 합계</p>
-            <h3 className="text-3xl md:text-4xl font-black text-purple-600 dark:text-purple-400">
+            <h3 className="text-3xl xl:text-4xl font-black text-purple-600 dark:text-purple-400">
               {students.reduce((acc, curr) => acc + curr.couponSales.reduce((c, n) => c + n.quantity, 0), 0)}
               <span className="text-sm"> 매</span>
             </h3>
           </div>
         </div>
 
-        <div className="md:col-span-2 bg-white dark:bg-gray-900 p-4 md:p-6 rounded-[2.5rem] border border-gray-200 dark:border-gray-800 flex flex-col justify-center gap-2">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400">
-              <Calendar className="w-5 h-5 md:w-6 md:h-6" />
+        <div className="xl:col-span-2 bg-white dark:bg-gray-900 p-4 xl:p-6 rounded-[2.5rem] border border-gray-200 dark:border-gray-800 flex flex-col justify-center gap-2">
+          <div className="flex items-center gap-2 xl:gap-3">
+            <div className="p-2 xl:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-2xl text-blue-600 dark:text-blue-400">
+              <Calendar className="w-5 h-5 xl:w-6 xl:h-6" />
             </div>
             <div className="flex-1">
               <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">배식 날짜 선택</label>
               <select
-                className="w-full bg-transparent border-none p-0 font-black text-lg md:text-xl text-gray-900 dark:text-gray-100 focus:ring-0 cursor-pointer outline-none"
+                className="w-full bg-transparent border-none p-0 font-black text-lg xl:text-xl text-gray-900 dark:text-gray-100 focus:ring-0 cursor-pointer outline-none"
                 value={selectedMenuId}
                 onChange={(e) => setSelectedMenuId(e.target.value)}
               >
@@ -337,7 +337,7 @@ export default function SalesManagementClient() {
 
       {/* 검색 + 필터 */}
       <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-sm border border-gray-200 dark:border-gray-800">
-        <div className="sticky top-28 md:top-16 z-20 bg-white dark:bg-gray-900 rounded-t-[2.5rem] overflow-hidden">
+        <div className="sticky top-28 xl:top-16 z-20 bg-white dark:bg-gray-900 rounded-t-[2.5rem] overflow-hidden">
         <div className="p-3 sm:p-6 border-b border-gray-50 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 space-y-2 sm:space-y-4">
           {/* 검색창 */}
           <div className="relative flex-1 group">
@@ -357,7 +357,7 @@ export default function SalesManagementClient() {
 
           {/* 필터 + 정렬 1줄 */}
           <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-1.5 shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+            <div className="hidden xl:flex items-center gap-1.5 shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
               <Filter className="w-3.5 h-3.5" />
               {activeFilterCount > 0 && (
                 <span className="w-4 h-4 flex items-center justify-center bg-blue-600 text-white rounded-full text-[9px] font-black">
@@ -395,7 +395,7 @@ export default function SalesManagementClient() {
               </select>
               <button
                 onClick={() => setFilterPAChild(v => !v)}
-                className={`shrink-0 flex items-center gap-1 px-2 md:px-3 py-1 md:py-2 rounded-xl text-[11px] md:text-xs font-black transition-all border-2 ${
+                className={`shrink-0 flex items-center gap-1 px-2 xl:px-3 py-1 xl:py-2 rounded-xl text-[11px] xl:text-xs font-black transition-all border-2 ${
                   filterPAChild
                     ? "bg-yellow-400 text-yellow-950 border-yellow-400"
                     : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-700"
@@ -407,13 +407,13 @@ export default function SalesManagementClient() {
                 <>
                   <button
                     onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
-                    className="md:hidden flex items-center justify-center w-6 h-6 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full border border-red-100 dark:border-red-800 transition-colors"
+                    className="xl:hidden flex items-center justify-center w-6 h-6 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full border border-red-100 dark:border-red-800 transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
                   <button
                     onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
-                    className="hidden md:flex items-center gap-1 px-2 py-1 text-[10px] font-black text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800 transition-colors"
+                    className="hidden xl:flex items-center gap-1 px-2 py-1 text-[10px] font-black text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800 transition-colors"
                   >
                     <X className="w-3 h-3" /> 초기화
                   </button>
@@ -421,15 +421,15 @@ export default function SalesManagementClient() {
               )}
               <button
                 onClick={fetchStudents}
-                className="hidden md:flex shrink-0 items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-700 ml-2"
+                className="hidden xl:flex shrink-0 items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-100 dark:border-gray-700 ml-2"
                 title="새로고침"
               >
                 <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
               </button>
-              <div className="md:hidden w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0" />
+              <div className="xl:hidden w-px h-4 bg-gray-200 dark:bg-gray-700 shrink-0" />
               <button
                 onClick={() => handleSort("class")}
-                className={`md:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${
+                className={`xl:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${
                   sortKey === "class" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                 }`}
               >
@@ -437,7 +437,7 @@ export default function SalesManagementClient() {
               </button>
               <button
                 onClick={() => handleSort("name")}
-                className={`md:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${
+                className={`xl:hidden shrink-0 flex items-center gap-0.5 px-2 py-1 rounded-xl text-[11px] font-black transition-all border ${
                   sortKey === "name" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                 }`}
               >
@@ -445,26 +445,27 @@ export default function SalesManagementClient() {
               </button>
               <button
                 onClick={fetchStudents}
-                className="md:hidden shrink-0 flex items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-200 dark:border-gray-700"
+                className="xl:hidden shrink-0 flex items-center justify-center p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border border-gray-200 dark:border-gray-700"
                 title="새로고침"
               >
                 <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
               </button>
             </div>
-            <span className="shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500">
+            <span className="shrink-0 text-xs font-black text-gray-400 dark:text-gray-500">
               {displayedStudents.length}
             </span>
           </div>
         </div>
         </div>{/* sticky wrapper end */}
 
-        {/* 모바일 카드 레이아웃 */}
-        <div className="md:hidden divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+        {/* 모바일 카드 레이아웃 (xl 미만에서 표시) */}
+        <div className="xl:hidden divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
           {displayedStudents.map((student) => {
             const order = student.orders[0];
             const couponSale = student.couponSales[0] ?? null;
             const couponQty = couponSale?.quantity ?? 0;
-            const total = (order?.amount ?? 0) + (couponSale?.amount ?? 0);
+            const orderAmount = (order && order.status !== "CANCELLED") ? order.amount : 0;
+            const total = orderAmount + (couponSale?.amount ?? 0);
 
             return (
               <div key={student.id} className="p-4 space-y-2.5">
@@ -473,10 +474,10 @@ export default function SalesManagementClient() {
                   <div className="flex items-center gap-2 min-w-0">
                     <p className={`text-sm font-black shrink-0 ${student.isPAChild ? "bg-yellow-400 text-yellow-950 px-1.5 py-0.5 rounded-md" : "text-gray-950 dark:text-gray-100"}`}>{student.name}</p>
                     <p className="text-sm font-black text-blue-500 dark:text-blue-400 shrink-0">{student.class?.name || "반미지정"}</p>
-                    <span className="shrink-0 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-200">${total}</span>
+                    <span className="shrink-0 px-3 flex items-center justify-center h-[38px] rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-xs font-black text-gray-800 dark:text-gray-200">${total}</span>
                   </div>
                   {order ? (
-                    <span className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black border-2 whitespace-nowrap ${
+                    <span className={`shrink-0 inline-flex items-center gap-1 px-3 h-[38px] rounded-xl text-xs font-black border-2 whitespace-nowrap ${
                       order.orderType === "PRE_ORDER"
                         ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
                         : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
@@ -487,7 +488,7 @@ export default function SalesManagementClient() {
                   ) : (
                     <button
                       onClick={() => handleOnSiteOrder(student.id)}
-                      className="shrink-0 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border-2 border-blue-100 dark:border-blue-800 hover:bg-blue-600 hover:text-white transition-all active:scale-95 whitespace-nowrap"
+                      className="shrink-0 px-3 h-[38px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border-2 border-blue-100 dark:border-blue-800 hover:bg-blue-600 hover:text-white transition-all active:scale-95 whitespace-nowrap"
                     >
                       현장 신청
                     </button>
@@ -498,7 +499,7 @@ export default function SalesManagementClient() {
                 {order && (
                   <div className="flex items-center justify-between gap-2">
                     <input
-                      className="flex-1 min-w-0 bg-red-50/50 dark:bg-red-950/20 border border-transparent rounded-lg py-2 px-3 text-sm font-medium text-red-600 dark:text-red-400 italic placeholder:text-red-300 dark:placeholder:text-red-900/50 focus:border-red-400 focus:bg-white dark:focus:bg-gray-900 focus:outline-none"
+                      className="flex-1 min-w-0 bg-red-50/50 dark:bg-red-950/20 border-2 border-transparent rounded-xl h-[38px] px-3 text-xs font-black text-red-600 dark:text-red-400 italic placeholder:text-red-300 dark:placeholder:text-red-900/50 focus:border-red-400 focus:bg-white dark:focus:bg-gray-900 focus:outline-none"
                       placeholder="특이사항..."
                       defaultValue={order.notes || ""}
                       onBlur={async (e) => {
@@ -513,7 +514,7 @@ export default function SalesManagementClient() {
                       }}
                     />
                     <select
-                      className={`shrink-0 rounded-xl border-2 py-2 px-3 text-xs font-black appearance-none cursor-pointer ${
+                      className={`shrink-0 rounded-xl border-2 h-[38px] px-3 text-xs font-black appearance-none cursor-pointer ${
                         PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
                       } bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
                       value={order.status}
@@ -529,23 +530,23 @@ export default function SalesManagementClient() {
                 {/* Row 3: 쿠폰 수량 (왼쪽) · 쿠폰 납부상태 (오른쪽) */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-gray-400 dark:text-gray-500 shrink-0">쿠폰 ($5)</span>
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-2.5 py-1.5 border-2 border-gray-100 dark:border-gray-700">
+                    <span className="text-sm font-black text-gray-400 dark:text-gray-500 shrink-0">쿠폰 ($5)</span>
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-2.5 h-[38px] border-2 border-gray-100 dark:border-gray-700">
                       <button
                         onClick={() => updateCouponQty(student.id, couponQty, -1)}
                         disabled={couponQty <= 0}
-                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 active:scale-90 text-base font-bold"
+                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 active:scale-90 text-sm font-bold"
                       >-</button>
-                      <span className="text-base font-black text-gray-900 dark:text-gray-100 w-5 text-center">{couponQty}</span>
+                      <span className="text-sm font-black text-gray-900 dark:text-gray-100 w-5 text-center">{couponQty}</span>
                       <button
                         onClick={() => updateCouponQty(student.id, couponQty, 1)}
-                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-purple-600 transition-colors active:scale-90 text-base font-bold"
+                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-purple-600 transition-colors active:scale-90 text-sm font-bold"
                       >+</button>
                     </div>
                   </div>
                   {couponQty > 0 && couponSale && (
                     <select
-                      className="shrink-0 rounded-xl border-2 py-2 px-3 text-xs font-black appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
+                      className="shrink-0 rounded-xl border-2 h-[38px] px-3 text-xs font-black appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
                       value={couponSale.paymentStatus}
                       onChange={(e) => handleCouponStatusChange(student.id, couponSale, e.target.value, couponQty)}
                     >
@@ -566,13 +567,13 @@ export default function SalesManagementClient() {
           )}
         </div>
 
-        {/* 데스크탑 테이블 */}
-        <div className="hidden md:block overflow-x-auto">
+        {/* 데스크탑 테이블 (xl 이상에서만 표시) */}
+        <div className="hidden xl:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50">
               <tr>
                 <th
-                  className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-28"
+                  className="px-4 py-5 text-left text-sm font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-28"
                   onClick={() => handleSort("class")}
                 >
                   <div className="flex items-center gap-1">
@@ -580,19 +581,19 @@ export default function SalesManagementClient() {
                   </div>
                 </th>
                 <th
-                  className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-32"
+                  className="px-4 py-5 text-left text-sm font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-32"
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center gap-1">
                     이름 <SortIcon col="name" />
                   </div>
                 </th>
-                <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 w-36">사전 신청/현장 신청</th>
-                <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 w-32">수납 상태</th>
-                <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400">특이사항</th>
-                <th className="px-4 py-5 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-36">매점 쿠폰 ($5)</th>
-                <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 w-32">쿠폰비 수납</th>
-                <th className="px-4 py-5 text-left text-xs font-black text-gray-500 dark:text-gray-400 w-24">총액</th>
+                <th className="px-4 py-5 text-left text-sm font-black text-gray-500 dark:text-gray-400 w-36">사전 신청/현장 신청</th>
+                <th className="px-4 py-5 text-left text-sm font-black text-gray-500 dark:text-gray-400 w-32">수납 상태</th>
+                <th className="px-4 py-5 text-left text-sm font-black text-gray-500 dark:text-gray-400">특이사항</th>
+                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-36">매점 쿠폰 ($5)</th>
+                <th className="px-4 py-5 text-left text-sm font-black text-gray-500 dark:text-gray-400 w-32">쿠폰비 수납</th>
+                <th className="px-4 py-5 text-left text-sm font-black text-gray-500 dark:text-gray-400 w-24">총액</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-900">
@@ -600,7 +601,8 @@ export default function SalesManagementClient() {
                 const order = student.orders[0];
                 const couponSale = student.couponSales[0] ?? null;
                 const couponQty = couponSale?.quantity ?? 0;
-                const total = (order?.amount ?? 0) + (couponSale?.amount ?? 0);
+                const orderAmount = (order && order.status !== "CANCELLED") ? order.amount : 0;
+            const total = orderAmount + (couponSale?.amount ?? 0);
 
                 return (
                   <tr key={student.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
@@ -610,14 +612,13 @@ export default function SalesManagementClient() {
                       </p>
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
-                      <p className="text-base font-black text-gray-950 dark:text-gray-100">{student.name}</p>
-                      {student.isPAChild && (
-                        <span className="inline-block mt-1 text-[10px] bg-yellow-400 text-yellow-950 font-black px-2 py-0.5 rounded-md">학부모회 자녀</span>
-                      )}
+                      <p className={`text-sm font-black inline-block ${student.isPAChild ? "bg-yellow-400 text-yellow-950 px-2 py-0.5 rounded-md" : "text-gray-950 dark:text-gray-100"}`}>
+                        {student.name}
+                      </p>
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order ? (
-                        <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black border-2 w-fit whitespace-nowrap ${
+                        <span className={`inline-flex items-center gap-1 px-3 h-[38px] rounded-xl text-xs font-black border-2 w-fit whitespace-nowrap ${
                             order.orderType === "PRE_ORDER"
                               ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800"
                               : "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-800"
@@ -628,7 +629,7 @@ export default function SalesManagementClient() {
                       ) : (
                         <button
                           onClick={() => handleOnSiteOrder(student.id)}
-                          className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border-2 border-blue-100 dark:border-blue-800 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white dark:hover:text-white transition-all shadow-sm active:scale-95 whitespace-nowrap"
+                          className="px-3 h-[38px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-black rounded-xl border-2 border-blue-100 dark:border-blue-800 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white dark:hover:text-white transition-all shadow-sm active:scale-95 whitespace-nowrap"
                         >
                           현장 신청
                         </button>
@@ -637,7 +638,7 @@ export default function SalesManagementClient() {
                     <td className="px-4 py-5 whitespace-nowrap">
                       {order ? (
                         <select
-                          className={`w-28 rounded-xl border-2 py-2 px-3 text-xs font-black transition-all appearance-none cursor-pointer ${
+                          className={`w-28 rounded-xl border-2 h-[38px] px-3 text-xs font-black transition-all appearance-none cursor-pointer ${
                             PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
                           } bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none`}
                           value={order.status}
@@ -654,7 +655,7 @@ export default function SalesManagementClient() {
                     <td className="px-4 py-5">
                       {order ? (
                         <input
-                          className="w-full min-w-[140px] bg-red-50/50 dark:bg-red-950/20 border border-transparent rounded-lg py-2 px-3 text-sm font-medium text-red-600 dark:text-red-400 italic placeholder:text-red-300 dark:placeholder:text-red-900/50 hover:border-red-100 dark:hover:border-red-900/30 transition-all focus:border-red-400 dark:focus:border-red-600 focus:bg-white dark:focus:bg-gray-900 focus:outline-none"
+                          className="w-full min-w-[140px] bg-red-50/50 dark:bg-red-950/20 border-2 border-transparent rounded-xl h-[38px] px-3 text-xs font-black text-red-600 dark:text-red-400 italic placeholder:text-red-300 dark:placeholder:text-red-900/50 hover:border-red-100 dark:hover:border-red-900/30 transition-all focus:border-red-400 dark:focus:border-red-600 focus:bg-white dark:focus:bg-gray-900 focus:outline-none"
                           placeholder="특이사항..."
                           defaultValue={order.notes || ""}
                           onBlur={async (e) => {
@@ -673,18 +674,18 @@ export default function SalesManagementClient() {
                       )}
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 w-32 mx-auto border-2 border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center justify-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-xl h-[38px] px-2 w-32 mx-auto border-2 border-gray-100 dark:border-gray-700">
                         <button
                           onClick={() => updateCouponQty(student.id, couponQty, -1)}
                           disabled={couponQty <= 0}
-                          className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-red-500 hover:border-red-100 dark:hover:border-red-900/50 transition-colors disabled:opacity-30 active:scale-90"
+                          className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-red-500 hover:border-red-100 dark:hover:border-red-900/50 transition-colors disabled:opacity-30 active:scale-90"
                         >
                           -
                         </button>
-                        <span className="text-lg font-black text-gray-900 dark:text-gray-100 w-4 text-center">{couponQty}</span>
+                        <span className="text-sm font-black text-gray-900 dark:text-gray-100 w-4 text-center">{couponQty}</span>
                         <button
                           onClick={() => updateCouponQty(student.id, couponQty, 1)}
-                          className="w-8 h-8 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-purple-600 hover:border-purple-100 dark:hover:border-purple-900/50 transition-colors active:scale-90"
+                          className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-purple-600 hover:border-purple-100 dark:hover:border-purple-900/50 transition-colors active:scale-90"
                         >
                           +
                         </button>
@@ -693,7 +694,7 @@ export default function SalesManagementClient() {
                     <td className="px-4 py-5 whitespace-nowrap">
                       {couponQty > 0 && couponSale ? (
                         <select
-                          className="w-28 rounded-xl border-2 py-2 px-3 text-xs font-black transition-all appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
+                          className="w-28 rounded-xl border-2 h-[38px] px-3 text-xs font-black transition-all appearance-none cursor-pointer bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none text-gray-700 dark:text-gray-200"
                           value={couponSale.paymentStatus}
                           onChange={(e) => handleCouponStatusChange(student.id, couponSale, e.target.value, couponQty)}
                         >
@@ -707,7 +708,7 @@ export default function SalesManagementClient() {
                       )}
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap">
-                      <span className="inline-block px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-black text-gray-900 dark:text-gray-100">${total}</span>
+                      <span className="inline-flex items-center justify-center px-3 h-[38px] rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-xs font-black text-gray-900 dark:text-gray-100">${total}</span>
                     </td>
                   </tr>
                 );
