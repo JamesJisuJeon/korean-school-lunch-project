@@ -97,7 +97,9 @@ export async function PUT(req: Request) {
 
     let successCount = 0;
     let failCount = 0;
+    const updates = [];
 
+    // 1. 매칭 단계 (찾을 수 없거나 중복인 경우 실패 카운트)
     for (const item of assignments) {
       const targetClass = activeYear.classes.find(c => c.name === item.className);
       if (!targetClass) {
@@ -105,24 +107,29 @@ export async function PUT(req: Request) {
         continue;
       }
 
-      // 이름이 일치하는 학생 찾기 (동명이인이 있을 수 있으므로 실제로는 학부모 이메일 등 유니크 값이 좋지만, 요청상 이름 기준)
       const student = await prisma.student.findFirst({
-        where: { name: item.studentName }
+        where: { name: item.studentName } // 실제 프로덕션에서는 이메일 등 유니크 식별자 사용 권장
       });
 
       if (student) {
-        await prisma.student.update({
-          where: { id: student.id },
-          data: { classId: targetClass.id }
-        });
+        updates.push(
+          prisma.student.update({
+            where: { id: student.id },
+            data: { classId: targetClass.id }
+          })
+        );
         successCount++;
       } else {
         failCount++;
       }
     }
 
+    // 2. 트랜잭션 처리 단계 (동기적이고 안전하게 Bulk 이관)
+    await prisma.$transaction(updates);
+
     return NextResponse.json({ successCount, failCount });
   } catch (error) {
-    return NextResponse.json({ message: "대량 등록 중 오류 발생" }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ message: "대량 등록 중 트랜잭션 오류 발생 (전체 롤백됨)" }, { status: 500 });
   }
 }

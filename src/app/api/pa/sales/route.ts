@@ -62,8 +62,18 @@ export async function PATCH(req: Request) {
 
     // 쿠폰비 수납 상태 변경 (studentId + menuId 기준)
     if (studentId !== undefined && menuId !== undefined && couponPaymentStatus !== undefined) {
+      const existingSale = await prisma.couponSale.findUnique({
+        where: { studentId_menuId: { studentId, menuId } }
+      });
+      if (!existingSale) return NextResponse.json({ message: "쿠폰 정보가 없습니다." }, { status: 404 });
+
       const couponData: any = { paymentStatus: couponPaymentStatus };
-      if (couponAmount !== undefined) couponData.amount = couponAmount;
+      if (couponPaymentStatus === "FREE_COUPON") {
+        couponData.amount = 0;
+      } else {
+        couponData.amount = existingSale.quantity * 5;
+      }
+
       const couponSale = await prisma.couponSale.update({
         where: { studentId_menuId: { studentId, menuId } },
         data: couponData
@@ -71,14 +81,34 @@ export async function PATCH(req: Request) {
       return NextResponse.json(couponSale);
     }
 
+    const existingOrder = await (prisma as any).order.findUnique({
+      where: { id: orderId },
+      include: { student: true, menu: true }
+    });
+    if (!existingOrder) return NextResponse.json({ message: "주문 정보가 없습니다." }, { status: 404 });
+
     const updateData: any = {};
-    if (status !== undefined) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
-    if (amount !== undefined) updateData.amount = amount;
+
+    if (status !== undefined) {
+      updateData.status = status;
+      // 서버사이드 금액 강제 재계산 (비즈니스 로직 캡슐화)
+      if (status === "FREE_SNACK") {
+        updateData.amount = 0;
+      } else {
+        updateData.amount = existingOrder.student.isPAChild ? 0 : existingOrder.menu.price;
+      }
+    } else if (amount !== undefined) {
+      // status 변경 없이 amount만 클라이언트가 보내는 경우는 무시하거나 옵셔널하게 남김
+      // 하지만 PA자녀/메뉴가에 따라 서버가 통제하는 것이 더 안전
+      updateData.amount = existingOrder.student.isPAChild ? 0 : existingOrder.menu.price;
+    }
+
     if (isPaid !== undefined) {
       updateData.isPaid = isPaid;
       updateData.paymentDate = isPaid ? new Date() : null;
     }
+
 
     const order = await (prisma as any).order.update({
       where: { id: orderId },

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Users, CheckCircle, Calendar, Filter, RefreshCw } from "lucide-react";
+import { PaymentBadge } from "@/components/common/PaymentBadge";
 
 interface Menu {
   id: string;
@@ -223,17 +224,7 @@ export default function ClassOrdersClient() {
                     </td>
                     <td className="px-2 md:px-4 py-5 whitespace-nowrap text-center">
                       {isOrdered ? (
-                        status === "PAID" || status === "POST_PAID" ? (
-                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full border border-green-200 dark:border-green-800">수납완료</span>
-                        ) : status === "FREE_SNACK" ? (
-                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-800">무료간식</span>
-                        ) : status === "UNPAID" ? (
-                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800">후납</span>
-                        ) : status === "CANCELLED" ? (
-                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full border border-red-200 dark:border-red-800">취소</span>
-                        ) : (
-                          <span className="px-2 py-0.5 md:px-4 md:py-1.5 text-xs font-black bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full border border-yellow-200 dark:border-yellow-800">수납대기</span>
-                        )
+                        <PaymentBadge status={status} />
                       ) : (
                         <span className="text-gray-200 dark:text-gray-700 font-black">-</span>
                       )}
