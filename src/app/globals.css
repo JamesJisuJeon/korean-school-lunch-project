@@ -13,6 +13,15 @@
   --foreground: #f9fafb;
 }
 
+/* HTML 전체에 대해 color-scheme 지정하여 스크롤바, 셀렉트박스 등 Native UI 다크모드 일관성 확보 */
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
@@ -28,12 +37,13 @@ body {
   display: none;
 }
 
-/* iOS Safari: date/datetime-local input 네이티브 텍스트 색상 보정 */
-input[type="date"],
-input[type="datetime-local"] {
+/* 폼 요소 기본 상속 (System 기본 디자인 투명화 방지) */
+select, input, textarea {
   color-scheme: light;
 }
-.dark input[type="date"],
-.dark input[type="datetime-local"] {
+
+html.dark select, 
+html.dark input, 
+html.dark textarea {
   color-scheme: dark;
 }
