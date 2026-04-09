@@ -221,7 +221,7 @@ export default function AnalyticsClient() {
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">PA자녀</th>
                     <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">간식금액</th>
                     <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">쿠폰납부</th>
-                    <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">쿠폰후납</th>
+                    <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">쿠폰후납</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">무료쿠폰</th>
                   </tr>
                 </thead>
