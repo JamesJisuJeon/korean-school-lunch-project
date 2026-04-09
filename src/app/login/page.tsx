@@ -33,7 +33,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white dark:bg-gray-900 p-10 shadow-xl dark:shadow-gray-950/50 border border-gray-100 dark:border-gray-800">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
-            동남한국학교 스낵관리 시스템
+            동남한국학교
+          </h2>
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
+            스낵관리 시스템
           </h2>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">계정 정보를 입력하여 로그인하세요</p>
         </div>
