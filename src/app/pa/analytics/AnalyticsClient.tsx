@@ -25,6 +25,7 @@ interface ClassStat {
   unpaidAmount: number;
   couponAmount: number;
   couponUnpaidAmount: number;
+  couponUnpaidCount: number;
   freeCouponCount: number;
 }
 
@@ -37,6 +38,10 @@ interface Analytics {
   preOrderPAChildCount: number;
   preOrderCancelledCount: number;
   onSiteCount: number;
+  paOrdersCount: number;
+  activePaOrdersCount: number;
+  cancelledPaOrdersCount: number;
+  cancelledOrdersCount: number;
   waitingCount: number;
   paidConfirmedCount: number;
   unpaidCount: number;
@@ -47,6 +52,7 @@ interface Analytics {
   preOrderUnpaidAmount: number;
   onSitePaidAmount: number;
   onSiteUnpaidAmount: number;
+  allUnpaidAmount: number;
   totalPaidAmount: number;
   couponSaleAmount: number;
   couponSaleUnpaidAmount: number;
@@ -128,7 +134,7 @@ export default function AnalyticsClient() {
         >
           {menus.map((m) => (
             <option key={m.id} value={m.id}>
-              {new Date(m.date).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })} 점심
+              {new Date(m.date).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" })}
             </option>
           ))}
         </select>
@@ -148,21 +154,28 @@ export default function AnalyticsClient() {
             </div>
             {/* 1열: 신청 관련 */}
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4 mb-3 sm:mb-4">
-              <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} color="blue" />
-              <StatCard label="사전 신청 PA자녀" value={`${data.preOrderPAChildCount}명`} color="purple" />
-              <StatCard label="총 사전 신청" value={`${data.totalPreOrders}명`} color="blue" />
-              <StatCard label="사전 신청 취소" value={`${data.preOrderCancelledCount}명`} color="red" />
+              <StatCard label="사전 신청" value={`${data.totalPreOrders}명`} color="blue" />
               <StatCard label="현장 신청" value={`${data.onSiteCount}명`} color="orange" />
-              <StatCard label="무료쿠폰" value={`${data.freeCouponCount}명`} color="green" />
+              <StatCard label="신청 취소" value={`${data.cancelledOrdersCount}명`} color="red" />
+
+              <StatCard label="최종 신청" value={`${data.finalOrderCount}명`} color="green" />
+              <StatCard label="수납 확인" value={`${data.finalConfirmedCount}명`} color="green" />
+              <StatCard label="수납 대기" value={`${data.waitingCount}명`} color="gray" />
+
+              {/* <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} color="blue" />
+              <StatCard label="사전 신청 PA자녀" value={`${data.preOrderPAChildCount}명`} color="purple" />
+              <StatCard label="사전 신청 취소" value={`${data.preOrderCancelledCount}명`} color="red" />
+              <StatCard label="무료쿠폰" value={`${data.freeCouponCount}매`} color="green" /> */}
             </div>
             {/* 2열: 수납 관련 */}
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4">
-              <StatCard label="최종 신청 인원" value={`${data.finalOrderCount}명`} color="green" />
-              <StatCard label="최종 확정 인원" value={`${data.finalConfirmedCount}명`} color="green" />
-              <StatCard label="수납 대기" value={`${data.waitingCount}명`} color="gray" />
               <StatCard label="납부 / 후납-납부" value={`${data.paidConfirmedCount}명`} color="green" />
               <StatCard label="후납" value={`${data.unpaidCount}명`} color="yellow" />
               <StatCard label="무료간식" value={`${data.freeLunchCount}명`} color="green" />
+
+              <StatCard label="PA 자녀" value={`${data.paOrdersCount}명`} color="purple" />
+              <StatCard label="PA 자녀 취소" value={`${data.cancelledPaOrdersCount}명`} color="red" />
+              <StatCard label="PA 자녀 확정" value={`${data.activePaOrdersCount}명`} color="blue" />
             </div>
           </div>
 
@@ -174,13 +187,15 @@ export default function AnalyticsClient() {
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4">
               <StatCard label="총 매출" value={fmt(data.totalRevenue)} color="blue" />
-              <StatCard label="점심 납부 총액" value={fmt(data.totalPaidAmount)} color="green" />
+              <StatCard label="간식 납부 총액" value={fmt(data.totalPaidAmount)} color="green" />
               <StatCard label="사전 신청 납부" value={fmt(data.preOrderPaidAmount)} color="green" />
-              <StatCard label="사전 신청 후납" value={fmt(data.preOrderUnpaidAmount)} color="yellow" />
+              {/* <StatCard label="사전 신청 후납" value={fmt(data.preOrderUnpaidAmount)} color="yellow" /> */}
               <StatCard label="현장 신청 납부" value={fmt(data.onSitePaidAmount)} color="green" />
-              <StatCard label="현장 신청 후납" value={fmt(data.onSiteUnpaidAmount)} color="yellow" />
+              {/* <StatCard label="현장 신청 후납" value={fmt(data.onSiteUnpaidAmount)} color="yellow" /> */}
+              <StatCard label="후납 금액" value={fmt(data.allUnpaidAmount)} color="yellow" />
               <StatCard label="쿠폰 납부 금액" value={fmt(data.couponSaleAmount)} color="green" />
               <StatCard label="쿠폰 판매 후납" value={fmt(data.couponSaleUnpaidAmount)} color="yellow" />
+              <StatCard label="무료 쿠폰" value={`${data.freeCouponCount}매`} color="green" />
             </div>
           </div>
 
@@ -201,13 +216,13 @@ export default function AnalyticsClient() {
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">수납대기</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">수납완료</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">후납</th>
+                    <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">무료간식</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">취소</th>
                     <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">PA자녀</th>
-                    <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">무료간식</th>
-                    <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">무료쿠폰</th>
-                    <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">납부금액</th>
+                    <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">간식금액</th>
                     <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">쿠폰납부</th>
                     <th className="px-4 py-3 text-right text-xs font-black text-gray-500 dark:text-gray-400">쿠폰후납</th>
+                    <th className="px-4 py-3 text-center text-xs font-black text-gray-500 dark:text-gray-400">무료쿠폰</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -216,18 +231,16 @@ export default function AnalyticsClient() {
                       <td className="px-4 py-3 font-black text-gray-950 dark:text-gray-100 sticky left-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50/60 dark:group-hover:bg-gray-800/30 transition-colors whitespace-nowrap">{cls.className}</td>
                       <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400 font-bold">{cls.totalStudents}</td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`font-black ${
-                          cls.confirmedCount !== cls.orderedCount && cls.orderedCount > 0
-                            ? "text-white bg-orange-500 dark:bg-orange-600 px-2 py-0.5 rounded-full text-xs"
-                            : "text-blue-700 dark:text-blue-400"
-                        }`}>{cls.orderedCount}</span>
+                        <span className={`font-black ${cls.confirmedCount !== cls.orderedCount && cls.orderedCount > 0
+                          ? "text-white bg-orange-500 dark:bg-orange-600 px-2 py-0.5 rounded-full text-xs"
+                          : "text-blue-700 dark:text-blue-400"
+                          }`}>{cls.orderedCount}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`font-black ${
-                          cls.confirmedCount === cls.orderedCount && cls.orderedCount > 0
-                            ? "text-white bg-indigo-600 dark:bg-indigo-500 px-2 py-0.5 rounded-full text-xs"
-                            : "text-indigo-700 dark:text-indigo-400"
-                        }`}>{cls.confirmedCount}</span>
+                        <span className={`font-black ${cls.confirmedCount === cls.orderedCount && cls.orderedCount > 0
+                          ? "text-white bg-indigo-600 dark:bg-indigo-500 px-2 py-0.5 rounded-full text-xs"
+                          : "text-indigo-700 dark:text-indigo-400"
+                          }`}>{cls.confirmedCount}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="font-black text-gray-500 dark:text-gray-400">{cls.waitingCount}</span>
@@ -239,23 +252,26 @@ export default function AnalyticsClient() {
                         <span className="font-black text-yellow-700 dark:text-yellow-400">{cls.unpaidCount}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
+                        <span className="font-black text-emerald-600 dark:text-emerald-400">{cls.freeLunchCount > 0 ? cls.freeLunchCount : <span className="text-gray-300 dark:text-gray-700">-</span>}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         <span className="font-black text-red-600 dark:text-red-400">{cls.cancelledCount}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="font-black text-purple-600 dark:text-purple-400">{cls.paChildCount}</span>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="font-black text-emerald-600 dark:text-emerald-400">{cls.freeLunchCount > 0 ? cls.freeLunchCount : <span className="text-gray-300 dark:text-gray-700">-</span>}</span>
-                      </td>
-                      <td className="px-4 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">
-                        {cls.freeCouponCount > 0 ? cls.freeCouponCount : <span className="text-gray-300 dark:text-gray-700">-</span>}
-                      </td>
                       <td className="px-4 py-3 text-right font-bold text-gray-700 dark:text-gray-300">{fmt(cls.paidAmount)}</td>
                       <td className="px-4 py-3 text-right font-bold text-green-700 dark:text-green-400">
                         {cls.couponAmount > 0 ? fmt(cls.couponAmount) : <span className="text-gray-300 dark:text-gray-700">-</span>}
                       </td>
-                      <td className="px-4 py-3 text-right font-bold text-yellow-700 dark:text-yellow-400">
+                      {/* <td className="px-4 py-3 text-right font-bold text-yellow-700 dark:text-yellow-400">
                         {cls.couponUnpaidAmount > 0 ? fmt(cls.couponUnpaidAmount) : <span className="text-gray-300 dark:text-gray-700">-</span>}
+                      </td> */}
+                      <td className="px-4 py-3 text-center font-bold text-yellow-700 dark:text-yellow-400">
+                        {cls.couponUnpaidCount > 0 ? cls.couponUnpaidCount : <span className="text-gray-300 dark:text-gray-700">-</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                        {cls.freeCouponCount > 0 ? cls.freeCouponCount : <span className="text-gray-300 dark:text-gray-700">-</span>}
                       </td>
                     </tr>
                   ))}
@@ -282,17 +298,14 @@ export default function AnalyticsClient() {
                     <td className="px-4 py-3 text-center font-black text-yellow-700 dark:text-yellow-400">
                       {data.classSummary.reduce((s, c) => s + c.unpaidCount, 0)}
                     </td>
+                    <td className="px-4 py-3 text-center font-black text-emerald-600 dark:text-emerald-400">
+                      {data.classSummary.reduce((s, c) => s + c.freeLunchCount, 0)}
+                    </td>
                     <td className="px-4 py-3 text-center font-black text-red-600 dark:text-red-400">
                       {data.classSummary.reduce((s, c) => s + c.cancelledCount, 0)}
                     </td>
                     <td className="px-4 py-3 text-center font-black text-purple-600 dark:text-purple-400">
                       {data.classSummary.reduce((s, c) => s + c.paChildCount, 0)}
-                    </td>
-                    <td className="px-4 py-3 text-center font-black text-emerald-600 dark:text-emerald-400">
-                      {data.classSummary.reduce((s, c) => s + c.freeLunchCount, 0)}
-                    </td>
-                    <td className="px-4 py-3 text-center font-black text-emerald-600 dark:text-emerald-400">
-                      {data.classSummary.reduce((s, c) => s + c.freeCouponCount, 0)}
                     </td>
                     <td className="px-4 py-3 text-right font-black text-gray-900 dark:text-gray-100">
                       {fmt(data.classSummary.reduce((s, c) => s + c.paidAmount, 0))}
@@ -300,8 +313,14 @@ export default function AnalyticsClient() {
                     <td className="px-4 py-3 text-right font-black text-green-700 dark:text-green-400">
                       {fmt(data.classSummary.reduce((s, c) => s + c.couponAmount, 0))}
                     </td>
-                    <td className="px-4 py-3 text-right font-black text-yellow-700 dark:text-yellow-400">
+                    {/* <td className="px-4 py-3 text-right font-black text-yellow-700 dark:text-yellow-400">
                       {fmt(data.classSummary.reduce((s, c) => s + c.couponUnpaidAmount, 0))}
+                    </td> */}
+                    <td className="px-4 py-3 text-center font-black text-yellow-700 dark:text-yellow-400">
+                      {data.classSummary.reduce((s, c) => s + c.couponUnpaidCount, 0)}
+                    </td>
+                    <td className="px-4 py-3 text-center font-black text-emerald-600 dark:text-emerald-400">
+                      {data.classSummary.reduce((s, c) => s + c.freeCouponCount, 0)}
                     </td>
                   </tr>
                 </tfoot>
