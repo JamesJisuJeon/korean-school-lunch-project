@@ -238,7 +238,7 @@ export default function MenuManagementClient() {
     setIsLoading(false);
   };
 
-  const inputClassName = "mt-1 block w-full min-w-0 max-w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-bold focus:border-green-500 dark:focus:border-green-400 focus:ring-4 focus:ring-green-50 dark:focus:ring-green-900/30 sm:text-sm py-2.5 px-3 bg-white dark:bg-gray-800 outline-none transition-all";
+  const inputClassName = "mt-1 block w-full min-w-0 max-w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-bold focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/30 sm:text-sm py-2.5 px-3 bg-white dark:bg-gray-800 outline-none transition-all";
 
   return (
     <>
@@ -265,7 +265,7 @@ export default function MenuManagementClient() {
     <div className="space-y-12">
       <section className="bg-white dark:bg-gray-900 p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl font-black flex items-center gap-3 text-green-700 dark:text-green-400">
+          <h2 className="text-xl sm:text-2xl font-black flex items-center gap-3 text-blue-700 dark:text-blue-400">
             <Calendar className="w-8 h-8" />
             {editingId ? "주간 메뉴 수정" : "주간 메뉴 등록"}
           </h2>
@@ -276,7 +276,7 @@ export default function MenuManagementClient() {
                   type="submit"
                   form="menu-form"
                   disabled={isLoading || isUploading}
-                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-all text-sm"
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-700 transition-all text-sm"
                 >
                   <Check className="w-4 h-4" /> {editingId ? "수정" : "등록"}
                 </button>
@@ -292,7 +292,7 @@ export default function MenuManagementClient() {
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white font-black rounded-xl hover:bg-green-700 transition-all text-sm"
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 transition-all text-sm"
               >
                 <Calendar className="w-4 h-4" /> 메뉴 등록
               </button>
@@ -384,7 +384,7 @@ export default function MenuManagementClient() {
 
       <section className="space-y-6">
         <h2 className="text-2xl font-black flex items-center gap-2 text-gray-900 dark:text-gray-50">
-          <Coffee className="w-7 h-7 text-green-600 dark:text-green-400" /> 등록된 메뉴 리스트
+          <Coffee className="w-7 h-7 text-blue-600 dark:text-blue-400" /> 등록된 메뉴 리스트
         </h2>
         <div className="grid grid-cols-1 gap-8">
           {menus.map((menu) => (
