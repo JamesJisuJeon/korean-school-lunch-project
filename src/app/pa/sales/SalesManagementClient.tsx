@@ -85,6 +85,10 @@ export default function SalesManagementClient() {
   };
 
   const updateOrderStatus = async (orderId: string, status: string, amount?: number) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("오프라인 상태입니다. 네트워크가 불안정하여 수납이 확정되지 않았습니다.");
+      return;
+    }
     const body: any = { orderId, status, isPaid: status === "PAID" || status === "POST_PAID" };
     if (amount !== undefined) body.amount = amount;
     const res = await fetch("/api/pa/sales", {
@@ -111,6 +115,10 @@ export default function SalesManagementClient() {
   };
 
   const handleOnSiteOrder = async (studentId: string) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("오프라인 상태입니다. 결제 처리를 할 수 없습니다.");
+      return;
+    }
     const res = await fetch("/api/pa/sales", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -120,6 +128,10 @@ export default function SalesManagementClient() {
   };
 
   const updateCouponPaymentStatus = async (studentId: string, menuId: string, couponPaymentStatus: string, couponAmount?: number) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("오프라인 상태입니다. 처리할 수 없습니다.");
+      return;
+    }
     const body: any = { studentId, menuId, couponPaymentStatus };
     if (couponAmount !== undefined) body.couponAmount = couponAmount;
     await fetch("/api/pa/sales", {
@@ -155,6 +167,10 @@ export default function SalesManagementClient() {
   };
 
   const updateCouponQty = async (studentId: string, currentQty: number, delta: number) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("현장 네트워크가 불안정하여 수납이 확정되지 않았습니다. 인터넷을 확인해주세요.");
+      return;
+    }
     const newQty = currentQty + delta;
     const res = await fetch("/api/pa/sales", {
       method: "POST",

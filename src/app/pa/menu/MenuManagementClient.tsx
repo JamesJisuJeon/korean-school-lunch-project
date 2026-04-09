@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Coffee, Calendar, Lock, Globe, Clock, Utensils, IceCream, Beer, Star, Upload, X, Check, Edit2, Trash2 } from "lucide-react";
+import { formatUTCtoNZInput, getNextSatAndDeadline, parseNZTimeToUTC } from "@/lib/dateUtils";
 
 interface Menu {
   id: string;
@@ -54,23 +55,8 @@ export default function MenuManagementClient() {
   const handleDateChange = (dateStr: string) => {
     if (!dateStr) return;
     const selectedDate = new Date(dateStr);
-    // 토요일(6)이 아니면 다음 토요일로 자동 보정
-    const dayOfWeek = selectedDate.getDay();
-    if (dayOfWeek !== 6) {
-      const daysToSaturday = (6 - dayOfWeek + 7) % 7 || 7;
-      selectedDate.setDate(selectedDate.getDate() + daysToSaturday);
-    }
-    const satYear = selectedDate.getFullYear();
-    const satMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const satDay = String(selectedDate.getDate()).padStart(2, '0');
-    const saturdayStr = `${satYear}-${satMonth}-${satDay}`;
-    const thursday = new Date(selectedDate);
-    thursday.setDate(selectedDate.getDate() - 2);
-    const year = thursday.getFullYear();
-    const month = String(thursday.getMonth() + 1).padStart(2, '0');
-    const day = String(thursday.getDate()).padStart(2, '0');
-    const defaultDeadline = `${year}-${month}-${day}T12:00`;
-    setNewMenu({ ...newMenu, date: saturdayStr, deadline: defaultDeadline });
+    const { saturdayStr, deadlineInputStr } = getNextSatAndDeadline(selectedDate);
+    setNewMenu({ ...newMenu, date: saturdayStr, deadline: deadlineInputStr });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,12 +88,7 @@ export default function MenuManagementClient() {
     if (res.ok) setMenus(await res.json());
   };
 
-  // UTC ISO 문자열을 브라우저 로컬 시간 기준의 datetime-local 입력값으로 변환
-  const toLocalInputString = (utcStr: string) => {
-    const d = new Date(utcStr);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
+  // 더 이상 별도의 toLocalInputString 없이 formatUTCtoNZInput 사용
 
   const addMenu = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,11 +96,11 @@ export default function MenuManagementClient() {
     const res = await fetch("/api/pa/menu", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // deadline은 브라우저 로컬(NZ) 시간 → UTC ISO 문자열로 변환 후 전송
+      // deadline은 브라우저에 표시된 뉴질랜드 NZ 시간을 UTC 문자열로 변환 후 전송
       body: JSON.stringify({
         ...newMenu,
         id: editingId ?? undefined,
-        deadline: newMenu.deadline ? new Date(newMenu.deadline).toISOString() : null,
+        deadline: newMenu.deadline ? parseNZTimeToUTC(newMenu.deadline).toISOString() : null,
       }),
     });
 
@@ -149,7 +130,7 @@ export default function MenuManagementClient() {
       notice: menu.notice || "",
       price: menu.price,
       isPublished: menu.isPublished,
-      deadline: menu.deadline ? toLocalInputString(menu.deadline) : ""
+      deadline: menu.deadline ? formatUTCtoNZInput(menu.deadline) : ""
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
