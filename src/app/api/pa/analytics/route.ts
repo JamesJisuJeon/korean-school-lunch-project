@@ -52,11 +52,22 @@ export async function GET(req: Request) {
 
   const paidStatuses = ["PAID", "POST_PAID"];
 
+  const allPreOrders = allOrders.filter((o) => o.orderType === "PRE_ORDER");
+  const onSiteOrders = allOrders.filter((o) => o.orderType === "ON_SITE");
+  const cancelledOrders = allOrders.filter((o) => o.status === "CANCELLED");
+
   const activeOrders = allOrders.filter((o) => o.status !== "CANCELLED");
-  const onSiteOrders = activeOrders.filter((o) => o.orderType === "ON_SITE");
+  const waitingCount = activeOrders.filter((o) => o.status === "WAITING").length;
+
+  const paidConfirmedCount = activeOrders.filter((o) => paidStatuses.includes(o.status)).length;
+  const unpaidCount = activeOrders.filter((o) => o.status === "UNPAID").length;
+  const freeLunchCount = activeOrders.filter((o) => o.status === "FREE_SNACK").length;
+
+  const paOrders = allOrders.filter((o) => o.isPAChild);
+  const cancelledPaOrders = paOrders.filter((o) => o.status === "CANCELLED");
+  const activePaOrders = paOrders.filter((o) => o.status !== "CANCELLED");
 
   // 사전 신청 (취소 포함)
-  const allPreOrders = allOrders.filter((o) => o.orderType === "PRE_ORDER");
   const preOrderCancelled = allPreOrders.filter((o) => o.status === "CANCELLED");
   const activePreOrders = allPreOrders.filter((o) => o.status !== "CANCELLED");
   const preOrderRegular = allPreOrders.filter((o) => !o.isPAChild);
@@ -68,7 +79,10 @@ export async function GET(req: Request) {
   const onSitePaid = onSiteOrders.filter((o) => paidStatuses.includes(o.status));
   const onSiteUnpaid = onSiteOrders.filter((o) => o.status === "UNPAID");
 
+  const allUnpaid = activeOrders.filter((o) => o.status === "UNPAID");
+
   const allCoupons = students.flatMap((s) => s.couponSales);
+  const freeCouponCount = allCoupons.filter((c) => c.paymentStatus === "FREE_COUPON").reduce((sum, c) => sum + c.quantity, 0);
   const couponPaidStatuses = ["PAID", "POST_PAID"];
   const couponSaleAmount = allCoupons
     .filter((c) => couponPaidStatuses.includes(c.paymentStatus))
@@ -102,6 +116,7 @@ export async function GET(req: Request) {
     unpaidAmount: number;
     couponAmount: number;
     couponUnpaidAmount: number;
+    couponUnpaidCount: number;
     freeCouponCount: number;
   };
 
@@ -125,6 +140,7 @@ export async function GET(req: Request) {
         unpaidAmount: 0,
         couponAmount: 0,
         couponUnpaidAmount: 0,
+        couponUnpaidCount: 0,
         freeCouponCount: 0,
       });
     }
@@ -157,20 +173,17 @@ export async function GET(req: Request) {
 
     for (const coupon of student.couponSales) {
       if (coupon.paymentStatus === "FREE_COUPON") {
-        cls.freeCouponCount++;
+        cls.freeCouponCount += coupon.quantity;
       } else if (couponPaidStatuses.includes(coupon.paymentStatus)) {
         cls.couponAmount += coupon.amount;
       } else if (coupon.paymentStatus === "UNPAID") {
         cls.couponUnpaidAmount += coupon.amount;
+        cls.couponUnpaidCount++;
       }
     }
   }
 
-  const waitingCount = activeOrders.filter((o) => o.status === "WAITING").length;
-  const paidConfirmedCount = activeOrders.filter((o) => paidStatuses.includes(o.status)).length;
-  const unpaidCount = activeOrders.filter((o) => o.status === "UNPAID").length;
-  const freeLunchCount = activeOrders.filter((o) => o.status === "FREE_SNACK").length;
-  const freeCouponCount = allCoupons.filter((c) => c.paymentStatus === "FREE_COUPON").length;
+
 
   return NextResponse.json({
     menu: { date: menu.date, price: menu.price },
@@ -181,6 +194,10 @@ export async function GET(req: Request) {
     preOrderPAChildCount: preOrderPAChild.length,
     preOrderCancelledCount: preOrderCancelled.length,
     onSiteCount: onSiteOrders.length,
+    paOrdersCount: paOrders.length,
+    activePaOrdersCount: activePaOrders.length,
+    cancelledPaOrdersCount: cancelledPaOrders.length,
+    cancelledOrdersCount: cancelledOrders.length,
     waitingCount,
     paidConfirmedCount,
     unpaidCount,
@@ -191,6 +208,7 @@ export async function GET(req: Request) {
     preOrderUnpaidAmount: preOrderUnpaid.reduce((sum, o) => sum + o.amount, 0),
     onSitePaidAmount: onSitePaid.reduce((sum, o) => sum + o.amount, 0),
     onSiteUnpaidAmount: onSiteUnpaid.reduce((sum, o) => sum + o.amount, 0),
+    allUnpaidAmount: allUnpaid.reduce((sum, o) => sum + o.amount, 0),
     totalPaidAmount:
       preOrderPaid.reduce((sum, o) => sum + o.amount, 0) +
       onSitePaid.reduce((sum, o) => sum + o.amount, 0),
