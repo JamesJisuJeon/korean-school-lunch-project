@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Search, DollarSign, ShoppingBag, Filter, UserPlus, X, Check, Calendar, ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw } from "lucide-react";
+import { PAYMENT_STATUSES, getPaymentStatusColor } from "@/lib/constants";
+import { CouponControl } from "@/components/common/CouponControl";
 
 interface StudentWithOrder {
   id: string;
@@ -31,15 +33,6 @@ interface Menu {
   price: number;
   isPublished: boolean;
 }
-
-const PAYMENT_STATUSES = [
-  { value: "WAITING", label: "수납 대기", color: "bg-gray-400" },
-  { value: "PAID", label: "납부", color: "bg-green-600" },
-  { value: "UNPAID", label: "후납", color: "bg-yellow-600" },
-  { value: "POST_PAID", label: "후납-납부", color: "bg-blue-600" },
-  { value: "CANCELLED", label: "취소", color: "bg-red-600" },
-  { value: "FREE_SNACK", label: "무료간식", color: "bg-emerald-500" },
-];
 
 type SortKey = "class" | "name";
 type SortDir = "asc" | "desc";
@@ -92,6 +85,10 @@ export default function SalesManagementClient() {
   };
 
   const updateOrderStatus = async (orderId: string, status: string, amount?: number) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("오프라인 상태입니다. 네트워크가 불안정하여 수납이 확정되지 않았습니다.");
+      return;
+    }
     const body: any = { orderId, status, isPaid: status === "PAID" || status === "POST_PAID" };
     if (amount !== undefined) body.amount = amount;
     const res = await fetch("/api/pa/sales", {
@@ -118,6 +115,10 @@ export default function SalesManagementClient() {
   };
 
   const handleOnSiteOrder = async (studentId: string) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("오프라인 상태입니다. 결제 처리를 할 수 없습니다.");
+      return;
+    }
     const res = await fetch("/api/pa/sales", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -127,6 +128,10 @@ export default function SalesManagementClient() {
   };
 
   const updateCouponPaymentStatus = async (studentId: string, menuId: string, couponPaymentStatus: string, couponAmount?: number) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("오프라인 상태입니다. 처리할 수 없습니다.");
+      return;
+    }
     const body: any = { studentId, menuId, couponPaymentStatus };
     if (couponAmount !== undefined) body.couponAmount = couponAmount;
     await fetch("/api/pa/sales", {
@@ -162,6 +167,10 @@ export default function SalesManagementClient() {
   };
 
   const updateCouponQty = async (studentId: string, currentQty: number, delta: number) => {
+    if (typeof window !== "undefined" && !window.navigator.onLine) {
+      alert("현장 네트워크가 불안정하여 수납이 확정되지 않았습니다. 인터넷을 확인해주세요.");
+      return;
+    }
     const newQty = currentQty + delta;
     const res = await fetch("/api/pa/sales", {
       method: "POST",
@@ -509,8 +518,7 @@ export default function SalesManagementClient() {
                       }}
                     />
                     <select
-                      className={`shrink-0 rounded-xl border-2 h-[38px] px-3 text-xs font-black appearance-none cursor-pointer ${PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
-                        } bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
+                      className={`shrink-0 rounded-xl border-2 h-[38px] px-3 text-xs font-black appearance-none cursor-pointer ${getPaymentStatusColor(order.status, 'text')} bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-0 outline-none`}
                       value={order.status}
                       onChange={(e) => handleOrderStatusChange(order, e.target.value, student.isPAChild)}
                     >
@@ -525,18 +533,7 @@ export default function SalesManagementClient() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black text-gray-400 dark:text-gray-500 shrink-0">쿠폰 ($5)</span>
-                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-2.5 h-[38px] border-2 border-gray-100 dark:border-gray-700">
-                      <button
-                        onClick={() => updateCouponQty(student.id, couponQty, -1)}
-                        disabled={couponQty <= 0}
-                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30 active:scale-90 text-sm font-bold"
-                      >-</button>
-                      <span className="text-sm font-black text-gray-900 dark:text-gray-100 w-5 text-center">{couponQty}</span>
-                      <button
-                        onClick={() => updateCouponQty(student.id, couponQty, 1)}
-                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-purple-600 transition-colors active:scale-90 text-sm font-bold"
-                      >+</button>
-                    </div>
+                    <CouponControl qty={couponQty} onUpdate={(delta) => updateCouponQty(student.id, couponQty, delta)} />
                   </div>
                   {couponQty > 0 && couponSale && (
                     <select
@@ -630,8 +627,7 @@ export default function SalesManagementClient() {
                     <td className="px-4 py-5 whitespace-nowrap text-center">
                       {order ? (
                         <select
-                          className={`w-28 rounded-xl border-2 h-[38px] px-3 text-xs font-black transition-all appearance-none cursor-pointer ${PAYMENT_STATUSES.find(s => s.value === order.status)?.color.replace('bg-', 'text-') || "text-gray-900 dark:text-gray-100"
-                            } bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none mx-auto block`}
+                          className={`w-28 rounded-xl border-2 h-[38px] px-3 text-xs font-black transition-all appearance-none cursor-pointer ${getPaymentStatusColor(order.status, 'text')} bg-gray-50 dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:ring-0 outline-none mx-auto block`}
                           value={order.status}
                           onChange={(e) => handleOrderStatusChange(order, e.target.value, student.isPAChild)}
                         >
@@ -665,22 +661,7 @@ export default function SalesManagementClient() {
                       )}
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-xl h-[38px] px-2 w-32 mx-auto border-2 border-gray-100 dark:border-gray-700">
-                        <button
-                          onClick={() => updateCouponQty(student.id, couponQty, -1)}
-                          disabled={couponQty <= 0}
-                          className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-red-500 hover:border-red-100 dark:hover:border-red-900/50 transition-colors disabled:opacity-30 active:scale-90"
-                        >
-                          -
-                        </button>
-                        <span className="text-sm font-black text-gray-900 dark:text-gray-100 w-4 text-center">{couponQty}</span>
-                        <button
-                          onClick={() => updateCouponQty(student.id, couponQty, 1)}
-                          className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-purple-600 hover:border-purple-100 dark:hover:border-purple-900/50 transition-colors active:scale-90"
-                        >
-                          +
-                        </button>
-                      </div>
+                      <CouponControl qty={couponQty} onUpdate={(delta) => updateCouponQty(student.id, couponQty, delta)} />
                     </td>
                     <td className="px-4 py-5 whitespace-nowrap text-center">
                       {couponQty > 0 && couponSale ? (
