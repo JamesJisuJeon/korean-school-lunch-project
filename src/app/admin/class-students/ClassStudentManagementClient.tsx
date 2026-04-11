@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
+import { matchesSearch } from "@/lib/chosungUtils";
 import { 
   Users, 
   Search, 
@@ -71,10 +72,9 @@ export default function ClassStudentManagementClient() {
 
   const filteredUnassigned = useMemo(() => {
     if (!searchTerm) return unassignedStudents;
-    const lower = searchTerm.toLowerCase();
-    return unassignedStudents.filter(s => 
-      s.name.toLowerCase().includes(lower) || 
-      s.parents.some(p => p.name.toLowerCase().includes(lower))
+    return unassignedStudents.filter(s =>
+      matchesSearch(s.name, searchTerm) ||
+      s.parents.some(p => matchesSearch(p.name, searchTerm))
     );
   }, [unassignedStudents, searchTerm]);
 

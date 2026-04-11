@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { UserPlus, GraduationCap, Key, Trash2, Search, X, CheckCircle2, PowerOff, Power, Download, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
+import { matchesSearch } from "@/lib/chosungUtils";
 
 interface Class {
   id: string;
@@ -93,15 +94,15 @@ export default function AdminStudentsClient() {
 
   const sortedStudents = useMemo(() => {
     let result = [...students.filter(s => {
-      const matchesSearch =
-        s.name.toLowerCase().includes(studentListSearch.toLowerCase()) ||
-        (s.class?.name || "").toLowerCase().includes(studentListSearch.toLowerCase()) ||
-        s.parents.some(p => (p.name || "").toLowerCase().includes(studentListSearch.toLowerCase()));
+      const matchesSearch_ =
+        matchesSearch(s.name, studentListSearch) ||
+        matchesSearch(s.class?.name || "", studentListSearch) ||
+        s.parents.some(p => matchesSearch(p.name || "", studentListSearch));
       const matchesFilter =
         activeFilter === 'all' ||
         (activeFilter === 'active' && s.isActive) ||
         (activeFilter === 'inactive' && !s.isActive);
-      return matchesSearch && matchesFilter;
+      return matchesSearch_ && matchesFilter;
     })];
 
     if (sortConfig) {
@@ -131,9 +132,9 @@ export default function AdminStudentsClient() {
   const filteredParents = useMemo(() => {
     if (!parentSearch) return [];
     return parents.filter(p => 
-      !selectedParentIds.includes(p.id) && 
-      ((p.name?.toLowerCase() || "").includes(parentSearch.toLowerCase()) || 
-       p.email.toLowerCase().includes(parentSearch.toLowerCase()))
+      !selectedParentIds.includes(p.id) &&
+      (matchesSearch(p.name || "", parentSearch) ||
+       matchesSearch(p.email, parentSearch))
     ).slice(0, 5);
   }, [parents, parentSearch, selectedParentIds]);
 
