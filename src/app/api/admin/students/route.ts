@@ -147,9 +147,23 @@ export async function DELETE(req: Request) {
 
   try {
     const { id } = await req.json();
-    await prisma.student.delete({ where: { id } });
-    return NextResponse.json({ message: "학생 정보가 삭제되었습니다." });
+    
+    // 외래 키 연결(링크)만 해제하고 레코드는 남겨둠
+    await prisma.$transaction([
+      prisma.order.updateMany({
+        where: { studentId: id },
+        data: { studentId: null }
+      }),
+      prisma.couponSale.updateMany({
+        where: { studentId: id },
+        data: { studentId: null }
+      }),
+      prisma.student.delete({ where: { id } })
+    ]);
+
+    return NextResponse.json({ message: "학생 정보가 삭제되었습니다. (관련 내역은 유지됨)" });
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ message: "학생 삭제 중 오류가 발생했습니다." }, { status: 500 });
   }
 }

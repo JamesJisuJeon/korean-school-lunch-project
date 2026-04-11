@@ -116,8 +116,8 @@ model Menu {
 
 model Order {
   id          String    @id @default(cuid())
-  studentId   String
-  student     Student   @relation(fields: [studentId], references: [id])
+  studentId   String?
+  student     Student?  @relation(fields: [studentId], references: [id])
   menuId      String
   menu        Menu      @relation(fields: [menuId], references: [id])
   orderType   OrderType @default(PRE_ORDER)
@@ -135,8 +135,8 @@ model Order {
 
 model CouponSale {
   id            String   @id @default(cuid())
-  studentId     String
-  student       Student  @relation(fields: [studentId], references: [id])
+  studentId     String?
+  student       Student?  @relation(fields: [studentId], references: [id])
   menuId        String
   menu          Menu     @relation(fields: [menuId], references: [id])
   quantity      Int      @default(1)
