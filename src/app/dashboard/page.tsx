@@ -5,6 +5,7 @@ import { Settings, Users, ClipboardList, BookOpen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { getNZTodayRange } from "@/lib/dateUtils";
+import { formatInTimeZone } from "date-fns-tz";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -122,7 +123,7 @@ export default async function DashboardPage() {
             title={substituteToday ? "임시 학급 관리 (배정됨)" : isAssistantOnly ? "학급 관리 (보조교사)" : "학급 관리 (Teacher)"}
             icon={<BookOpen className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
             iconBg="bg-orange-50 dark:bg-orange-900/30"
-            description={substituteToday ? `${format(todayStart, 'yyyy.MM.dd')} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
+            description={substituteToday ? `${formatInTimeZone(new Date(), "Pacific/Auckland", "yyyy.MM.dd")} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
             links={[
               { label: "우리 반 명단 확인", href: "/teacher/class" },
             ]}
@@ -133,12 +134,6 @@ export default async function DashboardPage() {
   );
 }
 
-function format(date: Date, str: string) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return str.replace('yyyy', String(y)).replace('MM', m).replace('dd', d);
-}
 
 function DashboardCard({
   title,
