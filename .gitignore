@@ -23,6 +23,9 @@ jspm_packages/
 out/
 build/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # IDE/System files
 .DS_Store
 .vscode/
