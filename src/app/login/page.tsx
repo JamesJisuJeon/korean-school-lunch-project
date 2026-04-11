@@ -36,7 +36,7 @@ export default function LoginPage() {
             동남한국학교
           </h2>
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
-            스낵관리 시스템
+            간식관리 시스템
           </h2>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">계정 정보를 입력하여 로그인하세요</p>
         </div>
