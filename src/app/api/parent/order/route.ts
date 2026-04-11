@@ -15,7 +15,7 @@ export async function GET() {
         student: true,
         menu: true
       },
-      orderBy: { menu: { date: "desc" } }
+      orderBy: [{ menu: { date: "desc" } }, { student: { name: "asc" } }]
     });
     return NextResponse.json(orders);
   } catch (error) {

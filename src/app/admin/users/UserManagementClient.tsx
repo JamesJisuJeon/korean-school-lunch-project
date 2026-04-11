@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { UserPlus, Search, Shield, Key, Trash2, X, Download, Upload, Users, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import * as XLSX from "xlsx";
+import { matchesSearch } from "@/lib/chosungUtils";
 
 interface User {
   id: string;
@@ -42,8 +43,8 @@ export default function UserManagementClient() {
 
   const sortedUsers = useMemo(() => {
     let list = users.filter(u =>
-      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
+      matchesSearch(u.name || "", searchTerm) ||
+      matchesSearch(u.email, searchTerm)
     );
     if (filterRoles.length > 0) {
       const roleFilters = filterRoles.filter(r => r !== "NONE");

@@ -48,10 +48,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token) {
+      if (token?.id) {
         session.user.id = token.id as string;
         (session.user as any).roles = token.roles as Role[];
         (session.user as any).mustChangePassword = token.mustChangePassword as boolean;
+
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { roles: true, mustChangePassword: true },
+          });
+          if (dbUser) {
+            (session.user as any).roles = dbUser.roles;
+            (session.user as any).mustChangePassword = dbUser.mustChangePassword;
+          }
+        } catch {
+          // DB 조회 실패 시 토큰의 기존 값 유지
+        }
       }
       return session;
     },

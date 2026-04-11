@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Plus, BookOpen, Trash2, Edit2, Download, Upload, Check, X, Search, User, Filter, GraduationCap, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import * as XLSX from "xlsx";
+import { matchesSearch } from "@/lib/chosungUtils";
 
 interface Teacher {
   id: string;
@@ -160,9 +161,9 @@ export default function ClassesManagementClient() {
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       result = result.filter(c =>
-        c.name.toLowerCase().includes(lower) ||
-        (c.grade && c.grade.toLowerCase().includes(lower)) ||
-        (c.teacherName && c.teacherName.toLowerCase().includes(lower))
+        matchesSearch(c.name, searchTerm) ||
+        matchesSearch(c.grade || "", searchTerm) ||
+        matchesSearch(c.teacherName || "", searchTerm)
       );
     }
     result.sort((a, b) => {
@@ -440,7 +441,7 @@ export default function ClassesManagementClient() {
                   </div>
                   {showTeacherSuggestions && (
                     <div className="absolute z-30 left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-[2rem] shadow-md max-h-60 overflow-y-auto p-2 animate-in slide-in-from-top-1 duration-200">
-                      {teachers.filter(t => t.name.includes(teacherSearchQuery)).map(t => (
+                      {teachers.filter(t => matchesSearch(t.name, teacherSearchQuery)).map(t => (
                         <button
                           key={t.id}
                           type="button"
@@ -477,7 +478,7 @@ export default function ClassesManagementClient() {
                       {allUsers
                         .filter(u =>
                           !newClassAssistants.some(a => a.id === u.id) &&
-                          ((u.name?.toLowerCase() || "").includes(newClassAssistantSearch.toLowerCase()) || u.email.toLowerCase().includes(newClassAssistantSearch.toLowerCase()))
+                          (matchesSearch(u.name || "", newClassAssistantSearch) || matchesSearch(u.email, newClassAssistantSearch))
                         )
                         .slice(0, 5)
                         .map(u => (
@@ -491,7 +492,7 @@ export default function ClassesManagementClient() {
                             <span className="text-gray-400 text-xs">{u.email}</span>
                           </button>
                         ))}
-                      {allUsers.filter(u => !newClassAssistants.some(a => a.id === u.id) && ((u.name?.toLowerCase() || "").includes(newClassAssistantSearch.toLowerCase()) || u.email.toLowerCase().includes(newClassAssistantSearch.toLowerCase()))).length === 0 && (
+                      {allUsers.filter(u => !newClassAssistants.some(a => a.id === u.id) && (matchesSearch(u.name || "", newClassAssistantSearch) || matchesSearch(u.email, newClassAssistantSearch))).length === 0 && (
                         <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
                       )}
                     </div>
@@ -590,7 +591,7 @@ export default function ClassesManagementClient() {
                         />
                         {showEditTeacherSuggestions && (
                           <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md max-h-40 overflow-y-auto p-1">
-                            {teachers.filter(t => t.name.includes(editTeacherSearch)).map(t => (
+                            {teachers.filter(t => matchesSearch(t.name, editTeacherSearch)).map(t => (
                               <button
                                 key={t.id}
                                 className="w-full p-3 text-left text-sm font-black rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-900 dark:text-gray-100"
@@ -635,7 +636,7 @@ export default function ClassesManagementClient() {
                             {allUsers
                               .filter(u =>
                                 !cls.assistants.some(a => a.userId === u.id) &&
-                                ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))
+                                (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))
                               )
                               .slice(0, 5)
                               .map(u => (
@@ -644,7 +645,7 @@ export default function ClassesManagementClient() {
                                   <span className="text-gray-400 text-[10px]">{u.email}</span>
                                 </button>
                               ))}
-                            {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))).length === 0 && (
+                            {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))).length === 0 && (
                               <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
                             )}
                           </div>
@@ -750,7 +751,7 @@ export default function ClassesManagementClient() {
                               {allUsers
                                 .filter(u =>
                                   !cls.assistants.some(a => a.userId === u.id) &&
-                                  ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))
+                                  (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))
                                 )
                                 .slice(0, 5)
                                 .map(u => (
@@ -759,7 +760,7 @@ export default function ClassesManagementClient() {
                                     <span className="text-gray-400 text-[10px]">{u.email}</span>
                                   </button>
                                 ))}
-                              {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase()))).length === 0 && (
+                              {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))).length === 0 && (
                                 <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
                               )}
                             </div>
@@ -815,7 +816,7 @@ export default function ClassesManagementClient() {
                               />
                               {showEditTeacherSuggestions && (
                                 <div className="absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-md max-h-40 overflow-y-auto p-1 animate-in slide-in-from-top-1 duration-200 min-w-[180px]">
-                                  {teachers.filter(t => t.name.includes(editTeacherSearch)).map(t => (
+                                  {teachers.filter(t => matchesSearch(t.name, editTeacherSearch)).map(t => (
                                     <button
                                       key={t.id}
                                       className="w-full p-3 text-left text-sm font-black rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-gray-900 dark:text-gray-100"
@@ -885,7 +886,7 @@ export default function ClassesManagementClient() {
                                   {assistantSearch && (
                                     <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-28 overflow-y-auto shadow-lg">
                                       {allUsers
-                                        .filter(u => !cls.assistants.some(a => a.userId === u.id) && ((u.name?.toLowerCase() || "").includes(assistantSearch.toLowerCase()) || u.email.toLowerCase().includes(assistantSearch.toLowerCase())))
+                                        .filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch)))
                                         .slice(0, 5)
                                         .map(u => (
                                           <button key={u.id} onClick={() => { addAssistant(cls.id, u.id); setAssistantPanelId(null); }} className="w-full px-3 py-1.5 text-left text-xs font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 text-gray-800 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700 last:border-0 flex justify-between">

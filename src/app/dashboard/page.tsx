@@ -95,7 +95,7 @@ export default async function DashboardPage() {
             iconBg="bg-green-50 dark:bg-green-900/30"
             description="간식 메뉴 등록, 신청 내역 수납, 매점 쿠폰 판매를 관리합니다."
             links={[
-              { label: "주간 메뉴 및 신청 관리", href: "/pa/menu" },
+              { label: "간식 메뉴 및 신청 관리", href: "/pa/menu" },
               { label: "현장 수납/쿠폰 판매", href: "/pa/sales" },
               { label: "반별 간식 신청 내역", href: "/pa/class-orders" },
               { label: "운영 집계 현황", href: "/pa/analytics" },

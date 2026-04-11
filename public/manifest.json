@@ -1,7 +1,7 @@
 {
-  "name": "동남스낵",
-  "short_name": "동남스낵",
-  "description": "한국학교 학부모회 점심 및 매점 운영 관리 시스템",
+  "name": "동남간식",
+  "short_name": "동남간식",
+  "description": "한국학교 학부모회 간식 및 매점 운영 관리 시스템",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#f9fafb",
