@@ -7,7 +7,7 @@ async function main() {
   const password = await bcrypt.hash("password123", 10);
 
   // 1. 사용자 생성
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "admin@school.com" },
     update: {},
     create: { email: "admin@school.com", name: "관리자", password, roles: [Role.ADMIN], mustChangePassword: false }
@@ -48,9 +48,9 @@ async function main() {
 
   // 3. 학생 생성
   const student1 = await prisma.student.create({ data: { name: "학부모회자녀", parents: { connect: { id: paMember.id } }, classId: class1.id, isPAChild: true } });
-  const student2 = await prisma.student.create({ data: { name: "선생님자녀", parents: { connect: { id: teacher.id } }, classId: class1.id, isPAChild: false } });
-  const student3 = await prisma.student.create({ data: { name: "일반자녀1", parents: { connect: { id: parent.id } }, classId: class2.id, isPAChild: false } });
-  const student4 = await prisma.student.create({ data: { name: "일반자녀2", parents: { connect: { id: parent.id } }, classId: class2.id, isPAChild: false } });
+  await prisma.student.create({ data: { name: "선생님자녀", parents: { connect: { id: teacher.id } }, classId: class1.id, isPAChild: false } });
+  await prisma.student.create({ data: { name: "일반자녀1", parents: { connect: { id: parent.id } }, classId: class2.id, isPAChild: false } });
+  await prisma.student.create({ data: { name: "일반자녀2", parents: { connect: { id: parent.id } }, classId: class2.id, isPAChild: false } });
 
   // 4. 메뉴 생성
   const pastDate = new Date(); pastDate.setDate(pastDate.getDate() - 7);
@@ -60,33 +60,30 @@ async function main() {
   const menuPast = await prisma.menu.create({
     data: {
       date: pastDate,
-      mainItems: "비빔밥",
-      dessertItems: "과일",
-      beverageItems: "주스",
+      mainItems: "비빔밥, 과일, 주스",
+      specialItems: null,
       price: 7,
       isPublished: true,
       deadline: pastDate
     }
   });
 
-  const menuNow = await prisma.menu.create({
+  await prisma.menu.create({
     data: {
       date: now,
-      mainItems: "불고기",
-      dessertItems: "도넛",
-      beverageItems: "식혜",
+      mainItems: "불고기, 도넛, 식혜",
+      specialItems: "핫도그 $2",
       price: 7,
       isPublished: true,
       deadline: futureDate
     }
   });
 
-  const menuFuture = await prisma.menu.create({
+  await prisma.menu.create({
     data: {
       date: futureDate,
       mainItems: "제육볶음",
-      dessertItems: null,
-      beverageItems: null,
+      specialItems: null,
       price: 10,
       isPublished: false,
       deadline: null
