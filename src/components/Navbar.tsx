@@ -34,7 +34,7 @@ export default async function Navbar() {
       <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl px-4 py-2.5">
         <Link href="/dashboard" className="flex items-center gap-2">
           <span className="self-center text-xl font-semibold whitespace-nowrap text-blue-600 dark:text-blue-400">
-            동남한국학교 스낵관리
+            동남한국학교 간식
           </span>
         </Link>
         <div className="flex items-center gap-3 lg:order-2">
@@ -49,9 +49,9 @@ export default async function Navbar() {
         <div className="flex items-center gap-1 px-3 py-1 w-max">
           <MobileShortcut href="/dashboard" icon={<Home className="w-5 h-5" />} label="홈" />
 
-{(isPA || isAdmin) && (
+          {(isPA || isAdmin) && (
             <>
-              <MobileShortcut href="/pa/menu" icon={<Utensils className="w-5 h-5" />} label="메뉴관리" />
+              <MobileShortcut href="/pa/menu" icon={<Utensils className="w-5 h-5" />} label="간식관리" />
               <MobileShortcut href="/pa/sales" icon={<DollarSign className="w-5 h-5" />} label="현장수납" />
               <MobileShortcut href="/pa/class-orders" icon={<ClipboardList className="w-5 h-5" />} label="반별신청" />
               <MobileShortcut href="/pa/analytics" icon={<BarChart2 className="w-5 h-5" />} label="집계현황" />

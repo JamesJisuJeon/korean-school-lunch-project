@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Search, DollarSign, ShoppingBag, Filter, UserPlus, X, Check, Calendar, ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { PAYMENT_STATUSES, getPaymentStatusColor } from "@/lib/constants";
+import { matchesSearch } from "@/lib/chosungUtils";
 import { CouponControl } from "@/components/common/CouponControl";
 
 interface StudentWithOrder {
@@ -211,12 +212,11 @@ export default function SalesManagementClient() {
   const displayedStudents = useMemo(() => {
     let result = [...students];
 
-    // 검색
+    // 검색 (초성 검색 포함)
     if (searchTerm) {
-      const q = searchTerm.toLowerCase();
       result = result.filter(s =>
-        s.name.toLowerCase().includes(q) ||
-        (s.class?.name || "").toLowerCase().includes(q)
+        matchesSearch(s.name, searchTerm) ||
+        matchesSearch(s.class?.name || "", searchTerm)
       );
     }
 
@@ -327,7 +327,7 @@ export default function SalesManagementClient() {
               <Calendar className="w-5 h-5 xl:w-6 xl:h-6" />
             </div>
             <div className="flex-1">
-              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">배식 날짜 선택</label>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">간식 일자 선택</label>
               <select
                 className="w-full bg-transparent border-none p-0 font-black text-lg xl:text-xl text-gray-900 dark:text-gray-100 focus:ring-0 cursor-pointer outline-none"
                 value={selectedMenuId}
@@ -553,7 +553,7 @@ export default function SalesManagementClient() {
           })}
           {displayedStudents.length === 0 && (
             <div className="px-8 py-16 text-center text-gray-300 dark:text-gray-600 font-black italic">
-              {students.length === 0 ? "배식 날짜를 선택해 주세요." : "조건에 맞는 학생이 없습니다."}
+              {students.length === 0 ? "간식 일자를 선택해 주세요." : "조건에 맞는 학생이 없습니다."}
             </div>
           )}
         </div>
@@ -688,7 +688,7 @@ export default function SalesManagementClient() {
               {displayedStudents.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-8 py-20 text-center text-gray-300 dark:text-gray-600 font-black italic">
-                    {students.length === 0 ? "배식 날짜를 선택해 주세요." : "조건에 맞는 학생이 없습니다."}
+                    {students.length === 0 ? "간식 일자를 선택해 주세요." : "조건에 맞는 학생이 없습니다."}
                   </td>
                 </tr>
               )}

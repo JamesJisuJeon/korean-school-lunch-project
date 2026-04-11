@@ -102,10 +102,8 @@ model Substitute {
 model Menu {
   id            String   @id @default(cuid())
   date          DateTime @unique // Saturday date
-  mainItems     String?  // Main Menu
-  dessertItems  String?  // Dessert
-  beverageItems String?  // Beverage
-  specialItems  String?  // 매점 특식
+  mainItems     String?  // 간식 메뉴
+  specialItems  String?  // 매점 특식 판매
   imageUrl      String?  // Announcement image URL
   notice        String?  // 공지사항
   price         Float    @default(7.0)
