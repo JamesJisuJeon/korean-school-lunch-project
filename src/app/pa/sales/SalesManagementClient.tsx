@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Search, DollarSign, ShoppingBag, Filter, UserPlus, X, Check, Calendar, ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { PAYMENT_STATUSES, getPaymentStatusColor } from "@/lib/constants";
 import { matchesSearch } from "@/lib/chosungUtils";
@@ -56,6 +56,19 @@ export default function SalesManagementClient() {
   const [filterCoupon, setFilterCoupon] = useState("ALL"); // ALL | HAS | NONE
   const [filterCouponStatus, setFilterCouponStatus] = useState("ALL"); // ALL | PAID | UNPAID | POST_PAID | FREE_COUPON
   const [filterPAChild, setFilterPAChild] = useState(false);
+
+  // 헤더 고정을 위한 높이 측정
+  const [filterHeight, setFilterHeight] = useState(0);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!filterRef.current) return;
+    const update = () => setFilterHeight(filterRef.current?.offsetHeight || 0);
+    update();
+    const obs = new ResizeObserver(update);
+    obs.observe(filterRef.current);
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     fetchMenus();
@@ -346,7 +359,7 @@ export default function SalesManagementClient() {
 
       {/* 검색 + 필터 */}
       <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-sm border border-gray-200 dark:border-gray-800">
-        <div className="sticky top-28 xl:top-16 z-20 bg-white dark:bg-gray-900 rounded-t-[2.5rem] overflow-hidden">
+        <div ref={filterRef} className="sticky top-28 xl:top-16 z-20 bg-white dark:bg-gray-900 rounded-t-[2.5rem] overflow-hidden">
           <div className="p-3 sm:p-6 border-b border-gray-50 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 space-y-2 sm:space-y-4">
             {/* 검색창 */}
             <div className="relative flex-1 group">
@@ -559,12 +572,13 @@ export default function SalesManagementClient() {
         </div>
 
         {/* 데스크탑 테이블 (xl 이상에서만 표시) */}
-        <div className="hidden xl:block overflow-x-auto">
+        <div className="hidden xl:block">
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
-            <thead className="bg-gray-50/50 dark:bg-gray-800/50">
+            <thead>
               <tr>
                 <th
-                  className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-28"
+                  className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-28 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700"
+                  style={{ top: `calc(4rem + ${filterHeight}px)` }}
                   onClick={() => handleSort("class")}
                 >
                   <div className="flex items-center justify-center gap-1">
@@ -572,19 +586,20 @@ export default function SalesManagementClient() {
                   </div>
                 </th>
                 <th
-                  className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-32"
+                  className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none w-32 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700"
+                  style={{ top: `calc(4rem + ${filterHeight}px)` }}
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center justify-center gap-1">
                     이름 <SortIcon col="name" />
                   </div>
                 </th>
-                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-32">사전/현장</th>
-                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-32">수납 상태</th>
-                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400">특이사항</th>
-                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-36">매점 쿠폰 ($5)</th>
-                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-32">쿠폰비 수납</th>
-                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-24">총액</th>
+                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-32 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700" style={{ top: `calc(4rem + ${filterHeight}px)` }}>사전/현장</th>
+                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-32 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700" style={{ top: `calc(4rem + ${filterHeight}px)` }}>수납 상태</th>
+                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700" style={{ top: `calc(4rem + ${filterHeight}px)` }}>특이사항</th>
+                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-36 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700" style={{ top: `calc(4rem + ${filterHeight}px)` }}>매점 쿠폰 ($5)</th>
+                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-32 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700" style={{ top: `calc(4rem + ${filterHeight}px)` }}>쿠폰비 수납</th>
+                <th className="px-4 py-5 text-center text-sm font-black text-gray-500 dark:text-gray-400 w-24 sticky z-10 bg-gray-50 dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700" style={{ top: `calc(4rem + ${filterHeight}px)` }}>총액</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800 bg-white dark:bg-gray-900">

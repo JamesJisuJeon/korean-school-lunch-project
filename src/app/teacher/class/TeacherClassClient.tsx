@@ -8,8 +8,7 @@ interface Menu {
   id: string;
   date: string;
   mainItems: string | null;
-  dessertItems: string | null;
-  beverageItems: string | null;
+  specialItems: string | null;
   isPublished: boolean;
 }
 
@@ -148,19 +147,17 @@ export default function TeacherClassClient() {
         </div>
 
         {currentMenu && (
-          <div className="lg:col-span-2 grid grid-cols-3 gap-2">
+          <div className={`lg:col-span-2 grid ${currentMenu.specialItems ? "grid-cols-2" : "grid-cols-1"} gap-2`}>
             {[
-              { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "메인 메뉴", value: currentMenu.mainItems },
-              { icon: <IceCream className="w-4 h-4" />, bg: "bg-pink-50 dark:bg-pink-900/20", border: "border-pink-100 dark:border-pink-800", color: "text-pink-600 dark:text-pink-400", label: "디저트", value: currentMenu.dessertItems },
-              { icon: <Beer className="w-4 h-4" />, bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-cyan-100 dark:border-cyan-800", color: "text-cyan-600 dark:text-cyan-400", label: "음료수", value: currentMenu.beverageItems },
-
+              { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "간식 메뉴", value: currentMenu.mainItems },
+              ...(currentMenu.specialItems ? [{ icon: <IceCream className="w-4 h-4" />, bg: "bg-yellow-50 dark:bg-yellow-900/20", border: "border-yellow-100 dark:border-yellow-800", color: "text-yellow-600 dark:text-yellow-400", label: "매점 특식 판매", value: currentMenu.specialItems }] : []),
             ].map((item, i) => (
-              <div key={i} className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
+              <div key={i} className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
                 <div className={`flex items-center gap-1.5 ${item.color}`}>
                   {item.icon}
                   <p className="text-xs font-black">{item.label}</p>
                 </div>
-                <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
+                <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight whitespace-pre-line">{item.value || "-"}</p>
               </div>
             ))}
           </div>

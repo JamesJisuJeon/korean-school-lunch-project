@@ -291,7 +291,8 @@ export default function ParentOrderClient() {
                       <textarea
                         value={studentNotes[student.id] || ""}
                         onChange={e => setStudentNotes(prev => ({ ...prev, [student.id]: e.target.value }))}
-                        className="w-full bg-white dark:bg-gray-800 border-2 border-blue-100 dark:border-blue-800 rounded-xl px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 focus:border-blue-400 dark:focus:border-blue-500 focus:outline-none resize-none h-9 overflow-hidden transition-all"
+                        placeholder="특이사항이 있는 경우 기입해 주세요."
+                        className="w-full bg-white dark:bg-gray-800 border-2 border-blue-100 dark:border-blue-800 rounded-xl px-3 py-2 text-sm font-medium text-gray-800 dark:text-gray-200 focus:border-blue-400 dark:focus:border-blue-500 focus:outline-none resize-none h-9 overflow-hidden transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       />
                     </div>
                   )}
