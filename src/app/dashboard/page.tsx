@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Settings, Users, ClipboardList, BookOpen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
+import { getNZTodayRange } from "@/lib/dateUtils";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -17,14 +18,13 @@ export default async function DashboardPage() {
 
   const user = session.user as any;
   const roles = user.roles || [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const { start: todayStart, end: todayEnd } = getNZTodayRange();
 
   // 보결 배정 체크
   let substituteToday = null;
   try {
     substituteToday = await (prisma as any).substitute.findFirst({
-      where: { userId: user.id, date: { gte: today, lt: new Date(today.getTime() + 24*60*60*1000) } }
+      where: { userId: user.id, date: { gte: todayStart, lt: todayEnd } }
     });
   } catch {}
 
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
             title={substituteToday ? "임시 학급 관리 (배정됨)" : isAssistantOnly ? "학급 관리 (보조교사)" : "학급 관리 (Teacher)"}
             icon={<BookOpen className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
             iconBg="bg-orange-50 dark:bg-orange-900/30"
-            description={substituteToday ? `${format(today, 'yyyy.MM.dd')} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
+            description={substituteToday ? `${format(todayStart, 'yyyy.MM.dd')} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
             links={[
               { label: "우리 반 명단 확인", href: "/teacher/class" },
             ]}
