@@ -48,19 +48,24 @@ export default function ParentOrderClient() {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    const [studentRes, menuRes, orderRes] = await Promise.all([
-      fetch("/api/parent/students"),
-      fetch("/api/pa/menu"),
-      fetch("/api/parent/order"),
-    ]);
-    if (studentRes.ok) setStudents(await studentRes.json());
-    if (menuRes.ok) {
-      const menusData = await menuRes.json();
-      const publishedMenus = menusData.filter((m: Menu) => m.isPublished);
-      setMenus(publishedMenus);
-      if (publishedMenus.length > 0) setSelectedMenuId(publishedMenus[0].id);
+    setIsLoading(true);
+    try {
+      const [studentRes, menuRes, orderRes] = await Promise.all([
+        fetch("/api/parent/students"),
+        fetch("/api/pa/menu"),
+        fetch("/api/parent/order"),
+      ]);
+      if (studentRes.ok) setStudents(await studentRes.json());
+      if (menuRes.ok) {
+        const menusData = await menuRes.json();
+        const publishedMenus = menusData.filter((m: Menu) => m.isPublished);
+        setMenus(publishedMenus);
+        if (publishedMenus.length > 0) setSelectedMenuId(publishedMenus[0].id);
+      }
+      if (orderRes.ok) setOrders(await orderRes.json());
+    } finally {
+      setIsLoading(false);
     }
-    if (orderRes.ok) setOrders(await orderRes.json());
   };
 
   const toggleStudent = (id: string) => {
