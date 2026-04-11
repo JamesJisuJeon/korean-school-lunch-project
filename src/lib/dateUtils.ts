@@ -19,30 +19,36 @@ export function formatUTCtoNZInput(utcDate: Date | string): string {
 }
 
 /**
- * 특정 날짜(Date 객체, 로컬 무관)가 주어졌을 때, 
- * 뉴질랜드 달력 기준으로 다음 '토요일'의 날짜 문자열(YYYY-MM-DD)과, 
- * 해당 토요일에 선행하는 '목요일 정오(12:00PM)'를 UTC Date로 계산해 반환합니다.
+ * 특정 날짜(Date 객체, 로컬 무관)가 주어졌을 때,
+ * 뉴질랜드 달력 기준으로 다음 '토요일'의 날짜 문자열(YYYY-MM-DD)과,
+ * 해당 토요일에 선행하는 '목요일 오후 2시(14:00)'를 UTC Date로 계산해 반환합니다.
  */
 export function getNextSatAndDeadline(baseDate: Date = new Date()) {
   const nzDate = toZonedTime(baseDate, NZ_TZ);
   const dayOfWeek = nzDate.getDay();
   // 토요일(6)이 아니면 다음 토요일로 보정
   const daysToSaturday = dayOfWeek === 6 ? 0 : (6 - dayOfWeek + 7) % 7;
-  
+
   // 기준 시간에서 daysToSaturday 만큼 더함
   const saturdayNZ = new Date(nzDate);
   saturdayNZ.setDate(saturdayNZ.getDate() + daysToSaturday);
   saturdayNZ.setHours(0, 0, 0, 0); // 자정
-  
+
   const satYear = saturdayNZ.getFullYear();
   const satMonth = String(saturdayNZ.getMonth() + 1).padStart(2, '0');
   const satDay = String(saturdayNZ.getDate()).padStart(2, '0');
   const saturdayStr = `${satYear}-${satMonth}-${satDay}`;
-  
-  // 마감일: 토요일 기준 이틀 전(목요일) 정오 (12:00)
-  const defaultDeadlineLocalStr = `${satYear}-${satMonth}-${String(saturdayNZ.getDate() - 2).padStart(2, '0')}T12:00`;
+
+  // 마감일: 토요일 기준 이틀 전(목요일) 오후 2시
+  // Date 객체로 계산해야 월초(1일, 2일)에서도 정상 작동함
+  const thursdayNZ = new Date(saturdayNZ);
+  thursdayNZ.setDate(thursdayNZ.getDate() - 2);
+  const thuYear = thursdayNZ.getFullYear();
+  const thuMonth = String(thursdayNZ.getMonth() + 1).padStart(2, '0');
+  const thuDay = String(thursdayNZ.getDate()).padStart(2, '0');
+  const defaultDeadlineLocalStr = `${thuYear}-${thuMonth}-${thuDay}T14:00`;
   const deadlineUTC = parseNZTimeToUTC(defaultDeadlineLocalStr);
-  
+
   return {
     saturdayStr,
     deadlineUTC,

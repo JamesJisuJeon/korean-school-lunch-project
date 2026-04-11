@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Calendar, Search, Trash2, CheckCircle2, X, Plus } from "lucide-react";
 import { format } from "date-fns";
+import { matchesSearch } from "@/lib/chosungUtils";
 
 interface User {
   id: string;
@@ -71,8 +72,8 @@ export default function AdminSubstitutesClient() {
     return allUsers
       .filter(
         (u) =>
-          (u.name?.toLowerCase() || "").includes(userSearch.toLowerCase()) ||
-          u.email.toLowerCase().includes(userSearch.toLowerCase())
+          matchesSearch(u.name || "", userSearch) ||
+          matchesSearch(u.email, userSearch)
       )
       .slice(0, 5);
   }, [allUsers, userSearch]);
@@ -90,9 +91,9 @@ export default function AdminSubstitutesClient() {
       const lower = listSearch.toLowerCase();
       return (
         !listSearch ||
-        (s.user.name?.toLowerCase() || "").includes(lower) ||
-        s.user.email.toLowerCase().includes(lower) ||
-        s.class.name.toLowerCase().includes(lower) ||
+        matchesSearch(s.user.name || "", listSearch) ||
+        matchesSearch(s.user.email, listSearch) ||
+        matchesSearch(s.class.name, listSearch) ||
         format(new Date(s.date), "yyyy.MM.dd").includes(lower)
       );
     })];
