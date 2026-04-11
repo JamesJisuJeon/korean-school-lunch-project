@@ -5,8 +5,8 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "동남한국학교 스낵관리 시스템",
-  description: "동남한국학교 학부모회 제공 스낵 및 매점 운영 관리 시스템",
+  title: "동남학교 간식",
+  description: "동남한국학교 학부모회 제공 간식 및 매점 운영 관리 시스템",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.png",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "동남스낵",
+    title: "동남간식",
   },
 };
 

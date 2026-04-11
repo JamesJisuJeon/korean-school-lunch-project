@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShoppingCart, CheckCircle, Clock, Utensils, IceCream, Beer, Star, ImageIcon, X } from "lucide-react";
+import { ShoppingCart, CheckCircle, Clock, Utensils, Star, X, RefreshCw } from "lucide-react";
 
 interface Student {
   id: string;
@@ -13,8 +13,6 @@ interface Menu {
   id: string;
   date: string;
   mainItems: string | null;
-  dessertItems: string | null;
-  beverageItems: string | null;
   specialItems: string | null;
   imageUrl: string | null;
   notice: string | null;
@@ -169,7 +167,7 @@ export default function ParentOrderClient() {
             <div className="p-2 bg-blue-600 rounded-xl">
               <ShoppingCart className="w-4 h-4 text-white" />
             </div>
-            <span className="text-base sm:text-lg font-black text-gray-950 dark:text-gray-50">이번주 메뉴 안내</span>
+            <span className="text-base sm:text-lg font-black text-gray-950 dark:text-gray-50">이번주 간식 안내</span>
             <span className="text-base sm:text-lg font-black text-gray-600 dark:text-gray-300">
               {selectedMenu
                 ? new Date(selectedMenu.date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
@@ -195,12 +193,12 @@ export default function ParentOrderClient() {
           )}
         </div>
 
-        {/* ② 중단: 이미지(좌) + 자녀선택(우) */}
-        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] min-h-[320px]">
+        {/* ② 중단: 이미지(좌, 있을 때만) + 자녀선택(우) */}
+        <div className={selectedMenu?.imageUrl ? "grid grid-cols-1 md:grid-cols-[3fr_2fr] min-h-[320px]" : ""}>
 
-          {/* 좌: 메뉴 이미지 */}
-          <div className="relative bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center p-4 md:p-0 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800">
-            {selectedMenu?.imageUrl ? (
+          {/* 좌: 메뉴 이미지 (이미지 있을 때만 표시) */}
+          {selectedMenu?.imageUrl && (
+            <div className="relative bg-gray-50 dark:bg-gray-800/50 flex items-center justify-center p-4 md:p-0 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800">
               <div className="relative group cursor-zoom-in w-full md:absolute md:inset-0" onClick={() => setZoomImage(true)}>
                 <img
                   src={selectedMenu.imageUrl}
@@ -213,33 +211,30 @@ export default function ParentOrderClient() {
                   </span>
                 </div>
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-3 text-gray-300 dark:text-gray-600 py-16">
-                <ImageIcon className="w-14 h-14 opacity-30" />
-                <span className="text-xs font-black uppercase tracking-widest">No Image</span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* 우: 자녀 선택 */}
           <div className="p-4 sm:p-6 flex flex-col gap-3">
             {/* 상세 메뉴 */}
             {selectedMenu && (
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[
-                  { icon: <Utensils className="w-4 h-4" />, bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-100 dark:border-orange-800", color: "text-orange-600 dark:text-orange-400", label: "메인 메뉴", value: selectedMenu.mainItems },
-                  { icon: <IceCream className="w-4 h-4" />, bg: "bg-pink-50 dark:bg-pink-900/20", border: "border-pink-100 dark:border-pink-800", color: "text-pink-600 dark:text-pink-400", label: "디저트", value: selectedMenu.dessertItems },
-                  { icon: <Beer className="w-4 h-4" />, bg: "bg-cyan-50 dark:bg-cyan-900/20", border: "border-cyan-100 dark:border-cyan-800", color: "text-cyan-600 dark:text-cyan-400", label: "음료수", value: selectedMenu.beverageItems },
-                  { icon: <Star className="w-4 h-4" />, bg: "bg-yellow-50 dark:bg-yellow-900/20", border: "border-yellow-100 dark:border-yellow-800", color: "text-yellow-600 dark:text-yellow-400", label: "매점 특식", value: selectedMenu.specialItems },
-                ].map((item, i) => (
-                  <div key={i} className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border ${item.bg} ${item.border}`}>
-                    <div className={`flex items-center gap-1.5 ${item.color}`}>
-                      {item.icon}
-                      <p className="text-xs font-black">{item.label}</p>
-                    </div>
-                    <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{item.value || "-"}</p>
+              <div className="flex flex-col gap-2 mb-4">
+                <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl border bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-800">
+                  <div className="flex items-center gap-1.5 text-orange-600 dark:text-orange-400">
+                    <Utensils className="w-4 h-4" />
+                    <p className="text-xs font-black">간식 메뉴</p>
                   </div>
-                ))}
+                  <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{selectedMenu.mainItems || "-"}</p>
+                </div>
+                {selectedMenu.specialItems && (
+                  <div className="flex flex-col items-center gap-1.5 p-3 rounded-2xl border bg-yellow-50 dark:bg-yellow-900/20 border-yellow-100 dark:border-yellow-800">
+                    <div className="flex items-center gap-1.5 text-yellow-600 dark:text-yellow-400">
+                      <Star className="w-4 h-4" />
+                      <p className="text-xs font-black">매점 특식 판매</p>
+                    </div>
+                    <p className="text-sm font-black text-gray-800 dark:text-gray-200 text-center leading-tight">{selectedMenu.specialItems}</p>
+                  </div>
+                )}
               </div>
             )}
             {selectedMenu?.notice && (
@@ -337,10 +332,20 @@ export default function ParentOrderClient() {
       {/* ── 나의 신청 내역 ── */}
       <section className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
         <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-50 dark:border-gray-800">
-          <h2 className="text-lg sm:text-xl font-black flex items-center gap-3 text-gray-900 dark:text-white">
-            <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" /> 나의 신청 내역
-          </h2>
-          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-1">배식일자 전, 수납대기 상태에서만 취소가 가능합니다.</p>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg sm:text-xl font-black flex items-center gap-3 text-gray-900 dark:text-white">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" /> 나의 신청 내역
+            </h2>
+            <button
+              onClick={fetchData}
+              disabled={isLoading}
+              className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+              title="새로고침"
+            >
+              <RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mt-1">간식일자 전, 수납대기 상태에서만 취소가 가능합니다.</p>
         </div>
 
         {/* 모바일 카드 레이아웃 */}
@@ -348,8 +353,11 @@ export default function ParentOrderClient() {
           {orders.map(order => {
             const canCancel = order.status === "WAITING" && new Date() < new Date(order.menu.date);
             const student = students.find(s => s.id === order.studentId);
+            const menuDay = new Date(order.menu.date); menuDay.setHours(0, 0, 0, 0);
+            const todayDay = new Date(); todayDay.setHours(0, 0, 0, 0);
+            const isOrderPast = todayDay > menuDay;
             return (
-              <div key={order.id} className="p-4 space-y-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+              <div key={order.id} className={`p-4 space-y-3 transition-colors ${isOrderPast ? "opacity-40 grayscale bg-gray-50/80 dark:bg-gray-800/20" : "hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}>
                 {/* 1행: 자녀 이름 + 배식 날짜 (글씨 크기 통일) + 신청 금액 */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
@@ -437,7 +445,7 @@ export default function ParentOrderClient() {
           <table className="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
             <thead className="bg-gray-50/50 dark:bg-gray-800/50">
               <tr>
-                <th className="px-6 py-5 text-center text-sm font-black text-gray-400 dark:text-gray-500">배식 날짜</th>
+                <th className="px-6 py-5 text-center text-sm font-black text-gray-400 dark:text-gray-500">간식일자</th>
                 <th className="px-6 py-5 text-center text-sm font-black text-gray-400 dark:text-gray-500">자녀</th>
                 <th className="px-6 py-5 text-center text-sm font-black text-gray-400 dark:text-gray-500">금액</th>
                 <th className="px-6 py-5 text-center text-sm font-black text-gray-400 dark:text-gray-500">특이사항</th>
@@ -449,8 +457,11 @@ export default function ParentOrderClient() {
               {orders.map(order => {
                 const canCancel = order.status === "WAITING" && new Date() < new Date(order.menu.date);
                 const student = students.find(s => s.id === order.studentId);
+                const menuDay = new Date(order.menu.date); menuDay.setHours(0, 0, 0, 0);
+                const todayDay = new Date(); todayDay.setHours(0, 0, 0, 0);
+                const isOrderPast = todayDay > menuDay;
                 return (
-                  <tr key={order.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
+                  <tr key={order.id} className={`transition-colors ${isOrderPast ? "opacity-40 grayscale bg-gray-50/80 dark:bg-gray-800/20" : "hover:bg-blue-50/20 dark:hover:bg-blue-900/10"}`}>
                     <td className="px-6 py-5 whitespace-nowrap text-center text-sm font-black text-gray-900 dark:text-gray-100">
                       {new Date(order.menu.date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', weekday: 'short' })}
                     </td>

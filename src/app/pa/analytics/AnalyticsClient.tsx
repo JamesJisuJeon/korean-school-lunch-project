@@ -146,59 +146,6 @@ export default function AnalyticsClient() {
 
       {data && (
         <div className="space-y-8 mt-3">
-          {/* 신청/수납 현황 */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">신청/수납 현황</h2>
-              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
-            </div>
-            {/* 1열: 신청 관련 */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4 mb-3 sm:mb-4">
-              <StatCard label="사전 신청" value={`${data.totalPreOrders}명`} color="blue" />
-              <StatCard label="현장 신청" value={`${data.onSiteCount}명`} color="orange" />
-              <StatCard label="신청 취소" value={`${data.cancelledOrdersCount}명`} color="red" />
-
-              <StatCard label="최종 신청" value={`${data.finalOrderCount}명`} color="green" />
-              <StatCard label="수납 확인" value={`${data.finalConfirmedCount}명`} color="green" />
-              <StatCard label="수납 대기" value={`${data.waitingCount}명`} color="gray" />
-
-              {/* <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} color="blue" />
-              <StatCard label="사전 신청 PA자녀" value={`${data.preOrderPAChildCount}명`} color="purple" />
-              <StatCard label="사전 신청 취소" value={`${data.preOrderCancelledCount}명`} color="red" />
-              <StatCard label="무료쿠폰" value={`${data.freeCouponCount}매`} color="green" /> */}
-            </div>
-            {/* 2열: 수납 관련 */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4">
-              <StatCard label="납부 / 후납-납부" value={`${data.paidConfirmedCount}명`} color="green" />
-              <StatCard label="후납" value={`${data.unpaidCount}명`} color="yellow" />
-              <StatCard label="무료간식" value={`${data.freeLunchCount}명`} color="green" />
-
-              <StatCard label="PA 자녀" value={`${data.paOrdersCount}명`} color="purple" />
-              <StatCard label="PA 자녀 취소" value={`${data.cancelledPaOrdersCount}명`} color="red" />
-              <StatCard label="PA 자녀 확정" value={`${data.activePaOrdersCount}명`} color="blue" />
-            </div>
-          </div>
-
-          {/* 금액 집계 */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">금액 현황</h2>
-              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4">
-              <StatCard label="총 매출" value={fmt(data.totalRevenue)} color="blue" />
-              <StatCard label="간식 납부 총액" value={fmt(data.totalPaidAmount)} color="green" />
-              <StatCard label="사전 신청 납부" value={fmt(data.preOrderPaidAmount)} color="green" />
-              {/* <StatCard label="사전 신청 후납" value={fmt(data.preOrderUnpaidAmount)} color="yellow" /> */}
-              <StatCard label="현장 신청 납부" value={fmt(data.onSitePaidAmount)} color="green" />
-              {/* <StatCard label="현장 신청 후납" value={fmt(data.onSiteUnpaidAmount)} color="yellow" /> */}
-              <StatCard label="후납 금액" value={fmt(data.allUnpaidAmount)} color="yellow" />
-              <StatCard label="쿠폰 납부 금액" value={fmt(data.couponSaleAmount)} color="green" />
-              <StatCard label="쿠폰 판매 후납" value={fmt(data.couponSaleUnpaidAmount)} color="yellow" />
-              <StatCard label="무료 쿠폰" value={`${data.freeCouponCount}매`} color="green" />
-            </div>
-          </div>
-
           {/* 반별 통계 */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -325,6 +272,59 @@ export default function AnalyticsClient() {
                   </tr>
                 </tfoot>
               </table>
+            </div>
+          </div>
+
+          {/* 신청/수납 현황 */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">신청/수납 현황</h2>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
+            </div>
+            {/* 1열: 신청 관련 */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4 mb-3 sm:mb-4">
+              <StatCard label="사전 신청" value={`${data.totalPreOrders}명`} color="blue" />
+              <StatCard label="현장 신청" value={`${data.onSiteCount}명`} color="orange" />
+              <StatCard label="신청 취소" value={`${data.cancelledOrdersCount}명`} color="red" />
+
+              <StatCard label="최종 신청" value={`${data.finalOrderCount}명`} color="green" />
+              <StatCard label="수납 확인" value={`${data.finalConfirmedCount}명`} color="green" />
+              <StatCard label="수납 대기" value={`${data.waitingCount}명`} color="gray" />
+
+              {/* <StatCard label="사전 신청 일반" value={`${data.preOrderRegularCount}명`} color="blue" />
+              <StatCard label="사전 신청 PA자녀" value={`${data.preOrderPAChildCount}명`} color="purple" />
+              <StatCard label="사전 신청 취소" value={`${data.preOrderCancelledCount}명`} color="red" />
+              <StatCard label="무료쿠폰" value={`${data.freeCouponCount}매`} color="green" /> */}
+            </div>
+            {/* 2열: 수납 관련 */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4">
+              <StatCard label="납부 / 후납-납부" value={`${data.paidConfirmedCount}명`} color="green" />
+              <StatCard label="후납" value={`${data.unpaidCount}명`} color="yellow" />
+              <StatCard label="무료간식" value={`${data.freeLunchCount}명`} color="green" />
+
+              <StatCard label="PA 자녀" value={`${data.paOrdersCount}명`} color="purple" />
+              <StatCard label="PA 자녀 취소" value={`${data.cancelledPaOrdersCount}명`} color="red" />
+              <StatCard label="PA 자녀 확정" value={`${data.activePaOrdersCount}명`} color="blue" />
+            </div>
+          </div>
+
+          {/* 금액 집계 */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">금액 현황</h2>
+              <button onClick={fetchData} className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="새로고침"><RefreshCw className={`w-4 h-4 transition-transform ${isLoading ? "animate-spin" : ""}`} /></button>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4">
+              <StatCard label="총 매출" value={fmt(data.totalRevenue)} color="blue" />
+              <StatCard label="간식 납부 총액" value={fmt(data.totalPaidAmount)} color="green" />
+              <StatCard label="사전 신청 납부" value={fmt(data.preOrderPaidAmount)} color="green" />
+              {/* <StatCard label="사전 신청 후납" value={fmt(data.preOrderUnpaidAmount)} color="yellow" /> */}
+              <StatCard label="현장 신청 납부" value={fmt(data.onSitePaidAmount)} color="green" />
+              {/* <StatCard label="현장 신청 후납" value={fmt(data.onSiteUnpaidAmount)} color="yellow" /> */}
+              <StatCard label="후납 금액" value={fmt(data.allUnpaidAmount)} color="yellow" />
+              <StatCard label="쿠폰 납부 금액" value={fmt(data.couponSaleAmount)} color="green" />
+              <StatCard label="쿠폰 판매 후납" value={fmt(data.couponSaleUnpaidAmount)} color="yellow" />
+              <StatCard label="무료 쿠폰" value={`${data.freeCouponCount}매`} color="green" />
             </div>
           </div>
         </div>

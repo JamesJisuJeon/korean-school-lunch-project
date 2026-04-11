@@ -33,8 +33,6 @@ export async function POST(req: Request) {
       id,
       date,
       mainItems,
-      dessertItems,
-      beverageItems,
       specialItems,
       imageUrl,
       notice,
@@ -58,11 +56,20 @@ export async function POST(req: Request) {
       }
     }
 
-    // 배식일자가 지난 메뉴는 게시 불가 (해제는 허용)
-    if (isPublished && new Date() >= menuDate) {
-      return NextResponse.json({
-        message: "배식일자가 지난 메뉴는 게시할 수 없습니다."
-      }, { status: 400 });
+    // 간식날짜가 지난 메뉴는 게시 불가 (해제는 허용, 이미 게시된 메뉴 수정은 허용)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const menuDateStr = menuDate.toISOString().split('T')[0];
+    if (isPublished && todayStr > menuDateStr) {
+      let alreadyPublished = false;
+      if (id) {
+        const existing = await prisma.menu.findUnique({ where: { id }, select: { isPublished: true } });
+        alreadyPublished = existing?.isPublished ?? false;
+      }
+      if (!alreadyPublished) {
+        return NextResponse.json({
+          message: "간식날짜가 지난 메뉴는 게시할 수 없습니다."
+        }, { status: 400 });
+      }
     }
 
     const existingPublishedMenu = await prisma.menu.findFirst({
@@ -81,25 +88,48 @@ export async function POST(req: Request) {
       }
     }
 
-    const menuData = {
-      mainItems,
-      dessertItems,
-      beverageItems,
-      specialItems,
-      imageUrl,
-      notice: notice ?? null,
-      price: parseFloat(price),
-      isPublished: isPublished ?? false,
-      deadline: deadline ? new Date(deadline) : null
-    };
-
     let menu;
     if (id) {
-      // 수정: id로 직접 업데이트
-      menu = await prisma.menu.update({ where: { id }, data: { ...menuData, date: menuDate } });
+      // 수정: 게시 중인 메뉴는 마감일시·공지사항·게시여부만 변경 허용
+      const existing = await prisma.menu.findUnique({ where: { id }, select: { isPublished: true } });
+      if (existing?.isPublished) {
+        menu = await prisma.menu.update({
+          where: { id },
+          data: {
+            notice: notice ?? null,
+            isPublished: isPublished ?? false,
+            deadline: deadline ? new Date(deadline) : null
+          }
+        });
+      } else {
+        menu = await prisma.menu.update({
+          where: { id },
+          data: {
+            date: menuDate,
+            mainItems,
+            specialItems,
+            imageUrl,
+            notice: notice ?? null,
+            price: parseFloat(price),
+            isPublished: isPublished ?? false,
+            deadline: deadline ? new Date(deadline) : null
+          }
+        });
+      }
     } else {
       // 신규 등록
-      menu = await prisma.menu.create({ data: { date: menuDate, ...menuData } });
+      menu = await prisma.menu.create({
+        data: {
+          date: menuDate,
+          mainItems,
+          specialItems,
+          imageUrl,
+          notice: notice ?? null,
+          price: parseFloat(price),
+          isPublished: isPublished ?? false,
+          deadline: deadline ? new Date(deadline) : null
+        }
+      });
     }
 
     return NextResponse.json(menu);
