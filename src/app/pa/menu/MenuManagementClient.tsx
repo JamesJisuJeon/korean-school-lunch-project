@@ -24,7 +24,7 @@ export default function MenuManagementClient() {
     specialItems: "",
     imageUrl: "",
     notice: "",
-    price: 7,
+    price: 7 as number | string,
     isPublished: false,
     deadline: ""
   });
@@ -36,7 +36,7 @@ export default function MenuManagementClient() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
-  const emptyMenu = { date: "", mainItems: "", specialItems: "", imageUrl: "", notice: "", price: 7, isPublished: false, deadline: "" };
+  const emptyMenu = { date: "", mainItems: "", specialItems: "", imageUrl: "", notice: "", price: 7 as number | string, isPublished: false, deadline: "" };
 
   const cancelForm = () => {
     setEditingId(null);
@@ -95,6 +95,7 @@ export default function MenuManagementClient() {
       // deadline은 브라우저에 표시된 뉴질랜드 NZ 시간을 UTC 문자열로 변환 후 전송
       body: JSON.stringify({
         ...newMenu,
+        price: Number(newMenu.price),
         id: editingId ?? undefined,
         deadline: newMenu.deadline ? parseNZTimeToUTC(newMenu.deadline).toISOString() : null,
       }),
@@ -310,7 +311,7 @@ export default function MenuManagementClient() {
                 간식 가격 ($)
                 {editingId && newMenu.isPublished && <span className="ml-2 text-xs font-bold text-amber-600 dark:text-amber-400">변경 불가</span>}
               </label>
-              <input type="number" min="1" inputMode="numeric" disabled={!!(editingId && newMenu.isPublished)} className={`${inputClassName} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed`} value={newMenu.price} onChange={(e) => setNewMenu({ ...newMenu, price: parseInt(e.target.value) || 7 })} />
+              <input type="number" min="1" required inputMode="numeric" disabled={!!(editingId && newMenu.isPublished)} className={`${inputClassName} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed`} value={newMenu.price} onChange={(e) => setNewMenu({ ...newMenu, price: e.target.value === "" ? "" : Number(e.target.value) })} />
             </div>
             <div className="relative">
               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-1">
