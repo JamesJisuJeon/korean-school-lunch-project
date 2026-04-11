@@ -59,6 +59,10 @@ export default function AdminStudentsClient() {
   const [importResult, setImportResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 삭제 모달 상태
+  const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -191,18 +195,26 @@ export default function AdminStudentsClient() {
     setIsLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("정말 이 학생 정보를 삭제하시겠습니까?")) return;
+  const handleDeleteRequest = (student: Student) => {
+    setDeleteTarget(student);
+    setDeleteConfirmText("");
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setIsLoading(true);
     const res = await fetch("/api/admin/students", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id: deleteTarget.id }),
     });
     if (res.ok) {
+      setDeleteTarget(null);
       fetchData();
     } else {
       alert("삭제 중 오류가 발생했습니다.");
     }
+    setIsLoading(false);
   };
 
   const handleToggleActive = async (student: Student) => {
@@ -535,7 +547,7 @@ export default function AdminStudentsClient() {
                     <Key className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(student.id)}
+                    onClick={() => handleDeleteRequest(student)}
                     className="p-2.5 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-xl hover:bg-red-100 transition-all active:scale-90"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -638,7 +650,7 @@ export default function AdminStudentsClient() {
                         <Key className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(student.id)}
+                        onClick={() => handleDeleteRequest(student)}
                         className="p-3 text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-90"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -659,6 +671,55 @@ export default function AdminStudentsClient() {
 
       {isSearchOpen && (
         <div className="fixed inset-0 z-40" onClick={() => setIsSearchOpen(false)} />
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border-2 border-red-200 dark:border-red-800 p-8 max-w-md w-full animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <Trash2 className="w-7 h-7 text-red-600 dark:text-red-400 shrink-0" />
+              <h3 className="text-xl font-black text-gray-900 dark:text-gray-50">학생 삭제 경고</h3>
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 font-bold mb-2">
+              아래 학생 정보를 정말로 삭제하시겠습니까?
+            </p>
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl border border-red-100 dark:border-red-800 mb-4">
+               <p className="text-red-700 dark:text-red-400 font-black text-lg text-center">
+                 {deleteTarget.name}
+                 {deleteTarget.class ? ` (${deleteTarget.class.name})` : ''}
+               </p>
+               <p className="text-xs text-red-600 dark:text-red-500 font-bold mt-2 text-center">
+                 주의: 학생이 등록했던 간식 신청 및 쿠폰 구매 내역의 연결이 해제됩니다. 이 작업은 되돌릴 수 없습니다.
+               </p>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              삭제를 확인하려면 아래에 <span className="font-black text-red-600 dark:text-red-400">삭제</span>를 입력하세요.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="삭제"
+              className="mt-1 block w-full rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-bold focus:border-red-500 dark:focus:border-red-400 focus:ring-4 focus:ring-red-50 dark:focus:ring-red-900/30 sm:text-sm py-2.5 px-3 bg-white dark:bg-gray-800 outline-none transition-all mb-6 text-center"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-black rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border-2 border-gray-200 dark:border-gray-700"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteConfirmText !== "삭제" || isLoading}
+                className="flex-1 py-3 bg-red-600 dark:bg-red-700 text-white font-black rounded-xl hover:bg-red-700 dark:hover:bg-red-800 transition-colors border-2 border-red-700 dark:border-red-800 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+              >
+                {isLoading ? "삭제 중..." : "삭제 확인"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
