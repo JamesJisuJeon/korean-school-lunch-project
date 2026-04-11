@@ -1,6 +1,11 @@
 # 한국학교 점심 관리 시스템 개발 현황 및 로드맵
 
-## 📋 현재 진행 상태 (2026-04-08 기준 최신) - 완료 🎉
+## 📋 현재 진행 상태 (2026-04-12 기준 최신) - 완료 🎉
+- [x] **보결선생님 날짜 비교 뉴질랜드 시간대 수정 + dateUtils 통일** (2026-04-12)
+- [x] **프로덕션 빌드 타입 오류 수정 (seed 파일 tsconfig.json exclude)** (2026-04-11)
+- [x] **메뉴 스키마 간소화 (디저트·음료 별도 필드 제거, 마이그레이션)** (2026-04-11)
+- [x] **초성 검색 기능 전체 관리자 화면 적용 (users/students/classes/class-students/substitutes)** (2026-04-11)
+- [x] **로그인 화면 개선** (2026-04-11)
 - [x] **학생 관리 다크모드 학부모 검색 팝업 텍스트 수정 + 확인 버튼 그림자 제거** (2026-04-08)
 - [x] **현장수납 모바일 PA 자녀 이름 강조 표시 (별도 뱃지 → 이름 노란 박스)** (2026-04-08)
 - [x] **운영 집계 현황 무료간식·무료쿠폰 카드 및 반별 통계 컬럼 추가** (2026-04-08)
@@ -171,6 +176,45 @@
   - `Menu` 생성 시 폐기된 `items` 필드 → `mainItems / dessertItems / beverageItems` 분리 필드로 교체.
 - **`src/auth.ts`:** JWT 콜백에서 `user.id` 타입 `string | undefined` → `user.id ?? ""` 로 안전하게 처리.
 - **빌드 결과:** `npm run build` 37개 라우트 정상 컴파일 확인.
+
+### 38. 보결선생님 날짜 비교 NZ 시간대 수정 (2026-04-12)
+
+- **원인:** 서버가 한국(KST=UTC+9)에 위치하므로 `new Date().setHours(0,0,0,0)`이 KST 자정(UTC 전날 15:00)으로 계산되어, NZ 기준 당일로 등록된 보결 선생님이 쿼리 범위 밖으로 빠지는 버그.
+- **`src/lib/dateUtils.ts` — `getNZTodayRange()` 추가:**
+  - `formatInTimeZone(now, NZ_TZ, "yyyy-MM-dd")`로 NZ 기준 오늘 날짜 문자열 획득.
+  - `fromZonedTime(nzDateStr + "T00:00:00", NZ_TZ)`로 NZ 자정을 UTC로 변환.
+  - `{ start: NZ 오늘 자정(UTC), end: NZ 내일 자정(UTC) }` 반환.
+- **`src/app/api/teacher/class/route.ts` — `getNZTodayRange()` 적용:**
+  - 기존 `en-CA` 로케일 방식 및 수동 오프셋 계산 제거.
+  - `const { start: todayStart, end: todayEnd } = getNZTodayRange()` 단일 호출로 교체.
+  - Prisma 쿼리: `date: { gte: todayStart, lt: todayEnd }` (DB 저장값: YYYY-MM-DD → UTC 자정과 정확히 매칭).
+
+### 37. 프로덕션 빌드 타입 오류 수정 — seed 파일 exclude (2026-04-11)
+
+- **원인:** `tsconfig.json`의 `include: ["**/*.ts"]` 설정이 `prisma/seed.ts`, `prisma/seed-test-data.ts`를 Next.js 빌드 대상으로 포함시켜 타입 오류 발생.
+- **수정:** `tsconfig.json`의 `exclude` 배열에 두 seed 파일 추가.
+
+### 36. 메뉴 스키마 간소화 (2026-04-11)
+
+- **DB 스키마 변경:** `Menu` 모델에서 디저트(`dessert*`) 및 음료(`beverage*`) 별도 필드 제거.
+- **마이그레이션:** `20260411053625_remove_dessert_beverage_fields` 적용.
+- **연관 파일 업데이트:** `pa/menu/MenuManagementClient.tsx`, `api/pa/menu/route.ts`, `parent/order/ParentOrderClient.tsx`, `api/parent/order/route.ts`, `pa/sales/SalesManagementClient.tsx`, `pa/analytics/AnalyticsClient.tsx`.
+- **seed-test-data.ts:** 제거된 필드 반영하여 시드 파일 업데이트.
+
+### 35. 초성 검색 기능 전체 관리자 화면 적용 (2026-04-11)
+
+- **`src/lib/chosungUtils.ts` 신규 생성:** 한글 초성 추출 및 초성 기반 검색 유틸리티.
+- **적용 화면:**
+  - `admin/users` (사용자 관리): 이름·이메일 초성 검색.
+  - `admin/students` (학생 관리): 이름 초성 검색.
+  - `admin/classes` (학급 관리): 학급명·담임 초성 검색. 신규 등록 폼 담임선생님 지정 드롭다운에도 초성 검색 적용.
+  - `admin/class-students` (학급 학생 관리): 이름 초성 검색.
+  - `admin/substitutes` (보결선생님 관리): 이름·학급 초성 검색.
+
+### 34. 로그인 화면 개선 (2026-04-11)
+
+- **`src/auth.ts` 변경:** 로그인 관련 인증 로직 개선.
+- **`dashboard/page.tsx`·`Navbar.tsx`·`manifest.json` 연동 업데이트.**
 
 ### 33. 학생 관리 다크모드 학부모 검색 팝업 + 확인 버튼 수정 (2026-04-08)
 

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getNZTodayRange } from "@/lib/dateUtils";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -11,15 +12,16 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const menuId = searchParams.get("menuId");
   const user = session.user as any;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+
+  // 뉴질랜드 시간 기준으로 오늘 날짜 범위 계산 (date-fns-tz 기반)
+  const { start: todayStart, end: todayEnd } = getNZTodayRange();
 
   try {
     // 1. 보결 선생님 여부 확인 (오늘 날짜 기준)
     const substitute = await prisma.substitute.findFirst({
-      where: { 
-        userId: user.id, 
-        date: { gte: today, lt: new Date(today.getTime() + 24*60*60*1000) } 
+      where: {
+        userId: user.id,
+        date: { gte: todayStart, lt: todayEnd }
       },
       include: { class: { include: { academicYear: true } } }
     });
