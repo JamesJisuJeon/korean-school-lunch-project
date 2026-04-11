@@ -64,3 +64,17 @@ export function isExpiredDeadline(deadlineUTCStr: string | null | Date): boolean
   const deadline = new Date(deadlineUTCStr);
   return new Date() > deadline; // Date()의 비교는 내부적으로 Timestamp(UTC 기준)를 쓰므로 안전
 }
+
+/**
+ * 현재 뉴질랜드 시간 기준으로 "오늘" 하루의 UTC 범위를 반환합니다.
+ * 날짜-only 필드(보결선생님 날짜 등)와 비교할 때 사용합니다.
+ * - start: NZ 오늘 자정 (UTC)
+ * - end:   NZ 내일 자정 (UTC)
+ */
+export function getNZTodayRange(): { start: Date; end: Date } {
+  const now = new Date();
+  const nzDateStr = formatInTimeZone(now, NZ_TZ, "yyyy-MM-dd"); // "YYYY-MM-DD" in NZ time
+  const start = fromZonedTime(`${nzDateStr}T00:00:00`, NZ_TZ);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end };
+}
