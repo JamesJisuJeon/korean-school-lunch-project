@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import TeacherClassClient from "./TeacherClassClient";
 import { prisma } from "@/lib/prisma";
+import { getNZTodayRange } from "@/lib/dateUtils";
 
 export default async function TeacherClassPage() {
   const session = await auth();
@@ -11,12 +12,11 @@ export default async function TeacherClassPage() {
   }
 
   const user = session.user as any;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const { start: todayStart, end: todayEnd } = getNZTodayRange();
 
   // 1. 보결 선생님 여부 확인
   const substitute = await prisma.substitute.findFirst({
-    where: { userId: user.id, date: { gte: today, lt: new Date(today.getTime() + 24*60*60*1000) } }
+    where: { userId: user.id, date: { gte: todayStart, lt: todayEnd } }
   });
 
   // 2. 선생님인 경우 담당 학급 여부 확인
