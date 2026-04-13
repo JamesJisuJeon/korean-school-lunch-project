@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { User, Download, LogOut, X } from "lucide-react";
+import { User, Download, LogOut, X, KeyRound } from "lucide-react";
+import Link from "next/link";
 import { handleSignOut } from "@/app/actions/auth";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -75,6 +76,14 @@ export default function UserMenu({ name }: { name: string }) {
                 앱 설치
               </button>
             )}
+            <Link
+              href="/change-password"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <KeyRound className="w-4 h-4 text-gray-400" />
+              비밀번호 변경
+            </Link>
             <button
               onClick={() => handleSignOut()}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"

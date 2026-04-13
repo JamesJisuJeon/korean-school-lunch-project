@@ -218,14 +218,13 @@ export default function TeacherClassClient() {
                     )}
                   </td>
                   <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
-                    {isOrdered && status !== "CANCELLED" ? (
+                    {isOrdered && status !== "CANCELLED" && status !== "WAITING" ? (
                       <button
                         onClick={() => toggleServed(order.id, order.isServed)}
-                        className={`inline-flex items-center justify-center w-6 h-6 rounded-md border-2 transition-all ${
-                          order.isServed
+                        className={`inline-flex items-center justify-center w-6 h-6 rounded-md border-2 transition-all ${order.isServed
                             ? "bg-orange-500 border-orange-500 text-white"
                             : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-transparent"
-                        }`}
+                          }`}
                       >
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                       </button>
