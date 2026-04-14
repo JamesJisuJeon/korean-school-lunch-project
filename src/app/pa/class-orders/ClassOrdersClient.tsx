@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, CheckCircle, Calendar, Filter, RefreshCw } from "lucide-react";
+import { Users, CheckCircle, Calendar, Filter, RefreshCw, Check } from "lucide-react";
 import { PaymentBadge } from "@/components/common/PaymentBadge";
 
 interface Menu {
@@ -25,6 +25,7 @@ interface Student {
     id: string;
     isPaid: boolean;
     status: string;
+    isServed: boolean;
     notes: string | null;
     menu: Menu;
   }[];
@@ -183,6 +184,7 @@ export default function ClassOrdersClient() {
                 <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400">이름</th>
                 <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">신청상태</th>
                 <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">수납상태</th>
+                <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">배식완료</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
@@ -229,12 +231,21 @@ export default function ClassOrdersClient() {
                         <span className="text-gray-200 dark:text-gray-700 font-black">-</span>
                       )}
                     </td>
+                    <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
+                      {isOrdered && status !== "CANCELLED" && status !== "WAITING" ? (
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md border-2 ${order.isServed ? "bg-orange-500 border-orange-500 text-white" : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-transparent"}`}>
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </span>
+                      ) : (
+                        <span className="text-gray-200 dark:text-gray-700 font-black">-</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
               {students.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-20 text-center text-gray-300 dark:text-gray-600 font-bold italic">
+                  <td colSpan={5} className="py-20 text-center text-gray-300 dark:text-gray-600 font-bold italic">
                     이 학급에 배정된 학생이 없습니다.
                   </td>
                 </tr>
