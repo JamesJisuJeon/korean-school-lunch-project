@@ -27,7 +27,7 @@ export default async function DashboardPage() {
     substituteToday = await (prisma as any).substitute.findFirst({
       where: { userId: user.id, date: { gte: todayStart, lt: todayEnd } }
     });
-  } catch {}
+  } catch { }
 
   // 담임 교사로 배정된 학급 여부 확인 (현재 활성 연도)
   let activeClass = null;
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
           ]
         }
       });
-    } catch {}
+    } catch { }
   }
 
   // 보조교사 여부 확인
@@ -53,9 +53,10 @@ export default async function DashboardPage() {
       include: { class: true },
     });
     if (assistantRecord) assistantClass = assistantRecord.class;
-  } catch {}
+  } catch { }
 
-  const canAccessTeacherMenu = !!activeClass || !!substituteToday || !!assistantClass;
+  const isTeacherAdmin = roles.includes("TEACHER_ADMIN");
+  const canAccessTeacherMenu = isTeacherAdmin || !!activeClass || !!substituteToday || !!assistantClass;
   const isAssistantOnly = !activeClass && !substituteToday && !!assistantClass;
 
   return (
@@ -120,10 +121,10 @@ export default async function DashboardPage() {
         {/* 선생님 카드 (보결선생님 포함) */}
         {canAccessTeacherMenu && (
           <DashboardCard
-            title={substituteToday ? "임시 학급 관리 (배정됨)" : isAssistantOnly ? "학급 관리 (보조교사)" : "학급 관리 (Teacher)"}
+            title={substituteToday ? "임시 학급 관리 (배정됨)" : isAssistantOnly ? "학급 관리 (보조교사)" : isTeacherAdmin ? "전체 학급 관리 (Teacher)" : "학급 관리 (Teacher)"}
             icon={<BookOpen className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
             iconBg="bg-orange-50 dark:bg-orange-900/30"
-            description={substituteToday ? `${formatInTimeZone(new Date(), "Pacific/Auckland", "yyyy.MM.dd")} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
+            description={substituteToday ? `${formatInTimeZone(new Date(), "Pacific/Auckland", "yyyy.MM.dd")} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : isTeacherAdmin ? "모든 학급 학생들의 간식 신청 명단을 확인합니다." : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
             links={[
               { label: "우리 반 명단 확인", href: "/teacher/class" },
             ]}
