@@ -222,8 +222,8 @@ export default function TeacherClassClient() {
                       <button
                         onClick={() => toggleServed(order.id, order.isServed)}
                         className={`inline-flex items-center justify-center w-6 h-6 rounded-md border-2 transition-all ${order.isServed
-                            ? "bg-orange-500 border-orange-500 text-white"
-                            : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-transparent"
+                          ? "bg-orange-500 border-orange-500 text-white"
+                          : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-transparent"
                           }`}
                       >
                         <Check className="w-3.5 h-3.5 stroke-[3]" />

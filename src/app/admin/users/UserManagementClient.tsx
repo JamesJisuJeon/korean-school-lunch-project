@@ -283,14 +283,15 @@ export default function UserManagementClient() {
           >
             전체
           </button>
-          {["PARENT", "TEACHER", "PA", "ADMIN", "NONE"].map(role => {
+          {["PARENT", "TEACHER", "TEACHER_ADMIN", "PA", "ADMIN", "NONE"].map(role => {
             const active = filterRoles.includes(role);
             const colorActive =
-              role === "ADMIN"   ? "bg-red-500 text-white border-red-500" :
-              role === "PA"      ? "bg-green-500 text-white border-green-500" :
-              role === "TEACHER" ? "bg-orange-500 text-white border-orange-500" :
-              role === "NONE"    ? "bg-gray-500 text-white border-gray-500" :
-                                   "bg-blue-500 text-white border-blue-500";
+              role === "ADMIN"         ? "bg-red-500 text-white border-red-500" :
+              role === "PA"            ? "bg-green-500 text-white border-green-500" :
+              role === "TEACHER_ADMIN" ? "bg-purple-500 text-white border-purple-500" :
+              role === "TEACHER"       ? "bg-orange-500 text-white border-orange-500" :
+              role === "NONE"          ? "bg-gray-500 text-white border-gray-500" :
+                                         "bg-blue-500 text-white border-blue-500";
             return (
               <button
                 key={role}
@@ -372,7 +373,7 @@ export default function UserManagementClient() {
             <div className="space-y-3">
               <label className="block text-xs font-black text-gray-400 dark:text-gray-500 mb-3 uppercase tracking-widest ml-1">부여 권한 (복수 선택 가능)</label>
               <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 bg-gray-50 dark:bg-gray-800/50 p-4 sm:p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700">
-                {["PARENT", "TEACHER", "PA", "ADMIN"].map(role => (
+                {["PARENT", "TEACHER", "TEACHER_ADMIN", "PA", "ADMIN"].map(role => (
                   <label key={role} className="inline-flex items-center gap-2 sm:gap-3 cursor-pointer group px-3 sm:px-4 py-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-700 hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition-all">
                     <input
                       type="checkbox"
@@ -418,6 +419,7 @@ export default function UserManagementClient() {
                       <span key={r} className={`px-2.5 py-1 text-[10px] font-black rounded-lg border tracking-tighter
                         ${r === "ADMIN" ? "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800" :
                           r === "PA" ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800" :
+                          r === "TEACHER_ADMIN" ? "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-800" :
                           r === "TEACHER" ? "bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border-orange-100 dark:border-orange-800" :
                           "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800"}`}>
                         {r}

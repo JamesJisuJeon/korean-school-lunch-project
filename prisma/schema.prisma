@@ -15,6 +15,7 @@ enum Role {
   ADMIN
   PA
   TEACHER
+  TEACHER_ADMIN
   PARENT
 }
 

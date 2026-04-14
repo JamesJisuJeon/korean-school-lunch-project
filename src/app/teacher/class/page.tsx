@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import TeacherClassClient from "./TeacherClassClient";
+import TeacherAllClassClient from "./TeacherAllClassClient";
 import { prisma } from "@/lib/prisma";
 import { getNZTodayRange } from "@/lib/dateUtils";
 
@@ -12,6 +13,19 @@ export default async function TeacherClassPage() {
   }
 
   const user = session.user as any;
+  const isTeacherAdmin = user.roles.includes("TEACHER_ADMIN");
+
+  if (isTeacherAdmin) {
+    return (
+      <div className="p-4 sm:p-8 max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-50">
+          반별 스낵 신청 명단
+        </h1>
+        <TeacherAllClassClient />
+      </div>
+    );
+  }
+
   const { start: todayStart, end: todayEnd } = getNZTodayRange();
 
   // 1. 보결 선생님 여부 확인
