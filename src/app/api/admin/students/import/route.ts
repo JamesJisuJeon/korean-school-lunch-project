@@ -71,6 +71,22 @@ export async function POST(req: Request) {
         continue;
       }
 
+      // 동일 반 + 동일 이름 중복 체크
+      if (classId) {
+        const duplicateCount = await prisma.student.count({
+          where: { name, classId },
+        });
+        if (duplicateCount > 0) {
+          results.errors.push({
+            row: rowNum,
+            name,
+            error: `"${className}" 반에 동일한 이름의 학생이 이미 존재합니다. 동명이인인 경우 수기로 등록해 주세요.`,
+          });
+          results.skipCount++;
+          continue;
+        }
+      }
+
       const isPAChild = parentUsers.some(u => u.roles.includes("PA"));
 
       try {
@@ -90,7 +106,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      message: `완료: 등록 ${results.successCount}건, 오류 ${results.errors.length}건`,
+      message: `완료: 등록 ${results.successCount}건, 중복 건너뜀 ${results.skipCount}건, 오류 ${results.errors.length - results.skipCount}건`,
       ...results,
     });
   } catch (error) {
