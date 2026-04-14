@@ -11,12 +11,54 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const menuId = searchParams.get("menuId");
+  const classId = searchParams.get("classId");
   const user = session.user as any;
 
   // 뉴질랜드 시간 기준으로 오늘 날짜 범위 계산 (date-fns-tz 기반)
   const { start: todayStart, end: todayEnd } = getNZTodayRange();
 
   try {
+    // TEACHER_ADMIN: 모든 반에 접근 가능
+    if (user.roles.includes("TEACHER_ADMIN")) {
+      if (!classId) {
+        // 반 목록 반환
+        const classes = await prisma.class.findMany({
+          where: { academicYear: { isActive: true } },
+          orderBy: { sortOrder: "asc" },
+          select: { id: true, name: true }
+        });
+        return NextResponse.json({ classes });
+      }
+
+      const targetClass = await prisma.class.findUnique({
+        where: { id: classId },
+        include: { academicYear: true }
+      });
+
+      if (!targetClass) {
+        return NextResponse.json({ message: "해당 학급을 찾을 수 없습니다." }, { status: 404 });
+      }
+
+      const students = await prisma.student.findMany({
+        where: { classId: targetClass.id, isActive: true },
+        include: {
+          orders: {
+            where: menuId ? { menuId } : undefined,
+            include: { menu: true },
+            take: 1,
+          }
+        },
+        orderBy: { name: "asc" }
+      });
+
+      return NextResponse.json({
+        className: targetClass.name,
+        academicYear: targetClass.academicYear.name,
+        isSubstitute: false,
+        students
+      });
+    }
+
     // 1. 보결 선생님 여부 확인 (오늘 날짜 기준)
     const substitute = await prisma.substitute.findFirst({
       where: {
