@@ -7,7 +7,7 @@ import path from "path";
 import { formatInTimeZone } from "date-fns-tz";
 
 const NOTICE_EXTS = ["png", "jpg", "jpeg"] as const;
-const PUBLIC_DIR = path.join(process.cwd(), "public", "notice-images");
+const PUBLIC_DIR = path.join(process.cwd(), "public", "uploads");
 
 function findExistingNoticeBg(): { filePath: string; ext: string } | null {
   for (const ext of NOTICE_EXTS) {

@@ -13,10 +13,10 @@ import path from "path";
 function findNoticeBg(): string | null {
   const exts = ["png", "jpg", "jpeg"];
   for (const ext of exts) {
-    const filePath = path.join(process.cwd(), "public", "notice-images", `notice-bg.${ext}`);
+    const filePath = path.join(process.cwd(), "public", "uploads", `notice-bg.${ext}`);
     if (fs.existsSync(filePath)) {
       const mtime = fs.statSync(filePath).mtimeMs;
-      return `/notice-images/notice-bg.${ext}?v=${mtime}`;
+      return `/uploads/notice-bg.${ext}?v=${mtime}`;
     }
   }
   return null;
