@@ -31,4 +31,5 @@ build/
 .vscode/
 .idea/
 docs/
-public/uploads/
+public/uploads/*
+public/notice-images/*

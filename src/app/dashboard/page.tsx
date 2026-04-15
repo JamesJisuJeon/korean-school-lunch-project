@@ -85,6 +85,7 @@ export default async function DashboardPage() {
               { label: "학생 관리", href: "/admin/students" },
               { label: "사용자 계정 관리", href: "/admin/users" },
               { label: "보결 선생님 관리", href: "/admin/substitutes" },
+              { label: "공지 이미지 변경", href: "/admin/notice-image" },
             ]}
           />
         )}
@@ -114,6 +115,7 @@ export default async function DashboardPage() {
             description="내 자녀의 간식을 신청하고 신청 현황을 확인합니다."
             links={[
               { label: "간식 신청하기", href: "/parent/order" },
+              { label: "이번주 간식 안내", href: "/parent/notice" },
             ]}
           />
         )}
