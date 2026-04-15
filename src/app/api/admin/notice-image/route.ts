@@ -1,23 +1,12 @@
-"use server";
-
 import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import sharp from "sharp";
 import { formatInTimeZone } from "date-fns-tz";
 
-const NOTICE_EXTS = ["png", "jpg", "jpeg"] as const;
-const PUBLIC_DIR = path.join(process.cwd(), "public", "uploads");
-
-function findExistingNoticeBg(): { filePath: string; ext: string } | null {
-  for (const ext of NOTICE_EXTS) {
-    const filePath = path.join(PUBLIC_DIR, `notice-bg.${ext}`);
-    if (fs.existsSync(filePath)) {
-      return { filePath, ext };
-    }
-  }
-  return null;
-}
+const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
+const NOTICE_BG_PATH = path.join(UPLOADS_DIR, "notice-bg.webp");
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -34,22 +23,21 @@ export async function POST(req: NextRequest) {
   }
 
   const originalExt = file.name.split(".").pop()?.toLowerCase();
-  if (!originalExt || !NOTICE_EXTS.includes(originalExt as typeof NOTICE_EXTS[number])) {
-    return NextResponse.json({ error: "png, jpg, jpeg 파일만 업로드 가능합니다." }, { status: 400 });
+  if (!originalExt || !["png", "jpg", "jpeg", "webp"].includes(originalExt)) {
+    return NextResponse.json({ error: "png, jpg, jpeg, webp 파일만 업로드 가능합니다." }, { status: 400 });
   }
 
-  // 기존 notice-bg 파일 타임스탬프 백업
-  const existing = findExistingNoticeBg();
-  if (existing) {
+  // 기존 notice-bg.webp 타임스탬프 백업
+  if (fs.existsSync(NOTICE_BG_PATH)) {
     const timestamp = formatInTimeZone(new Date(), "Pacific/Auckland", "yyyyMMddHHmmss");
-    const backupPath = path.join(PUBLIC_DIR, `notice-bg_${timestamp}.${existing.ext}`);
-    fs.renameSync(existing.filePath, backupPath);
+    fs.renameSync(NOTICE_BG_PATH, path.join(UPLOADS_DIR, `notice-bg_${timestamp}.webp`));
   }
 
-  // 새 이미지 저장
+  // WebP로 변환하여 저장
   const buffer = Buffer.from(await file.arrayBuffer());
-  const newFilePath = path.join(PUBLIC_DIR, `notice-bg.${originalExt}`);
-  fs.writeFileSync(newFilePath, buffer);
+  const compressed = await sharp(buffer).webp({ quality: 85 }).toBuffer();
+  const newFilePath = path.join(UPLOADS_DIR, "notice-bg.webp");
+  fs.writeFileSync(newFilePath, compressed);
 
   return NextResponse.json({ success: true });
 }
