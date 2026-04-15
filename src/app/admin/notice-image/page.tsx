@@ -5,15 +5,10 @@ import path from "path";
 import NoticeImageClient from "./NoticeImageClient";
 
 function findNoticeBg(): string | null {
-  const exts = ["png", "jpg", "jpeg"];
-  for (const ext of exts) {
-    const filePath = path.join(process.cwd(), "public", "uploads", `notice-bg.${ext}`);
-    if (fs.existsSync(filePath)) {
-      const mtime = fs.statSync(filePath).mtimeMs;
-      return `/uploads/notice-bg.${ext}?v=${mtime}`;
-    }
-  }
-  return null;
+  const filePath = path.join(process.cwd(), "public", "uploads", "notice-bg.webp");
+  if (!fs.existsSync(filePath)) return null;
+  const mtime = fs.statSync(filePath).mtimeMs;
+  return `/uploads/notice-bg.webp?v=${mtime}`;
 }
 
 export const dynamic = "force-dynamic";
