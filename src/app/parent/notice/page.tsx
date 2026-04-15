@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import Image from "next/image";
+import NoticeImageZoom from "@/components/NoticeImageZoom";
 import { formatInTimeZone } from "date-fns-tz";
 import { ko } from "date-fns/locale";
 import { Utensils, IceCream, MessageSquare, ShoppingCart } from "lucide-react";
@@ -9,15 +9,10 @@ import fs from "fs";
 import path from "path";
 
 function findNoticeBg(): string | null {
-  const exts = ["png", "jpg", "jpeg"];
-  for (const ext of exts) {
-    const filePath = path.join(process.cwd(), "public", "uploads", `notice-bg.${ext}`);
-    if (fs.existsSync(filePath)) {
-      const mtime = fs.statSync(filePath).mtimeMs;
-      return `/uploads/notice-bg.${ext}?v=${mtime}`;
-    }
-  }
-  return null;
+  const filePath = path.join(process.cwd(), "public", "uploads", "notice-bg.webp");
+  if (!fs.existsSync(filePath)) return null;
+  const mtime = fs.statSync(filePath).mtimeMs;
+  return `/uploads/notice-bg.webp?v=${mtime}`;
 }
 
 export const dynamic = "force-dynamic";
@@ -88,19 +83,7 @@ export default async function ParentNoticePage() {
           )}
 
           {/* 고정 배경 이미지 */}
-          {noticeBg && (
-            <div className="rounded-3xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800 aspect-[4/3]">
-              <Image
-                src={noticeBg}
-                alt="공지 배경 이미지"
-                width={900}
-                height={600}
-                className="w-full h-full object-contain"
-                priority
-                unoptimized
-              />
-            </div>
-          )}
+          {noticeBg && <NoticeImageZoom src={noticeBg} />}
         </>
       ) : (
         <div className="flex flex-col items-center justify-center py-32 text-center gap-4">
