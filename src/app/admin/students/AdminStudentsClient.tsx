@@ -386,14 +386,19 @@ export default function AdminStudentsClient() {
             ))}
           </div>
         </div>
-        {!showAddForm && (
-          <button
-            onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className="w-full md:w-auto px-8 py-3.5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 transition-all text-base"
-          >
-            <UserPlus className="w-5 h-5" /> 신규 학생 등록
-          </button>
-        )}
+        <div className="flex items-center gap-4 shrink-0">
+          <span className="text-[11px] font-black text-gray-400 dark:text-gray-500">
+            {sortedStudents.length}/{students.length}
+          </span>
+          {!showAddForm && (
+            <button
+              onClick={() => { setShowAddForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              className="w-full md:w-auto px-8 py-3.5 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none active:scale-95 transition-all text-base"
+            >
+              <UserPlus className="w-5 h-5" /> 신규 학생 등록
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 등록/수정 섹션 - 높이 축소 및 스타일 통일 */}
