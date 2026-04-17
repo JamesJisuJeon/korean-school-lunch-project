@@ -66,7 +66,7 @@ export default async function DashboardPage() {
           안녕하세요, {session.user.name || session.user.email}님!
         </h1>
         <p className="mt-2 text-gray-500 dark:text-gray-400">
-          오늘도 한국학교의 원활한 운영을 위해 함께해주셔서 감사합니다.
+          오늘도 학부모회의 원활한 간식 운영을 위해 함께해 주셔서 깊이 감사드립니다.
         </p>
       </div>
 
