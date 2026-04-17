@@ -1,6 +1,10 @@
 # 한국학교 점심 관리 시스템 개발 현황 및 로드맵
 
-## 📋 현재 진행 상태 (2026-04-12 기준 최신) - 완료 🎉
+## 📋 현재 진행 상태 (2026-04-15 기준 최신) - 완료 🎉
+- [x] **공지 이미지 관리 시스템 (`/admin/notice-image` + API) + 학부모 공지 페이지 (`/parent/notice`)** (2026-04-15)
+- [x] **기본 화면 날짜 섹션 수평 한 줄 리디자인 + NoticeImageZoom 줌팝업 컴포넌트** (2026-04-15)
+- [x] **TEACHER_ADMIN 역할 추가 및 학급 조회 권한 확장** (2026-04-15)
+- [x] **학생 엑셀 업로드 중복 학생 체크 강화** (2026-04-15)
 - [x] **보결선생님 날짜 비교 뉴질랜드 시간대 수정 + dateUtils 통일** (2026-04-12)
 - [x] **프로덕션 빌드 타입 오류 수정 (seed 파일 tsconfig.json exclude)** (2026-04-11)
 - [x] **메뉴 스키마 간소화 (디저트·음료 별도 필드 제거, 마이그레이션)** (2026-04-11)
@@ -176,6 +180,45 @@
   - `Menu` 생성 시 폐기된 `items` 필드 → `mainItems / dessertItems / beverageItems` 분리 필드로 교체.
 - **`src/auth.ts`:** JWT 콜백에서 `user.id` 타입 `string | undefined` → `user.id ?? ""` 로 안전하게 처리.
 - **빌드 결과:** `npm run build` 37개 라우트 정상 컴파일 확인.
+
+### 42. 공지 이미지 관리 시스템 (2026-04-15)
+
+- **`/admin/notice-image` 페이지 신규:** ADMIN 전용 공지 배경 이미지 업로드/교체 화면. 현재 이미지 미리보기 + 파일 업로드 UI + 제출 버튼 구성.
+- **`/api/admin/notice-image` API 신규 (POST):**
+  - 업로드 파일 확장자 유효성 검사 (png/jpg/jpeg/webp).
+  - 기존 `notice-bg.webp` 존재 시 NZ 시간 기준 타임스탬프로 백업: `notice-bg_YYYYMMDDHHMMSS.webp`.
+  - `sharp` 라이브러리로 WebP 변환(quality 85) 후 `public/uploads/notice-bg.webp`로 저장.
+- **이미지 저장 위치:** `public/uploads/notice-bg.webp` (고정 파일명).
+- **캐시 무효화:** `fs.statSync().mtimeMs`를 쿼리 파라미터로 추가(`?v=<mtime>`) — 새 이미지 업로드 즉시 반영.
+- **대시보드 링크 추가:** 관리자 섹션에 "공지 이미지 변경" 링크 추가.
+
+### 41. 학부모 공지 페이지 신규 (`/parent/notice`) (2026-04-15)
+
+- **로그인 필요:** `auth()` 세션 체크 후 미로그인 시 `/login` 리다이렉트.
+- **표시 내용:** 기본 화면(`page.tsx`)과 동일 — 이번주 간식 날짜, 간식 메뉴 카드, 매점 특식 카드, 공지사항 텍스트, 공지 이미지(줌 팝업 포함).
+- **대시보드 링크 추가:** 학부모 서비스 카드에 "이번주 간식 안내" 링크 추가 ("간식 신청하기" 하단).
+- **`findNoticeBg()` 함수:** `notice-bg.webp` 단일 파일만 확인 (확장자 루프 불필요).
+
+### 40. NoticeImageZoom 공통 컴포넌트 (2026-04-15)
+
+- **`src/components/NoticeImageZoom.tsx` 신규:**
+  - Server Component인 `page.tsx`, `parent/notice/page.tsx`에서 `useState` 없이 이미지 줌 기능 사용 가능하도록 분리.
+  - 썸네일: `aspect-[4/3]`, `cursor-zoom-in`, `object-contain` — 클릭 시 전체화면 오버레이 팝업.
+  - 팝업: `fixed inset-0 bg-black/80`, X 버튼, 배경 클릭으로 닫기.
+  - `unoptimized` prop으로 캐시 무효화 쿼리 파라미터 보존.
+
+### 39. 기본 화면 날짜 섹션 수평 리디자인 (2026-04-15)
+
+- **변경 전:** 세로 레이아웃, 별도 제목·날짜.
+- **변경 후:** `ShoppingCart` 파란 아이콘 + "이번주 간식 안내" + 날짜를 한 줄 가운데 정렬.
+  ```jsx
+  <div className="flex items-center justify-center gap-2 sm:gap-3">
+    <div className="p-2 bg-blue-600 rounded-xl"><ShoppingCart className="w-4 h-4 text-white" /></div>
+    <h1>이번주 간식 안내</h1>
+    <span>{formatInTimeZone(new Date(menu.date), "Pacific/Auckland", "M월 d일 (EEE)", { locale: ko })}</span>
+  </div>
+  ```
+- **적용 화면:** `page.tsx`, `parent/notice/page.tsx`.
 
 ### 38. 보결선생님 날짜 비교 NZ 시간대 수정 (2026-04-12)
 
