@@ -57,7 +57,9 @@ export default function AdminStudentsClient() {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [importResult, setImportResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [parentUpdateResult, setParentUpdateResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const parentUpdateFileInputRef = useRef<HTMLInputElement>(null);
 
   // 삭제 모달 상태
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
@@ -252,6 +254,19 @@ export default function AdminStudentsClient() {
     XLSX.writeFile(wb, "student_registration_template.xlsx");
   };
 
+  const handleExcelExport = () => {
+    const data = sortedStudents.map(s => ({
+      "학생이름(Name)": s.name,
+      "학급(Class)": s.class?.name ?? "",
+      "학부모이메일(ParentEmails)": s.parents.map(p => p.email).join(","),
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 40 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students");
+    XLSX.writeFile(wb, `students_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -302,6 +317,59 @@ export default function AdminStudentsClient() {
     reader.readAsBinaryString(file);
   };
 
+  const handleParentUpdateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const wb = XLSX.read(evt.target?.result, { type: "binary" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw: any[] = XLSX.utils.sheet_to_json(ws);
+
+        const parsed = raw
+          .filter(row => row["학생이름(Name)"] || row["학생이름"] || row["name"])
+          .map(row => ({
+            name: row["학생이름(Name)"] || row["학생이름"] || row["name"] || "",
+            className: row["학급(Class)"] || row["학급"] || row["class"] || "",
+            parentEmails: row["학부모이메일(ParentEmails)"] || row["학부모이메일"] || row["parentEmails"] || "",
+          }));
+
+        if (parsed.length === 0) {
+          setParentUpdateResult({ type: "error", message: "유효한 데이터가 없습니다. 양식을 확인해주세요." });
+          return;
+        }
+
+        setIsLoading(true);
+        const res = await fetch("/api/admin/students/update-parents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ students: parsed }),
+        });
+
+        const result = await res.json();
+        const hasErrors = result.errors?.length > 0;
+        const hasSkips = result.skips?.length > 0;
+        let msg = result.message;
+        if (hasSkips) {
+          msg += "\n\n스킵:\n" + result.skips.map((s: any) => `- ${s.row}행 ${s.name}: ${s.message}`).join("\n");
+        }
+        if (hasErrors) {
+          msg += "\n\n오류 사유:\n" + result.errors.map((e: any) => `- ${e.row}행 ${e.name}: ${e.error}`).join("\n");
+        }
+        setParentUpdateResult({ type: hasErrors && result.successCount === 0 ? "error" : "success", message: msg });
+        fetchData();
+      } catch (err) {
+        setParentUpdateResult({ type: "error", message: `파일 읽기 오류: ${err}` });
+      } finally {
+        setIsLoading(false);
+        if (parentUpdateFileInputRef.current) parentUpdateFileInputRef.current.value = "";
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const toggleParent = (parentId: string) => {
     if (selectedParentIds.includes(parentId)) {
       setSelectedParentIds(selectedParentIds.filter(id => id !== parentId));
@@ -330,20 +398,33 @@ export default function AdminStudentsClient() {
                 <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50">
                   <Upload className="w-3.5 h-3.5" /> 엑셀 대량 등록
                 </button>
+                <button onClick={handleExcelExport} disabled={sortedStudents.length === 0} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-xl hover:bg-gray-700 dark:hover:bg-gray-300 transition-all active:scale-95 disabled:opacity-40">
+                  <Download className="w-3.5 h-3.5" /> 자료 엑셀 추출
+                </button>
+                <button onClick={() => parentUpdateFileInputRef.current?.click()} disabled={isLoading} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all active:scale-95 disabled:opacity-50">
+                  <Upload className="w-3.5 h-3.5" /> 학부모 일괄 수정
+                </button>
               </div>
             </div>
             <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">학생 정보를 등록하고 학부모 계정과 연결합니다.</p>
           </div>
         </div>
-        <div className="flex gap-2 mt-4 xl:hidden">
-          <button onClick={downloadTemplate} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
-            <Download className="w-4 h-4" /> 양식 다운로드
+        <div className="grid grid-cols-2 gap-2 mt-4 xl:hidden">
+          <button onClick={downloadTemplate} className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
+            <Download className="w-3.5 h-3.5 shrink-0" /> 양식 다운로드
           </button>
-          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-black bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-md disabled:opacity-50">
-            <Upload className="w-4 h-4" /> 엑셀 대량 등록
+          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black bg-blue-600 text-white rounded-xl border-2 border-transparent hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50">
+            <Upload className="w-3.5 h-3.5 shrink-0" /> 엑셀 대량 등록
+          </button>
+          <button onClick={handleExcelExport} disabled={sortedStudents.length === 0} className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-xl border-2 border-transparent hover:bg-gray-700 dark:hover:bg-gray-300 transition-all active:scale-95 disabled:opacity-40">
+            <Download className="w-3.5 h-3.5 shrink-0" /> 자료 엑셀 추출
+          </button>
+          <button onClick={() => parentUpdateFileInputRef.current?.click()} disabled={isLoading} className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black bg-purple-600 text-white rounded-xl border-2 border-transparent hover:bg-purple-700 transition-all active:scale-95 disabled:opacity-50">
+            <Upload className="w-3.5 h-3.5 shrink-0" /> 학부모 일괄 수정
           </button>
         </div>
         <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleExcelUpload} />
+        <input type="file" ref={parentUpdateFileInputRef} className="hidden" accept=".xlsx,.xls" onChange={handleParentUpdateUpload} />
       </div>
 
       {/* 대량 등록 결과 */}
@@ -351,6 +432,17 @@ export default function AdminStudentsClient() {
         <div className={`p-5 rounded-2xl border-2 flex items-start justify-between gap-4 ${importResult.type === "success" ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"}`}>
           <p className={`text-sm font-bold whitespace-pre-wrap ${importResult.type === "success" ? "text-green-800 dark:text-green-300" : "text-red-800 dark:text-red-300"}`}>{importResult.message}</p>
           <button onClick={() => setImportResult(null)} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
+        </div>
+      )}
+
+      {/* 학부모 일괄 수정 결과 */}
+      {parentUpdateResult && (
+        <div className={`p-5 rounded-2xl border-2 flex items-start justify-between gap-4 ${parentUpdateResult.type === "success" ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800" : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"}`}>
+          <div>
+            <p className={`text-xs font-black uppercase tracking-widest mb-1.5 ${parentUpdateResult.type === "success" ? "text-purple-500 dark:text-purple-400" : "text-red-500 dark:text-red-400"}`}>학부모 일괄 수정 결과</p>
+            <p className={`text-sm font-bold whitespace-pre-wrap ${parentUpdateResult.type === "success" ? "text-purple-800 dark:text-purple-300" : "text-red-800 dark:text-red-300"}`}>{parentUpdateResult.message}</p>
+          </div>
+          <button onClick={() => setParentUpdateResult(null)} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
         </div>
       )}
 
