@@ -46,6 +46,19 @@
 
 ## 🔧 파트 B. 운영 효율 및 유지보수 보완 (기존 5장)
 
+### 9. 공지 이미지 관리 시스템 ✅ **완료 (2026-04-15)**
+* **완료 내용:**
+  - `public/uploads/notice-bg.webp` 고정 파일명으로 공지 배경 이미지 관리.
+  - `/admin/notice-image` 페이지 + `/api/admin/notice-image` API 신규 생성.
+  - 업로드 시 `sharp` WebP 변환(quality 85) 적용, 기존 파일은 NZ 타임스탬프 백업.
+  - `NoticeImageZoom` 공통 클라이언트 컴포넌트로 `page.tsx` · `parent/notice/page.tsx` 모두에서 클릭-줌 팝업 지원.
+  - `findNoticeBg()` 단순화: `notice-bg.webp` 단일 파일 존재 여부만 확인.
+  - 대시보드에 "공지 이미지 변경"(ADMIN), "이번주 간식 안내"(PARENT) 링크 추가.
+* **DB 스키마 영향도:** **없음** (파일 시스템 기반).
+* **사이드 이펙트 검증 계획:**
+  - [x] 새 이미지 업로드 후 기본 화면·`/parent/notice`에서 즉시 반영 확인 (캐시 버스팅).
+  - [x] 기존 파일 백업명 형식(`notice-bg_YYYYMMDDHHMMSS.webp`) 확인.
+
 ### 5. Timezone(뉴질랜드 시간) 로직 무결성 확보 ✅ **완료 (2026-04-12)**
 * **완료 내용:**
   - `src/lib/dateUtils.ts`에 `getNZTodayRange()` 함수 추가 — `date-fns-tz` 기반으로 NZ 기준 오늘 하루의 UTC 범위 `{ start, end }` 반환.
