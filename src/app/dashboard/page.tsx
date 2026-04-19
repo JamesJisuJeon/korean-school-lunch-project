@@ -59,6 +59,8 @@ export default async function DashboardPage() {
   const isTeacherAdmin = roles.includes("TA");
   const isAssistantOnly = !activeClass && !substituteToday && !!assistantClass;
 
+  const postCount = roles.includes("PARENT") ? await (prisma as any).post.count() : 0;
+
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto">
       <div className="mb-8 sm:mb-10 text-center md:text-left">
@@ -94,10 +96,11 @@ export default async function DashboardPage() {
             title="학부모회 관리자"
             icon={<Settings className="w-6 h-6 text-teal-600 dark:text-teal-400" />}
             iconBg="bg-teal-50 dark:bg-teal-900/30"
-            description="보결 선생님 배정 및 공지 이미지를 관리합니다."
+            description="보결 선생님 배정 및 공지 이미지, 활동 내역을 관리합니다."
             links={[
               { label: "보결 선생님 관리", href: "/spa/substitutes" },
               { label: "공지 이미지 변경", href: "/spa/notice-image" },
+              { label: "학부모회 활동 관리", href: "/spa/board" },
             ]}
           />
         )}
@@ -128,6 +131,7 @@ export default async function DashboardPage() {
             links={[
               { label: "간식 신청하기", href: "/parent/order" },
               { label: "이번주 간식 안내", href: "/parent/notice" },
+              ...(postCount > 0 ? [{ label: "학부모회 활동 이야기", href: "/parent/board" }] : []),
             ]}
           />
         )}
