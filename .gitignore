@@ -32,3 +32,6 @@ build/
 .idea/
 docs/
 public/uploads/*
+
+# TinyMCE self-hosted assets
+public/tinymce

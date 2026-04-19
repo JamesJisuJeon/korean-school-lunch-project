@@ -44,6 +44,156 @@
 
 ---
 
+## 📋 파트 C. 신기능 — 학부모회 활동 게시판 ✅ **완료 (2026-04-20)**
+
+### C-1. 개요
+
+| 항목 | 내용 |
+|------|------|
+| 목적 | 학부모회 활동 기록을 게시판 형태로 공유. S_PA가 작성/수정, 학부모는 조회 전용 |
+| 에디터 | TinyMCE (GPLv2, self-hosted) — 정렬·밑줄·글자색·배경색·글자크기·표·들여쓰기 지원 |
+| 이미지 | 서버 파일시스템 (`public/uploads/board/`) 저장, sharp WebP 변환 + EXIF 자동 회전 |
+| 접근 권한 | `PARENT` : 조회 전용 / `S_PA` : 작성·수정·삭제 |
+
+### 완료된 추가 구현 사항
+
+- **EXIF 자동 회전 수정:** `sharp().rotate()` 적용 — 세로 사진 업로드 시 가로로 뒤집히던 버그 수정
+- **이미지 폴더 자동 삭제:** 게시글 삭제 시 `public/uploads/board/{number}/` 폴더도 `fs.rmSync`로 일괄 삭제
+- **수정 시 이미지 파일 정리:** PUT API에서 기존 콘텐츠와 새 콘텐츠를 비교하여 제거된 이미지 파일 자동 삭제
+- **새 temp 이미지 이동:** 수정 시 temp 폴더의 새 이미지를 post 폴더로 이동 후 URL 교체
+- **고아 temp 파일 정리:** 업로드 후 에디터에서 삭제된 temp 이미지를 `uploadedImages` ref로 추적, 저장 시 서버에서 삭제
+- **라이트박스 기능:** PostViewer에서 이미지 클릭 시 전체화면 확대 모달 (이벤트 위임 방식으로 재클릭 버그 수정)
+- **"← 목록으로" 우측 정렬:** spa/board/[id]·parent/board/[id] 상세 화면 모두 적용
+- **대시보드 연동:** 게시글 없을 때 학부모 카드 "학부모회 활동 이야기" 링크 숨김 (서버사이드 count 조회)
+- **S_PA 카드 설명 문구 변경:** "보결 선생님 배정 및 공지 이미지, 활동 내역을 관리합니다."
+
+---
+
+### C-2. DB 스키마 변경
+
+`prisma/schema.prisma`에 `Post` 모델 추가:
+
+```prisma
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text   // Tiptap JSON 직렬화 문자열
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+마이그레이션 명령:
+```bash
+npx prisma migrate dev --name add_post_model
+```
+
+---
+
+### C-3. 파일 구조
+
+```
+src/
+├── app/
+│   ├── parent/
+│   │   └── board/
+│   │       ├── page.tsx              ← 글 목록 (PARENT 전용)
+│   │       └── [id]/
+│   │           └── page.tsx          ← 글 상세 조회 (PARENT 전용)
+│   ├── spa/
+│   │   └── board/
+│   │       ├── page.tsx              ← 관리 목록 + 새글 버튼 (S_PA)
+│   │       ├── new/
+│   │       │   └── page.tsx          ← 새글 작성 (S_PA)
+│   │       └── [id]/
+│   │           └── page.tsx          ← 글 상세 + 수정하기 버튼 (S_PA)
+│   └── api/
+│       ├── board/
+│       │   ├── route.ts              ← GET(목록) · POST(작성, S_PA)
+│       │   └── [id]/
+│       │       └── route.ts          ← GET(단건) · PUT(수정, S_PA) · DELETE(삭제, S_PA)
+│       └── board/upload/
+│           └── route.ts              ← POST: 이미지 → public/uploads/board/ 저장, WebP 변환 (S_PA)
+└── components/
+    └── board/
+        ├── PostList.tsx              ← 목록 공통 컴포넌트
+        ├── PostViewer.tsx            ← Tiptap read-only 뷰어
+        └── PostEditor.tsx            ← Tiptap 에디터 (S_PA 전용)
+```
+
+---
+
+### C-4. 라우팅 및 권한
+
+| 경로 | 접근 가능 역할 | 기능 |
+|------|---------------|------|
+| `/parent/board` | PARENT | 게시글 목록 조회 |
+| `/parent/board/[id]` | PARENT | 게시글 상세 조회 |
+| `/spa/board` | S_PA | 관리용 목록 + 새글 쓰기 버튼 |
+| `/spa/board/new` | S_PA | 새 게시글 작성 |
+| `/spa/board/[id]` | S_PA | 게시글 상세 조회 + 수정하기 버튼 |
+
+---
+
+### C-5. API 설계
+
+| Method | 경로 | 권한 | 설명 |
+|--------|------|------|------|
+| GET | `/api/board` | PARENT · S_PA | 목록 (최신순, 페이지네이션) |
+| POST | `/api/board` | S_PA | 새 글 작성 |
+| GET | `/api/board/[id]` | PARENT · S_PA | 단건 조회 |
+| PUT | `/api/board/[id]` | S_PA | 글 수정 |
+| DELETE | `/api/board/[id]` | S_PA | 글 삭제 |
+| POST | `/api/board/upload` | S_PA | 이미지 → `public/uploads/board/` 저장, WebP 변환 후 URL 반환 |
+
+---
+
+### C-6. 대시보드 카드 변경
+
+- **학부모 서비스 카드** (`PARENT`): `이번주 간식 안내` 아래 → `{ label: "학부모회 활동 이야기", href: "/parent/board" }` 추가
+- **학부모회 관리자 카드** (`S_PA`, `isSpaMode`): `공지 이미지 변경` 아래 → `{ label: "학부모회 활동 관리", href: "/spa/board" }` 추가
+
+---
+
+### C-7. Tiptap 설치 패키지
+
+```bash
+npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-image @tiptap/extension-link @tiptap/extension-placeholder
+```
+
+> 이미지 처리는 기존 `sharp` 패키지 재사용 (신규 설치 불필요)
+
+---
+
+### C-8. 구현 순서
+
+1. `prisma/schema.prisma` — `Post` 모델 추가 후 `migrate dev`
+2. `src/app/api/board/` — GET/POST 라우트 구현
+3. `src/app/api/board/[id]/` — GET/PUT/DELETE 라우트 구현
+4. `src/app/api/board/upload/` — 이미지 업로드 라우트 구현 (sharp WebP 변환 → `public/uploads/board/` 저장)
+5. `src/components/board/PostList.tsx` — 목록 공통 컴포넌트
+6. `src/components/board/PostViewer.tsx` — read-only 뷰어
+7. `src/components/board/PostEditor.tsx` — Tiptap 에디터 (이미지 업로드 포함)
+8. `src/app/parent/board/` — 조회용 페이지 (목록 + 상세)
+9. `src/app/spa/board/` — 관리용 페이지 (목록 + 작성 + 상세/수정)
+10. `src/app/dashboard/page.tsx` — 두 카드에 링크 추가
+11. 모바일 Navbar — 필요 시 바로가기 추가 검토
+
+---
+
+### C-9. 사이드 이펙트 검증 계획
+
+- [ ] PARENT 계정으로 `/spa/board/new` 직접 접근 시 접근 거부(redirect) 확인
+- [ ] S_PA 이외 계정(PA, ADMIN 등)으로 `/parent/board` 직접 접근 시 접근 거부 확인
+- [ ] S_PA 계정으로 글 작성 후 `/parent/board`에서 즉시 반영 확인
+- [ ] 이미지 인라인 삽입 후 `public/uploads/board/` 저장 및 WebP 렌더링 확인
+- [ ] 글 수정 시 기존 content(Tiptap JSON)가 에디터에 정상 로드되는지 확인
+- [ ] `spa_mode` 쿠키가 false일 때 대시보드 "학부모회 활동 관리" 버튼 미노출 확인
+
+---
+
 ## 🔧 파트 B. 운영 효율 및 유지보수 보완 (기존 5장)
 
 ### 9. 공지 이미지 관리 시스템 ✅ **완료 (2026-04-15)**
