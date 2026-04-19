@@ -20,8 +20,9 @@ export async function GET(req: Request) {
   try {
     const listClasses = searchParams.get("listClasses") === "true";
 
-    // TA: 모든 반에 접근 가능 (listClasses 요청이거나, classId가 있거나, TEACHER 롤이 없을 때)
-    if (user.roles.includes("TA") && (listClasses || classId || !user.roles.includes("TEACHER"))) {
+    // TA: listClasses 또는 classId 요청 시에만 TA 분기 처리
+    // (classId/listClasses 없이 접근 시 보조교사 배정 학급 조회로 fall-through)
+    if (user.roles.includes("TA") && (listClasses || classId)) {
       if (!classId) {
         // 반 목록 반환
         const classes = await prisma.class.findMany({
@@ -48,7 +49,11 @@ export async function GET(req: Request) {
             where: menuId ? { menuId } : undefined,
             include: { menu: true },
             take: 1,
-          }
+          },
+          attendances: {
+            where: menuId ? { menuId } : undefined,
+            take: 1,
+          },
         },
         orderBy: { name: "asc" }
       });
@@ -111,7 +116,11 @@ export async function GET(req: Request) {
           where: menuId ? { menuId } : undefined,
           include: { menu: true },
           take: 1,
-        }
+        },
+        attendances: {
+          where: menuId ? { menuId } : undefined,
+          take: 1,
+        },
       },
       orderBy: { name: "asc" }
     });
@@ -133,17 +142,69 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
   }
 
+  const user = session.user as any;
+
   try {
-    const { orderId, isServed } = await req.json();
+    const body = await req.json();
+    const { action } = body;
+
+    if (action === "attendance" || action === "attendanceStatus") {
+      const hasRoleAccess = user.roles.some((r: string) => ["TEACHER", "TA", "PA", "ADMIN"].includes(r));
+      if (!hasRoleAccess) {
+        const { start: todayStart, end: todayEnd } = getNZTodayRange();
+        const [substitute, assistant] = await Promise.all([
+          prisma.substitute.findFirst({ where: { userId: user.id, date: { gte: todayStart, lt: todayEnd } } }),
+          prisma.classAssistant.findUnique({ where: { userId: user.id } }),
+        ]);
+        if (!substitute && !assistant) {
+          return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
+        }
+      }
+    }
+
+    if (action === "attendance") {
+      const { studentId, menuId, isPresent } = body;
+      if (!studentId || !menuId || typeof isPresent !== "boolean") {
+        return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
+      }
+      if (!isPresent) {
+        await prisma.attendance.deleteMany({ where: { studentId, menuId } });
+        return NextResponse.json({ deleted: true });
+      }
+      const attendance = await prisma.attendance.upsert({
+        where: { studentId_menuId: { studentId, menuId } },
+        update: { isPresent: true, status: "PRESENT" },
+        create: { studentId, menuId, isPresent: true, status: "PRESENT" },
+      });
+      return NextResponse.json(attendance);
+    }
+
+    if (action === "attendanceStatus") {
+      const { studentId, menuId, status } = body;
+      if (!studentId || !menuId || !status) {
+        return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
+      }
+      const validStatuses = ["PRESENT", "ABSENT", "LATE", "EARLY_LEAVE"];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json({ message: "유효하지 않은 상태값입니다." }, { status: 400 });
+      }
+      const attendance = await prisma.attendance.upsert({
+        where: { studentId_menuId: { studentId, menuId } },
+        update: { status },
+        create: { studentId, menuId, isPresent: false, status },
+      });
+      return NextResponse.json(attendance);
+    }
+
+    // 기존 배식완료 처리
+    const { orderId, isServed } = body;
     if (!orderId || typeof isServed !== "boolean") {
       return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
     }
-
     const updated = await prisma.order.update({
       where: { id: orderId },
       data: { isServed },
     });
-
     return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ message: "업데이트 중 오류가 발생했습니다." }, { status: 500 });

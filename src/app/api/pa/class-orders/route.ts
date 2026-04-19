@@ -44,6 +44,10 @@ export async function GET(req: Request) {
         include: { menu: true },
         take: 1,
       },
+      attendances: {
+        where: { menuId },
+        take: 1,
+      },
     },
     orderBy: { name: "asc" },
   });

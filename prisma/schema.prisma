@@ -88,6 +88,7 @@ model Student {
 
   orders       Order[]
   couponSales  CouponSale[]
+  attendances  Attendance[]
 }
 
 model Substitute {
@@ -115,6 +116,7 @@ model Menu {
 
   orders      Order[]
   couponSales CouponSale[]
+  attendances Attendance[]
 }
 
 model Order {
@@ -146,6 +148,20 @@ model CouponSale {
   amount        Float    @default(5.0) // $5 per coupon
   date          DateTime @default(now())
   paymentStatus String   @default("PAID") // PAID | UNPAID | POST_PAID
+
+  @@unique([studentId, menuId])
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  menuId    String
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  isPresent Boolean  @default(true)
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([studentId, menuId])
 }

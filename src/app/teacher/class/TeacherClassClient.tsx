@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, CheckCircle, Calendar, Utensils, IceCream, Beer, RefreshCw, Check } from "lucide-react";
+import { Users, CheckCircle, Calendar, Utensils, IceCream, RefreshCw, Check } from "lucide-react";
 import { PaymentBadge } from "@/components/common/PaymentBadge";
 
 interface Menu {
@@ -10,6 +10,12 @@ interface Menu {
   mainItems: string | null;
   specialItems: string | null;
   isPublished: boolean;
+}
+
+interface Attendance {
+  id: string;
+  isPresent: boolean;
+  status: string;
 }
 
 interface Student {
@@ -23,6 +29,7 @@ interface Student {
     notes: string | null;
     menu: Menu;
   }[];
+  attendances: Attendance[];
 }
 
 interface ClassData {
@@ -30,6 +37,14 @@ interface ClassData {
   academicYear: string;
   students: Student[];
 }
+
+const ATTENDANCE_STATUS_OPTIONS = [
+  { value: "", label: "선택" },
+  { value: "PRESENT", label: "출석" },
+  { value: "ABSENT", label: "결석" },
+  { value: "LATE", label: "지각" },
+  { value: "EARLY_LEAVE", label: "조퇴" },
+];
 
 export default function TeacherClassClient() {
   const [classData, setClassData] = useState<ClassData | null>(null);
@@ -71,6 +86,25 @@ export default function TeacherClassClient() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ orderId, isServed: !current }),
+    });
+    fetchClassData();
+  };
+
+  const toggleAttendance = async (studentId: string, currentIsPresent: boolean) => {
+    await fetch("/api/teacher/class", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "attendance", studentId, menuId: selectedMenuId, isPresent: !currentIsPresent }),
+    });
+    fetchClassData();
+  };
+
+  const setAttendanceStatus = async (studentId: string, status: string) => {
+    if (!status) return;
+    await fetch("/api/teacher/class", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "attendanceStatus", studentId, menuId: selectedMenuId, status }),
     });
     fetchClassData();
   };
@@ -171,7 +205,8 @@ export default function TeacherClassClient() {
             <tr>
               <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-10 md:w-16">번호</th>
               <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400">이름</th>
-              <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">신청상태</th>
+              <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">출석</th>
+              <th className="hidden px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-20 md:w-28">출석상태</th>
               <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">수납상태</th>
               <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">배식완료</th>
             </tr>
@@ -181,6 +216,8 @@ export default function TeacherClassClient() {
               const order = student.orders[0];
               const isOrdered = !!order;
               const status = order?.status;
+              const attendance = student.attendances[0];
+              const isPresent = !!attendance?.isPresent;
 
               return (
                 <tr key={student.id} className={`${!isOrdered ? "bg-gray-50/50 dark:bg-gray-800/20" : "hover:bg-blue-50/30 dark:hover:bg-blue-900/10"} transition-colors`}>
@@ -194,21 +231,26 @@ export default function TeacherClassClient() {
                     )}
                   </td>
                   <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
-                    {isOrdered ? (
-                      status === "CANCELLED" ? (
-                        <span className="inline-flex items-center justify-center gap-1 text-red-500 dark:text-red-400 font-black text-xs md:text-sm">
-                          취소
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center justify-center gap-1 text-blue-700 dark:text-blue-400 font-black text-xs md:text-sm">
-                          <CheckCircle className="w-3.5 h-3.5 md:w-5 md:h-5" /> 신청
-                        </span>
-                      )
-                    ) : (
-                      <span className="inline-flex items-center justify-center text-gray-300 dark:text-gray-600 font-bold text-xs md:text-sm italic">
-                        미신청
-                      </span>
-                    )}
+                    <button
+                      onClick={() => toggleAttendance(student.id, isPresent)}
+                      className={`inline-flex items-center justify-center w-6 h-6 rounded-md border-2 transition-all ${isPresent
+                        ? "bg-green-500 border-green-500 text-white"
+                        : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-transparent"
+                      }`}
+                    >
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </button>
+                  </td>
+                  <td className="hidden px-1 md:px-4 py-5 whitespace-nowrap text-center">
+                    <select
+                      value={attendance?.status ?? ""}
+                      onChange={(e) => setAttendanceStatus(student.id, e.target.value)}
+                      className="text-xs font-black bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-1 py-1 text-gray-700 dark:text-gray-300 cursor-pointer outline-none focus:ring-1 focus:ring-green-400"
+                    >
+                      {ATTENDANCE_STATUS_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
                     {isOrdered ? (
