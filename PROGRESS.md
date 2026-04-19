@@ -1,6 +1,15 @@
 # 한국학교 점심 관리 시스템 개발 현황 및 로드맵
 
 ## 📋 현재 진행 상태 (2026-04-20 기준 최신) - 완료 🎉
+- [x] **출석 관리 기능 (파트 D) 구현 완료** (2026-04-20)
+  - Attendance 모델 추가 (studentId × menuId 복합 unique, isPresent + status 이중 필드)
+  - `api/teacher/class` GET — attendances 포함, PATCH — attendance/attendanceStatus 액션 추가
+  - `api/pa/class-orders` GET — attendances 포함
+  - `TeacherClassClient` — 출석여부 토글(녹색 체크박스) 인터랙티브 컬럼 추가
+  - `TeacherAllClassClient`, `ClassOrdersClient` — 출석여부 읽기전용 컬럼 추가
+  - **버그수정:** 보결·보조교사(substitute/ClassAssistant)도 출석 토글 가능하도록 PATCH 권한 체크 수정
+  - **버그수정:** 출석상태(status) 변경 시 isPresent 건드리지 않도록 수정 (upsert create: isPresent: false)
+  - **출석상태 컬럼 숨김:** 3개 화면 모두 출석상태 `<th>/<td>`에 `hidden` 클래스 적용 (코드/DB는 유지)
 - [x] **활동 게시판 이미지 라이트박스 — PostViewer 클릭 확대, 이벤트 위임 방식으로 재클릭 버그 수정** (2026-04-20)
 - [x] **TinyMCE 에디터 기능 추가 — 정렬, 밑줄, 글자색, 배경색, 글자크기, 표, 들여쓰기, toolbar_mode wrap** (2026-04-20)
 - [x] **게시글 삭제 시 이미지 폴더 자동 삭제 (fs.rmSync)** (2026-04-20)
