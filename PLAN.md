@@ -4,6 +4,199 @@
 
 ---
 
+## 📋 파트 D. 신기능 — 출석 관리 ✅ **완료 (2026-04-20)**
+
+### D-1. 개요
+
+| 항목 | 내용 |
+|------|------|
+| 목적 | 매주 수업일 학생 출석 여부를 기록·조회. 간식 주문 여부와 독립적으로 관리 |
+| 데이터 단위 | 학생(Student) × 메뉴(Menu, 주차 식별자로 활용) |
+| 마킹 권한 | `TEACHER` (teacher/class 화면에서만 토글 가능) |
+| 조회 권한 | `TA` (ta/all-classes), `PA` (pa/class-orders) — 읽기 전용 |
+| 컬럼 변경 | 3개 화면 모두 "신청상태" 컬럼을 제거하고 그 위치에 "출석여부" 컬럼 삽입 |
+
+### D-2. 설계 전략: 2-Phase Dual-Field
+
+#### 핵심 원칙: 레코드 존재 = 출석, 레코드 없음 = 미체크
+
+`isPresent=false` 레코드를 DB에 남기지 않는다. 체크 해제 시 레코드를 삭제함으로써 "미체크 vs. false"의 모호함을 원천 차단한다.
+
+#### Phase 1 (현재 구현)
+
+- UI: 체크박스(ON/OFF) 토글
+- ON 클릭 → `prisma.attendance.upsert({ isPresent: true, status: "PRESENT" })` — 두 필드 동시 기록
+- OFF 클릭 → `prisma.attendance.delete(...)` — 레코드 전체 삭제
+- 화면 표시: `attendance !== null` 이면 출석, `null` 이면 미체크
+
+#### Phase 2 (추후 전환, 스키마 변경 없음)
+
+- UI: 출석/결석/지각/조퇴 드롭다운 (선택 전까지 레코드 미생성)
+- 옵션 선택 → `prisma.attendance.upsert({ status: "<선택값>" })` — `status`만 업데이트
+- **`isPresent` 필드는 Phase 2에서 코드가 읽지도, 쓰지도 않는다 — 완전히 무시되는 필드가 된다.**
+- 삭제 옵션 없음 (한번 기록하면 status 변경만 가능)
+- Phase 1 생성 레코드: `status="PRESENT"` 값이 이미 있으므로 데이터 연속성 유지
+
+#### Phase 2 전환 후 `isPresent` 컬럼 처리
+
+| 선택지 | 장점 | 단점 |
+|--------|------|------|
+| **유지** | 마이그레이션 불필요 | 기술 부채, 코드 혼란 가능성 |
+| **삭제** | 깔끔한 스키마 | DROP COLUMN 마이그레이션 필요 |
+
+→ **권고:** Phase 2 안정화 후 2~3주 내 `isPresent` 컬럼 삭제. `DROP COLUMN` 시 TypeScript 컴파일 에러가 모든 참조 지점을 자동으로 노출해 안전한 제거 가능.
+
+### D-3. DB 스키마 변경
+
+`prisma/schema.prisma`에 `Attendance` 모델 추가 및 연관 관계 설정:
+
+```prisma
+model Attendance {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  menuId    String
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  isPresent Boolean  @default(true)   // Phase 1용. Phase 2 전환 후 삭제 예정
+  status    String                    // Phase 1: "PRESENT" 고정. Phase 2: "PRESENT"|"ABSENT"|"LATE"|"EARLY_LEAVE"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, menuId])
+}
+```
+
+`Student` 모델에 역방향 relation 추가:
+```prisma
+attendances  Attendance[]
+```
+
+`Menu` 모델에 역방향 relation 추가:
+```prisma
+attendances  Attendance[]
+```
+
+마이그레이션 명령:
+```bash
+npx prisma migrate dev --name add_attendance_model
+```
+
+### D-4. API 설계
+
+| Method | 경로 | 권한 | 설명 |
+|--------|------|------|------|
+| PATCH | `/api/teacher/class` | TEACHER | `{ action: "attendance", studentId, menuId, checked: boolean }` |
+
+**PATCH 처리 로직 (Phase 1):**
+- `checked: true` → `prisma.attendance.upsert({ isPresent: true, status: "PRESENT" })`
+- `checked: false` → `prisma.attendance.delete({ where: { studentId_menuId: { studentId, menuId } } })`
+
+**GET 응답 변경:**
+- 기존 GET `/api/teacher/class?menuId=...` 응답의 각 student에 `attendance: { status: string } | null` 포함
+- 기존 GET `/api/teacher/class?classId=...&menuId=...` (TA용) 동일하게 추가
+- 기존 GET `/api/pa/class-orders?menuId=...&classId=...` 동일하게 추가
+
+### D-5. 화면별 변경 사항
+
+#### 컬럼 구조 (3개 화면 공통)
+| 전 | 후 |
+|----|-----|
+| 번호 / 이름 / **신청상태** / 수납상태 / 배식완료 | 번호 / 이름 / **출석여부** / 수납상태 / 배식완료 |
+
+#### teacher/class (`TeacherClassClient.tsx`)
+- "출석여부" 셀: 체크박스 형태 토글 버튼 (배식완료와 동일한 UI 스타일)
+- 클릭 시 `PATCH /api/teacher/class` 호출 (`action: "attendance"`)
+- 간식 신청 여부와 무관하게 **모든 학생에게** 토글 표시
+- `attendance !== null` 이면 체크 상태로 표시
+
+#### ta/all-classes (`TeacherAllClassClient.tsx`)
+- "출석여부" 셀: 읽기 전용 체크 표시 (배식완료 읽기 전용과 동일한 방식)
+- 토글 버튼 없이 현재 상태만 표시
+
+#### pa/class-orders (`ClassOrdersClient.tsx`)
+- 동일하게 읽기 전용 표시
+
+### D-6. 구현 순서
+
+1. `prisma/schema.prisma` — `Attendance` 모델 추가, `Student`·`Menu` 역참조 추가
+2. `npx prisma migrate dev --name add_attendance_model`
+3. `src/app/api/teacher/class/route.ts`
+   - GET: 각 student에 `prisma.attendance.findUnique` 결과 포함
+   - PATCH: `action === "attendance"` 분기 추가 — `checked:true` → upsert, `checked:false` → delete
+4. `src/app/api/pa/class-orders/route.ts` — GET 응답에 attendance 포함
+5. `TeacherClassClient.tsx` — 컬럼 교체 + 출석 토글 버튼 구현
+6. `TeacherAllClassClient.tsx` — 컬럼 교체 + 읽기 전용 출석 표시
+7. `ClassOrdersClient.tsx` — 컬럼 교체 + 읽기 전용 출석 표시
+
+### D-7. 사이드 이펙트 검증 계획
+
+- [x] TEACHER로 출석 체크 후, TA/PA 화면에서 동일 주차 동일 반 조회 시 즉시 반영 확인
+- [x] 간식 미신청 학생에게도 출석 체크 가능한지 확인
+- [x] 간식 취소(CANCELLED) 학생에게도 출석 체크 가능한지 확인
+- [x] TA/PA 계정으로 PATCH `/api/teacher/class` 직접 호출 시 403 반환 확인
+- [x] 동일 student+menuId로 중복 체크 시 upsert로 정상 처리되는지 확인
+- [x] 출석여부 미체크 상태에서 출석상태만 변경해도 레코드 생성(upsert) 정상 처리
+- [x] 학생 삭제(onDelete: Cascade) 시 연관 Attendance도 함께 삭제되는지 확인
+
+### D-8. 완료 후 변경 사항 (2026-04-20)
+
+- **출석상태 드롭다운 독립 작동 버그 수정**: `attendanceStatus` action이 `updateMany` 사용 시 레코드 없으면 silent no-op 발생. `upsert`로 교체하되 `create: { isPresent: false, status }` — isPresent를 true로 설정하지 않아 두 필드의 독립성 유지.
+- **출석상태 컬럼 숨김**: 3개 화면 모두 `<th>` / `<td>` 에 `hidden` 클래스 추가 (코드·데이터·API 보존).
+- **보결/보조선생님 PATCH 권한**: `attendanceStatus` action은 substitute·ClassAssistant fallback 포함.
+
+### D-9. Phase 2 전환 가이드 (출석여부 → 출석상태 단독 사용)
+
+#### 옵션 A: 단순 숨김 (UI 스왑만)
+
+출석상태 컬럼을 표시하고, 출석여부(isPresent 토글) 컬럼을 숨긴다. DB·API·로직 변경 없음.
+
+3개 파일 모두 동일하게 적용:
+
+```tsx
+// 출석여부 <th> — hidden 추가
+<th className="hidden ...">출석여부</th>
+
+// 출석여부 <td> (토글 버튼 또는 체크 표시) — hidden 추가
+<td className="hidden ...">...</td>
+
+// 출석상태 <th> — hidden 제거
+<th className="px-2 md:px-4 ...">출석상태</th>
+
+// 출석상태 <td> — hidden 제거
+<td className="px-1 md:px-4 ...">...</td>
+```
+
+대상 파일:
+- `src/app/teacher/class/TeacherClassClient.tsx`
+- `src/app/ta/all-classes/TeacherAllClassClient.tsx`
+- `src/app/pa/class-orders/ClassOrdersClient.tsx`
+
+#### 옵션 B: isPresent DB 완전 삭제 (전체 정리)
+
+1. **스키마 변경**: `prisma/schema.prisma`에서 `isPresent Boolean @default(true)` 줄 삭제
+   ```bash
+   npx prisma migrate dev --name remove_isPresent
+   ```
+
+2. **API 정리** (`src/app/api/teacher/class/route.ts`):
+   - `action === "attendance"` 블록 전체 삭제 (isPresent 토글 핸들러)
+   - `attendanceStatus` upsert의 `create`에서 `isPresent: false` 제거
+
+3. **클라이언트 정리** (`TeacherClassClient.tsx`):
+   - `toggleAttendance` 함수 삭제
+   - 출석여부 토글 버튼 `<td>` 삭제
+   - 출석여부 `<th>` 삭제
+
+4. **나머지 2개 화면** (`TeacherAllClassClient.tsx`, `ClassOrdersClient.tsx`):
+   - 출석여부 체크 표시 `<td>` 및 `<th>` 삭제
+   - `isPresent` 참조 제거
+
+5. **컴파일러 안전망**: `npx tsc --noEmit` 실행 시 남은 `isPresent` 참조가 모두 에러로 표시됨 → 전수 제거.
+
+> **권고 시점**: Phase 2(출석상태 단독 운용) 안정화 후 2~3주 이내 B 옵션 실행.
+
+---
+
 ## 🏗 파트 A. 코드 구조 및 중복 리팩토링 (기존 6장)
 
 ### 1. 컴포넌트 마크업 중복 제거 (반응형 UI 리팩토링)

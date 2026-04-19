@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, CheckCircle, Calendar, Utensils, IceCream, RefreshCw, Check, BookOpen } from "lucide-react";
+import { Users, Calendar, Utensils, IceCream, RefreshCw, Check, BookOpen } from "lucide-react";
 import { PaymentBadge } from "@/components/common/PaymentBadge";
 
 interface Menu {
@@ -17,6 +17,12 @@ interface ClassItem {
   name: string;
 }
 
+interface Attendance {
+  id: string;
+  isPresent: boolean;
+  status: string;
+}
+
 interface Student {
   id: string;
   name: string;
@@ -28,6 +34,7 @@ interface Student {
     notes: string | null;
     menu: Menu;
   }[];
+  attendances: Attendance[];
 }
 
 interface ClassData {
@@ -207,7 +214,8 @@ export default function TeacherAllClassClient() {
               <tr>
                 <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-10 md:w-16">번호</th>
                 <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400">이름</th>
-                <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">신청상태</th>
+                <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">출석</th>
+                <th className="hidden px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-20 md:w-28">출석상태</th>
                 <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">수납상태</th>
                 <th className="px-2 md:px-4 py-4 text-center text-xs font-black text-gray-500 dark:text-gray-400 w-16 md:w-20">배식완료</th>
               </tr>
@@ -217,6 +225,11 @@ export default function TeacherAllClassClient() {
                 const order = student.orders[0];
                 const isOrdered = !!order;
                 const status = order?.status;
+                const attendance = student.attendances[0];
+                const isPresent = !!attendance?.isPresent;
+                const attendanceStatusLabel: Record<string, string> = {
+                  PRESENT: "출석", ABSENT: "결석", LATE: "지각", EARLY_LEAVE: "조퇴"
+                };
 
                 return (
                   <tr key={student.id} className={`${!isOrdered ? "bg-gray-50/50 dark:bg-gray-800/20" : "hover:bg-blue-50/30 dark:hover:bg-blue-900/10"} transition-colors`}>
@@ -230,20 +243,20 @@ export default function TeacherAllClassClient() {
                       )}
                     </td>
                     <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
-                      {isOrdered ? (
-                        status === "CANCELLED" ? (
-                          <span className="inline-flex items-center justify-center gap-1 text-red-500 dark:text-red-400 font-black text-xs md:text-sm">
-                            취소
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center gap-1 text-blue-700 dark:text-blue-400 font-black text-xs md:text-sm">
-                            <CheckCircle className="w-3.5 h-3.5 md:w-5 md:h-5" /> 신청
-                          </span>
-                        )
-                      ) : (
-                        <span className="inline-flex items-center justify-center text-gray-300 dark:text-gray-600 font-bold text-xs md:text-sm italic">
-                          미신청
+                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md border-2 ${isPresent
+                        ? "bg-green-500 border-green-500 text-white"
+                        : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-transparent"
+                      }`}>
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      </span>
+                    </td>
+                    <td className="hidden px-1 md:px-4 py-5 whitespace-nowrap text-center">
+                      {attendance?.status ? (
+                        <span className="text-xs font-black text-gray-700 dark:text-gray-300">
+                          {attendanceStatusLabel[attendance.status] ?? attendance.status}
                         </span>
+                      ) : (
+                        <span className="text-gray-200 dark:text-gray-700 font-black">-</span>
                       )}
                     </td>
                     <td className="px-1 md:px-4 py-5 whitespace-nowrap text-center">
