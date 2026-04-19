@@ -56,7 +56,7 @@ export default function TeacherAllClassClient() {
   }, [selectedClassId, selectedMenuId]);
 
   const fetchClasses = async () => {
-    const res = await fetch("/api/teacher/class");
+    const res = await fetch("/api/teacher/class?listClasses=true");
     if (res.ok) {
       const data = await res.json();
       const list: ClassItem[] = data.classes ?? [];

@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const session = await auth();
 
-  if (!session || !(session.user as any).roles.includes("ADMIN")) {
+  if (!session || !["ADMIN", "TA", "S_PA"].some((r) => (session.user as any).roles.includes(r))) {
     return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
   }
 

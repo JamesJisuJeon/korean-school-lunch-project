@@ -18,8 +18,10 @@ export async function GET(req: Request) {
   const { start: todayStart, end: todayEnd } = getNZTodayRange();
 
   try {
-    // TEACHER_ADMIN: 모든 반에 접근 가능
-    if (user.roles.includes("TEACHER_ADMIN")) {
+    const listClasses = searchParams.get("listClasses") === "true";
+
+    // TA: 모든 반에 접근 가능 (listClasses 요청이거나, classId가 있거나, TEACHER 롤이 없을 때)
+    if (user.roles.includes("TA") && (listClasses || classId || !user.roles.includes("TEACHER"))) {
       if (!classId) {
         // 반 목록 반환
         const classes = await prisma.class.findMany({
