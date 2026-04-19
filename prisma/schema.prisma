@@ -13,9 +13,10 @@ datasource db {
 
 enum Role {
   ADMIN
+  S_PA
   PA
   TEACHER
-  TEACHER_ADMIN
+  TA
   PARENT
 }
 

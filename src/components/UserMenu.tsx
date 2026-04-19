@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { User, Download, LogOut, X, KeyRound } from "lucide-react";
+import { User, Download, LogOut, X, KeyRound, Settings } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { handleSignOut } from "@/app/actions/auth";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -10,13 +11,15 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-export default function UserMenu({ name }: { name: string }) {
+export default function UserMenu({ name, isAdmin = false, initialAdminMode = false }: { name: string; isAdmin?: boolean; initialAdminMode?: boolean }) {
   const [open, setOpen] = useState(false);
   const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [adminMode, setAdminMode] = useState(initialAdminMode);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (window.matchMedia("(display-mode: standalone)").matches) {
@@ -54,6 +57,15 @@ export default function UserMenu({ name }: { name: string }) {
 
   const showInstall = !isStandalone && (promptEvent || isIOS);
 
+  const toggleAdminMode = () => {
+    const newMode = !adminMode;
+    setAdminMode(newMode);
+    const expires = new Date();
+    expires.setTime(expires.getTime() + 30 * 24 * 60 * 60 * 1000);
+    document.cookie = `admin_mode=${newMode};expires=${expires.toUTCString()};path=/`;
+    router.refresh();
+  };
+
   return (
     <>
       <div ref={ref} className="relative">
@@ -74,6 +86,15 @@ export default function UserMenu({ name }: { name: string }) {
               >
                 <Download className="w-4 h-4 text-blue-500" />
                 앱 설치
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={toggleAdminMode}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Settings className={`w-4 h-4 ${adminMode ? "text-blue-500" : "text-gray-400"}`} />
+                시스템 관리 {adminMode ? "Off" : "On"}
               </button>
             )}
             <Link

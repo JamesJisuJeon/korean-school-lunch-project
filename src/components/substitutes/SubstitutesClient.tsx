@@ -31,7 +31,7 @@ interface AcademicYear {
   classes: { id: string; name: string }[];
 }
 
-export default function AdminSubstitutesClient() {
+export default function SubstitutesClient() {
   const [substitutes, setSubstitutes] = useState<Substitute[]>([]);
   const [years, setYears] = useState<AcademicYear[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -53,7 +53,7 @@ export default function AdminSubstitutesClient() {
 
   const fetchData = async () => {
     const [subRes, schoolRes, userRes] = await Promise.all([
-      fetch("/api/admin/substitutes"),
+      fetch("/api/spa/substitutes"),
       fetch("/api/admin/school"),
       fetch("/api/admin/users"),
     ]);
@@ -119,7 +119,7 @@ export default function AdminSubstitutesClient() {
       return;
     }
     setIsLoading(true);
-    const res = await fetch("/api/admin/substitutes", {
+    const res = await fetch("/api/spa/substitutes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ date, classId: selectedClassId, userId: selectedUserId }),
@@ -139,7 +139,7 @@ export default function AdminSubstitutesClient() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("삭제하시겠습니까?")) return;
-    const res = await fetch("/api/admin/substitutes", {
+    const res = await fetch("/api/spa/substitutes", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),

@@ -16,6 +16,7 @@ export default async function DashboardPage() {
 
   const cookieStore = await cookies();
   const isAdminMode = cookieStore.get("admin_mode")?.value === "true";
+  const isSpaMode = cookieStore.get("spa_mode")?.value === "true";
 
   const user = session.user as any;
   const roles = user.roles || [];
@@ -55,8 +56,7 @@ export default async function DashboardPage() {
     if (assistantRecord) assistantClass = assistantRecord.class;
   } catch { }
 
-  const isTeacherAdmin = roles.includes("TEACHER_ADMIN");
-  const canAccessTeacherMenu = isTeacherAdmin || !!activeClass || !!substituteToday || !!assistantClass;
+  const isTeacherAdmin = roles.includes("TA");
   const isAssistantOnly = !activeClass && !substituteToday && !!assistantClass;
 
   return (
@@ -84,16 +84,28 @@ export default async function DashboardPage() {
               { label: "학급 학생 관리", href: "/admin/class-students" },
               { label: "학생 관리", href: "/admin/students" },
               { label: "사용자 계정 관리", href: "/admin/users" },
-              { label: "보결 선생님 관리", href: "/admin/substitutes" },
-              { label: "공지 이미지 변경", href: "/admin/notice-image" },
+            ]}
+          />
+        )}
+
+        {/* S_PA 카드 */}
+        {roles.includes("S_PA") && isSpaMode && (
+          <DashboardCard
+            title="학부모회 관리자"
+            icon={<Settings className="w-6 h-6 text-teal-600 dark:text-teal-400" />}
+            iconBg="bg-teal-50 dark:bg-teal-900/30"
+            description="보결 선생님 배정 및 공지 이미지를 관리합니다."
+            links={[
+              { label: "보결 선생님 관리", href: "/spa/substitutes" },
+              { label: "공지 이미지 변경", href: "/spa/notice-image" },
             ]}
           />
         )}
 
         {/* 학부모회 카드 (관리자도 접근 가능) */}
-        {(roles.includes("PA") || roles.includes("ADMIN")) && (
+        {roles.includes("PA") && (
           <DashboardCard
-            title="학부모회 운영 (PA)"
+            title="학부모회 운영"
             icon={<ClipboardList className="w-6 h-6 text-green-600 dark:text-green-400" />}
             iconBg="bg-green-50 dark:bg-green-900/30"
             description="간식 메뉴 등록, 신청 내역 수납, 매점 쿠폰 판매를 관리합니다."
@@ -120,13 +132,27 @@ export default async function DashboardPage() {
           />
         )}
 
-        {/* 선생님 카드 (보결선생님 포함) */}
-        {canAccessTeacherMenu && (
+        {/* TA 카드 (전체 학급) */}
+        {isTeacherAdmin && (
           <DashboardCard
-            title={substituteToday ? "임시 학급 관리 (배정됨)" : isAssistantOnly ? "학급 관리 (보조교사)" : isTeacherAdmin ? "전체 학급 관리 (Teacher)" : "학급 관리 (Teacher)"}
+            title="학교 관리자"
+            icon={<BookOpen className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
+            iconBg="bg-purple-50 dark:bg-purple-900/30"
+            description="전체 반 조회 및, 보결 선생님을 관리할 수 있습니다."
+            links={[
+              { label: "전체 반 명단 확인", href: "/ta/all-classes" },
+              { label: "보결 선생님 관리", href: "/ta/substitutes" },
+            ]}
+          />
+        )}
+
+        {/* 선생님 카드 (담임/보결/보조) */}
+        {(!!activeClass || !!substituteToday || !!assistantClass) && (
+          <DashboardCard
+            title={substituteToday ? "임시 학급 관리 (배정됨)" : isAssistantOnly ? "학급 관리 (보조교사)" : "학급 관리 (Teacher)"}
             icon={<BookOpen className="w-6 h-6 text-orange-600 dark:text-orange-400" />}
             iconBg="bg-orange-50 dark:bg-orange-900/30"
-            description={substituteToday ? `${formatInTimeZone(new Date(), "Pacific/Auckland", "yyyy.MM.dd")} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : isTeacherAdmin ? "모든 학급 학생들의 간식 신청 명단을 확인합니다." : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
+            description={substituteToday ? `${formatInTimeZone(new Date(), "Pacific/Auckland", "yyyy.MM.dd")} 보결 선생님으로 배정되었습니다.` : isAssistantOnly ? `${assistantClass?.name ?? ""} 학급의 보조교사로 등록되어 있습니다.` : "담당 학급 학생들의 간식 신청 명단을 확인합니다."}
             links={[
               { label: "우리 반 명단 확인", href: "/teacher/class" },
             ]}
