@@ -33,7 +33,7 @@ export default function NoticeImageClient({ currentImage }: NoticeImageClientPro
     const formData = new FormData();
     formData.append("image", file);
 
-    const res = await fetch("/api/admin/notice-image", {
+    const res = await fetch("/api/spa/notice-image", {
       method: "POST",
       body: formData,
     });
@@ -86,7 +86,6 @@ export default function NoticeImageClient({ currentImage }: NoticeImageClientPro
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 space-y-4">
         <p className="text-sm font-black text-gray-700 dark:text-gray-300">새 이미지 등록</p>
 
-        {/* 파일 선택 */}
         <div
           className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer py-10"
           onClick={() => inputRef.current?.click()}

@@ -13,10 +13,10 @@ function findNoticeBg(): string | null {
 
 export const dynamic = "force-dynamic";
 
-export default async function NoticeImagePage() {
+export default async function SpaNoticeImagePage() {
   const session = await auth();
   const user = session?.user as any;
-  if (!session || !user?.roles?.includes("ADMIN")) {
+  if (!session || !["ADMIN", "S_PA"].some((r) => user?.roles?.includes(r))) {
     redirect("/dashboard");
   }
 

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
-  if (!session || !(session.user as any).roles.includes("ADMIN")) {
+  if (!session || !["ADMIN", "S_PA", "TA"].some((r) => (session.user as any).roles.includes(r))) {
     return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
   }
 
@@ -24,7 +24,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session || !(session.user as any).roles.includes("ADMIN")) {
+  if (!session || !["ADMIN", "S_PA", "TA"].some((r) => (session.user as any).roles.includes(r))) {
     return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
   }
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   const session = await auth();
-  if (!session || !(session.user as any).roles.includes("ADMIN")) {
+  if (!session || !["ADMIN", "S_PA", "TA"].some((r) => (session.user as any).roles.includes(r))) {
     return NextResponse.json({ message: "권한이 없습니다." }, { status: 403 });
   }
 

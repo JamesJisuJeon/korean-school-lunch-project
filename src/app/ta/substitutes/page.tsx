@@ -1,14 +1,16 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import AdminSubstitutesClient from "./AdminSubstitutesClient";
+import SubstitutesClient from "@/components/substitutes/SubstitutesClient";
 
 export const metadata = {
-  title: "보결 선생님 관리 | 한국학교 관리자",
+  title: "보결 선생님 관리 | 한국학교",
 };
 
-export default async function AdminSubstitutesPage() {
+export default async function TaSubstitutesPage() {
   const session = await auth();
-  if (!session || !(session.user as any).roles.includes("ADMIN")) {
+  const roles = (session?.user as any)?.roles ?? [];
+
+  if (!session || (!roles.includes("TA") && !roles.includes("ADMIN"))) {
     redirect("/dashboard");
   }
 
@@ -21,7 +23,7 @@ export default async function AdminSubstitutesPage() {
             <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">날짜와 학급별로 보결 선생님을 배정하고 관리합니다.</p>
           </div>
         </div>
-        <AdminSubstitutesClient />
+        <SubstitutesClient />
       </div>
     </main>
   );

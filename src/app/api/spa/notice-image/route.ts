@@ -11,7 +11,7 @@ const NOTICE_BG_PATH = path.join(UPLOADS_DIR, "notice-bg.webp");
 export async function POST(req: NextRequest) {
   const session = await auth();
   const user = session?.user as any;
-  if (!session || !user?.roles?.includes("ADMIN")) {
+  if (!session || !["ADMIN", "S_PA"].some((r) => user?.roles?.includes(r))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -27,13 +27,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "png, jpg, jpeg, webp 파일만 업로드 가능합니다." }, { status: 400 });
   }
 
-  // 기존 notice-bg.webp 타임스탬프 백업
   if (fs.existsSync(NOTICE_BG_PATH)) {
     const timestamp = formatInTimeZone(new Date(), "Pacific/Auckland", "yyyyMMddHHmmss");
     fs.renameSync(NOTICE_BG_PATH, path.join(UPLOADS_DIR, `notice-bg_${timestamp}.webp`));
   }
 
-  // WebP로 변환하여 저장
   const buffer = Buffer.from(await file.arrayBuffer());
   const compressed = await sharp(buffer).webp({ quality: 85 }).toBuffer();
   const newFilePath = path.join(UPLOADS_DIR, "notice-bg.webp");
