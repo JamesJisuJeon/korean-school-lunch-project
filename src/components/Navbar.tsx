@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import Link from "next/link";
-import { BookOpen, Utensils, DollarSign, ClipboardList, BarChart2, ShoppingCart, Bell, Users, UserCheck } from "lucide-react";
+import { BookOpen, Utensils, DollarSign, ClipboardList, BarChart2, ShoppingCart, Bell, Users, UserCheck, Newspaper } from "lucide-react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getNZTodayRange } from "@/lib/dateUtils";
@@ -56,6 +56,7 @@ export default async function Navbar() {
     (prisma as any).classAssistant.findUnique({ where: { userId: user.id } }),
   ]);
   const hasTeacherAccess = !!substitute || !!activeClass || !!assistant;
+  const postCount = isParent ? await (prisma as any).post.count() : 0;
 
   return (
     <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
@@ -89,6 +90,7 @@ export default async function Navbar() {
               {(isPA || isAdmin) && <MobileDivider />}
               <MobileShortcut href="/parent/order" icon={<ShoppingCart className="w-5 h-5" />} label="간식신청" />
               <MobileShortcut href="/parent/notice" icon={<Bell className="w-5 h-5" />} label="간식안내" />
+              {postCount > 0 && <MobileShortcut href="/parent/board" icon={<Newspaper className="w-5 h-5" />} label="활동이야기" />}
             </>
           )}
 
