@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/start-dev.js",
+    "postinstall": "cp -r node_modules/tinymce public/tinymce || true",
     "build": "prisma migrate deploy && prisma generate && next build",
     "start": "node scripts/start-prod.js",
     "lint": "eslint"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "@tinymce/tinymce-react": "^6.3.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -21,6 +24,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.5.0",
+    "tinymce": "^8.4.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

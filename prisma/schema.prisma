@@ -40,6 +40,7 @@ model User {
   classesAsTeacher   Class[]   @relation("TeacherClasses")
   substitutes        Substitute[]
   assistantIn        ClassAssistant?
+  posts              Post[]
 }
 
 model AcademicYear {
@@ -147,4 +148,15 @@ model CouponSale {
   paymentStatus String   @default("PAID") // PAID | UNPAID | POST_PAID
 
   @@unique([studentId, menuId])
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  number    Int      @default(autoincrement())
+  title     String
+  content   String   @db.Text
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
