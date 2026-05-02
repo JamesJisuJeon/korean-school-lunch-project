@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Calendar, ArrowUpDown } from "lucide-react";
+import { Calendar, ArrowUp, ArrowDown } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 
 interface Menu {
@@ -19,7 +19,7 @@ interface VolunteerRow {
   task: string | null;
 }
 
-type FilterType = "all" | "available" | "unavailable";
+type FilterType = "all" | "available" | "unavailable" | "me";
 type SortDir = "asc" | "desc";
 
 interface Props {
@@ -35,6 +35,7 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
   { value: "all", label: "전체" },
   { value: "available", label: "봉사 가능" },
   { value: "unavailable", label: "미응답" },
+  { value: "me", label: "나" },
 ];
 
 export default function VolunteerClient({ userId, isSpa }: Props) {
@@ -81,6 +82,7 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
     let list = [...volunteers];
     if (filter === "available") list = list.filter((v) => v.available);
     else if (filter === "unavailable") list = list.filter((v) => !v.available);
+    else if (filter === "me") list = list.filter((v) => v.userId === userId);
     list.sort((a, b) => {
       const na = a.name || a.email;
       const nb = b.name || b.email;
@@ -206,8 +208,12 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                 onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <ArrowUpDown className="w-3.5 h-3.5" />
-                이름 {sortDir === "asc" ? "가→나" : "나→가"}
+                {sortDir === "asc" ? (
+                  <ArrowUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ArrowDown className="w-3.5 h-3.5" />
+                )}
+                이름
               </button>
             </div>
           </div>
@@ -264,20 +270,25 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                         </button>
                       </div>
                       {canEditTask ? (
-                        <input
-                          type="text"
+                        <textarea
+                          ref={(el) => {
+                            if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
+                          }}
+                          rows={1}
                           value={taskDrafts[v.userId] ?? ""}
-                          onChange={(e) =>
-                            setTaskDrafts((prev) => ({ ...prev, [v.userId]: e.target.value }))
-                          }
+                          onChange={(e) => {
+                            setTaskDrafts((prev) => ({ ...prev, [v.userId]: e.target.value }));
+                            e.target.style.height = "auto";
+                            e.target.style.height = e.target.scrollHeight + "px";
+                          }}
                           onBlur={() => saveTask(v.userId)}
-                          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && e.currentTarget.blur()}
                           disabled={isSavingRow}
                           placeholder="담당업무 입력..."
-                          className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                          className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 resize-none overflow-hidden leading-relaxed"
                         />
                       ) : v.task ? (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2 break-words whitespace-pre-wrap">
                           {v.task}
                         </p>
                       ) : v.available ? (
@@ -363,20 +374,25 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                           </td>
                           <td className="px-5 py-3">
                             {canEditTask ? (
-                              <input
-                                type="text"
+                              <textarea
+                                ref={(el) => {
+                                  if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
+                                }}
+                                rows={1}
                                 value={taskDrafts[v.userId] ?? ""}
-                                onChange={(e) =>
-                                  setTaskDrafts((prev) => ({ ...prev, [v.userId]: e.target.value }))
-                                }
+                                onChange={(e) => {
+                                  setTaskDrafts((prev) => ({ ...prev, [v.userId]: e.target.value }));
+                                  e.target.style.height = "auto";
+                                  e.target.style.height = e.target.scrollHeight + "px";
+                                }}
                                 onBlur={() => saveTask(v.userId)}
-                                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && e.currentTarget.blur()}
                                 disabled={isSavingRow}
                                 placeholder="담당업무 입력..."
-                                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                                className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 resize-none overflow-hidden leading-relaxed"
                               />
                             ) : (
-                              <span className="text-gray-700 dark:text-gray-300">
+                              <span className="text-gray-700 dark:text-gray-300 break-words whitespace-pre-wrap">
                                 {v.task || (
                                   <span className="text-gray-400 dark:text-gray-500 text-xs">
                                     {v.available ? "미정" : "—"}
