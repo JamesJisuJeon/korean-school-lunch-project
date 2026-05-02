@@ -18,6 +18,7 @@ enum Role {
   TEACHER
   TA
   PARENT
+  ASSISTANT
 }
 
 enum OrderType {

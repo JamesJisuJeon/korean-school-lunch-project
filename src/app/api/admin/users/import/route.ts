@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 
-const VALID_ROLES: Role[] = ["PARENT", "TEACHER", "PA", "ADMIN"];
+const VALID_ROLES: Role[] = ["PARENT", "TEACHER", "PA", "ADMIN", "ASSISTANT"];
 const DEFAULT_PASSWORD = "password1234";
 
 export async function POST(req: Request) {
