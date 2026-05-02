@@ -147,6 +147,7 @@ export default async function DashboardPage() {
             links={[
               { label: "전체 반 명단 확인", href: "/ta/all-classes" },
               { label: "보결 선생님 관리", href: "/ta/substitutes" },
+              { label: "보조교사 관리", href: "/ta/assistants" },
             ]}
           />
         )}

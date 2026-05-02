@@ -63,10 +63,11 @@ export default function ClassesManagementClient() {
   const [importResult, setImportResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [assistantPanelId, setAssistantPanelId] = useState<string | null>(null);
   const [assistantSearch, setAssistantSearch] = useState("");
-  const [allUsers, setAllUsers] = useState<{ id: string; name: string | null; email: string }[]>([]);
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string | null; email: string; roles: string[] }[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newClassAssistants, setNewClassAssistants] = useState<{ id: string; name: string | null; email: string }[]>([]);
   const [newClassAssistantSearch, setNewClassAssistantSearch] = useState("");
+  const assistantUsers = allUsers.filter(u => u.roles.includes("ASSISTANT"));
   const [sortKey, setSortKey] = useState<"sortOrder" | "academicYear" | "grade" | "name" | "teacherName">("sortOrder");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,7 +164,8 @@ export default function ClassesManagementClient() {
       result = result.filter(c =>
         matchesSearch(c.name, searchTerm) ||
         matchesSearch(c.grade || "", searchTerm) ||
-        matchesSearch(c.teacherName || "", searchTerm)
+        matchesSearch(c.teacherName || "", searchTerm) ||
+        c.assistants.some(a => matchesSearch(a.user.name || "", searchTerm) || matchesSearch(a.user.email, searchTerm))
       );
     }
     result.sort((a, b) => {
@@ -475,7 +477,7 @@ export default function ClassesManagementClient() {
                   </div>
                   {newClassAssistantSearch && (
                     <div className="mt-2 bg-white dark:bg-gray-800 rounded-2xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-32 overflow-y-auto shadow-md">
-                      {allUsers
+                      {assistantUsers
                         .filter(u =>
                           !newClassAssistants.some(a => a.id === u.id) &&
                           (matchesSearch(u.name || "", newClassAssistantSearch) || matchesSearch(u.email, newClassAssistantSearch))
@@ -492,7 +494,7 @@ export default function ClassesManagementClient() {
                             <span className="text-gray-400 text-xs">{u.email}</span>
                           </button>
                         ))}
-                      {allUsers.filter(u => !newClassAssistants.some(a => a.id === u.id) && (matchesSearch(u.name || "", newClassAssistantSearch) || matchesSearch(u.email, newClassAssistantSearch))).length === 0 && (
+                      {assistantUsers.filter(u => !newClassAssistants.some(a => a.id === u.id) && (matchesSearch(u.name || "", newClassAssistantSearch) || matchesSearch(u.email, newClassAssistantSearch))).length === 0 && (
                         <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
                       )}
                     </div>
@@ -522,7 +524,7 @@ export default function ClassesManagementClient() {
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
               <input
                 className="w-full pl-16 pr-12 py-5 rounded-[2rem] border-none shadow-md dark:shadow-none bg-white dark:bg-gray-800 font-bold text-gray-950 dark:text-gray-100 placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/20 transition-all outline-none"
-                placeholder="학년, 학급 이름, 담임교사로 검색하세요"
+                placeholder="학년, 학급 이름, 담임교사, 보조교사로 검색하세요"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -633,7 +635,7 @@ export default function ClassesManagementClient() {
                         </div>
                         {assistantPanelId === cls.id && assistantSearch && (
                           <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-32 overflow-y-auto">
-                            {allUsers
+                            {assistantUsers
                               .filter(u =>
                                 !cls.assistants.some(a => a.userId === u.id) &&
                                 (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))
@@ -645,7 +647,7 @@ export default function ClassesManagementClient() {
                                   <span className="text-gray-400 text-[10px]">{u.email}</span>
                                 </button>
                               ))}
-                            {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))).length === 0 && (
+                            {assistantUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))).length === 0 && (
                               <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
                             )}
                           </div>
@@ -748,7 +750,7 @@ export default function ClassesManagementClient() {
                           </div>
                           {assistantSearch && (
                             <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-32 overflow-y-auto">
-                              {allUsers
+                              {assistantUsers
                                 .filter(u =>
                                   !cls.assistants.some(a => a.userId === u.id) &&
                                   (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))
@@ -760,7 +762,7 @@ export default function ClassesManagementClient() {
                                     <span className="text-gray-400 text-[10px]">{u.email}</span>
                                   </button>
                                 ))}
-                              {allUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))).length === 0 && (
+                              {assistantUsers.filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch))).length === 0 && (
                                 <p className="px-3 py-2 text-xs text-gray-400 italic">검색 결과 없음</p>
                               )}
                             </div>
@@ -885,7 +887,7 @@ export default function ClassesManagementClient() {
                                   </div>
                                   {assistantSearch && (
                                     <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-700 overflow-hidden max-h-28 overflow-y-auto shadow-lg">
-                                      {allUsers
+                                      {assistantUsers
                                         .filter(u => !cls.assistants.some(a => a.userId === u.id) && (matchesSearch(u.name || "", assistantSearch) || matchesSearch(u.email, assistantSearch)))
                                         .slice(0, 5)
                                         .map(u => (

@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import Link from "next/link";
-import { BookOpen, Utensils, DollarSign, ClipboardList, BarChart2, ShoppingCart, Bell, Users, UserCheck, Newspaper } from "lucide-react";
+import { BookOpen, Utensils, DollarSign, ClipboardList, BarChart2, ShoppingCart, Bell, Users, UserCheck, Newspaper, GraduationCap, HeartHandshake } from "lucide-react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getNZTodayRange } from "@/lib/dateUtils";
@@ -82,6 +82,7 @@ export default async function Navbar() {
               <MobileShortcut href="/pa/sales" icon={<DollarSign className="w-5 h-5" />} label="현장수납" />
               <MobileShortcut href="/pa/class-orders" icon={<ClipboardList className="w-5 h-5" />} label="반별신청" />
               <MobileShortcut href="/pa/analytics" icon={<BarChart2 className="w-5 h-5" />} label="집계현황" />
+              <MobileShortcut href="/pa/volunteer" icon={<HeartHandshake className="w-5 h-5" />} label="봉사현황" />
             </>
           )}
 
@@ -99,6 +100,7 @@ export default async function Navbar() {
               {(isPA || isAdmin || isParent) && <MobileDivider />}
               <MobileShortcut href="/ta/all-classes" icon={<Users className="w-5 h-5" />} label="전체반" />
               <MobileShortcut href="/ta/substitutes" icon={<UserCheck className="w-5 h-5" />} label="보결관리" />
+              <MobileShortcut href="/ta/assistants" icon={<GraduationCap className="w-5 h-5" />} label="보조교사" />
             </>
           )}
 
