@@ -41,6 +41,7 @@ model User {
   substitutes        Substitute[]
   assistantIn        ClassAssistant?
   posts              Post[]
+  volunteers         Volunteer[]
 }
 
 model AcademicYear {
@@ -117,6 +118,7 @@ model Menu {
   orders      Order[]
   couponSales CouponSale[]
   attendances Attendance[]
+  volunteers  Volunteer[]
 }
 
 model Order {
@@ -164,6 +166,20 @@ model Attendance {
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, menuId])
+}
+
+model Volunteer {
+  id        String   @id @default(cuid())
+  menuId    String
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  available Boolean  @default(false)
+  task      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([menuId, userId])
 }
 
 model Post {
