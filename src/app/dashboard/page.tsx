@@ -117,6 +117,7 @@ export default async function DashboardPage() {
               { label: "현장 수납/쿠폰 판매", href: "/pa/sales" },
               { label: "반별 간식 신청 내역", href: "/pa/class-orders" },
               { label: "운영 집계 현황", href: "/pa/analytics" },
+              { label: "봉사 현황", href: "/pa/volunteer" },
             ]}
           />
         )}
