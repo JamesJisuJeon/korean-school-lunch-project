@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Calendar, ArrowUp, ArrowDown } from "lucide-react";
+import { Calendar, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 
 interface Menu {
@@ -170,9 +170,19 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
           {/* 헤더 */}
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
             <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-              <span className="font-semibold text-gray-700 dark:text-gray-300">
-                학부모회원 봉사 현황
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  학부모회원 봉사 현황
+                </span>
+                <button
+                  onClick={() => fetchVolunteers(selectedMenuId)}
+                  disabled={loading}
+                  className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                  title="새로고침"
+                >
+                  <RefreshCw className={`w-4 h-4 transition-transform ${loading ? "animate-spin" : ""}`} />
+                </button>
+              </div>
               {!loading && (
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   봉사 가능{" "}
