@@ -91,6 +91,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   return NextResponse.json({ success: true, data: post });
 }
 
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  const user = session?.user as any;
+  if (!session || !["ADMIN", "S_PA"].some((r) => user?.roles?.includes(r))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const { published } = await req.json();
+
+  const post = await prisma.post.update({
+    where: { id },
+    data: { published: Boolean(published) },
+  });
+
+  return NextResponse.json({ success: true, data: post });
+}
+
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   const user = session?.user as any;

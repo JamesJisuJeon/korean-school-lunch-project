@@ -19,7 +19,7 @@ export default function ParentBoardClient() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/board?page=${page}`)
+    fetch(`/api/board?page=${page}&publishedOnly=true`)
       .then((r) => r.json())
       .then((data) => {
         setPosts(data.data ?? []);
