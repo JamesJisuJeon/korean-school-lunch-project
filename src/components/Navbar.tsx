@@ -95,9 +95,16 @@ export default async function Navbar() {
             </>
           )}
 
-          {isTA && (
+          {isSpa && (
             <>
               {(isPA || isAdmin || isParent) && <MobileDivider />}
+              <MobileShortcut href="/spa/classes" icon={<GraduationCap className="w-5 h-5" />} label="학급정보" />
+            </>
+          )}
+
+          {isTA && (
+            <>
+              {(isPA || isAdmin || isParent || isSpa) && <MobileDivider />}
               <MobileShortcut href="/ta/all-classes" icon={<Users className="w-5 h-5" />} label="전체반" />
               <MobileShortcut href="/ta/substitutes" icon={<UserCheck className="w-5 h-5" />} label="보결관리" />
               <MobileShortcut href="/ta/assistants" icon={<GraduationCap className="w-5 h-5" />} label="보조교사" />
