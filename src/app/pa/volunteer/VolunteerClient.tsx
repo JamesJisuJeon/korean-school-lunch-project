@@ -185,7 +185,7 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
               </div>
               {!loading && (
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  봉사 가능{" "}
+                  가능{" "}
                   <span className="font-bold text-green-600 dark:text-green-400">
                     {availableCount}
                   </span>
