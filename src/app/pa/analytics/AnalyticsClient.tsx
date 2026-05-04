@@ -12,6 +12,7 @@ interface Menu {
 
 interface ClassStat {
   className: string;
+  gradeName: string | null;
   totalStudents: number;
   orderedCount: number;
   confirmedCount: number;
@@ -175,7 +176,10 @@ export default function AnalyticsClient() {
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                   {data.classSummary.map((cls) => (
                     <tr key={cls.className} className="group hover:bg-gray-50/60 dark:hover:bg-gray-800/30 transition-colors">
-                      <td className="px-4 py-3 font-black text-gray-950 dark:text-gray-100 sticky left-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50/60 dark:group-hover:bg-gray-800/30 transition-colors whitespace-nowrap">{cls.className}</td>
+                      <td className="px-4 py-3 font-black text-gray-950 dark:text-gray-100 sticky left-0 z-10 bg-white dark:bg-gray-900 group-hover:bg-gray-50/60 dark:group-hover:bg-gray-800/30 transition-colors whitespace-nowrap">
+                        {cls.gradeName && <span className="text-xs font-semibold text-blue-500 dark:text-blue-400 mr-1">{cls.gradeName}</span>}
+                        {cls.className}
+                      </td>
                       <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400 font-bold">{cls.totalStudents}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`font-black ${cls.confirmedCount !== cls.orderedCount && cls.orderedCount > 0

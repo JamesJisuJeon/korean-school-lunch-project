@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /Users/jamesjeon/Private/Project/korean-school-lunch-project/src/app/api/spa/classes)",
+      "Bash(mkdir -p /Users/jamesjeon/Private/Project/korean-school-lunch-project/src/app/spa/classes)"
+    ]
+  }
+}

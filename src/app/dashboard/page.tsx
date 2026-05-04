@@ -99,6 +99,7 @@ export default async function DashboardPage() {
             description="보결 선생님 배정 및 공지 이미지, 활동 내역을 관리합니다."
             links={[
               { label: "보결 선생님 관리", href: "/spa/substitutes" },
+              { label: "학급정보", href: "/spa/classes" },
               { label: "공지 이미지 변경", href: "/spa/notice-image" },
               { label: "학부모회 활동 관리", href: "/spa/board" },
             ]}
