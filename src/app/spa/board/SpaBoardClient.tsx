@@ -8,6 +8,7 @@ interface Post {
   id: string;
   title: string;
   createdAt: string;
+  published: boolean;
   author: { name: string | null };
 }
 
@@ -16,6 +17,7 @@ export default function SpaBoardClient() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
 
   function fetchPosts(p: number) {
     setLoading(true);
@@ -31,6 +33,28 @@ export default function SpaBoardClient() {
   useEffect(() => {
     fetchPosts(page);
   }, [page]);
+
+  async function handleTogglePublish(id: string, currentPublished: boolean) {
+    setTogglingIds((prev) => new Set(prev).add(id));
+    try {
+      const res = await fetch(`/api/board/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !currentPublished }),
+      });
+      if (res.ok) {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, published: !currentPublished } : p))
+        );
+      }
+    } finally {
+      setTogglingIds((prev) => {
+        const s = new Set(prev);
+        s.delete(id);
+        return s;
+      });
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -63,6 +87,8 @@ export default function SpaBoardClient() {
               total={total}
               page={page}
               onPageChange={setPage}
+              onTogglePublish={handleTogglePublish}
+              togglingIds={togglingIds}
             />
           )}
         </div>

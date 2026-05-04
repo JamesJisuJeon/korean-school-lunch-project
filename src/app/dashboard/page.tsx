@@ -59,7 +59,7 @@ export default async function DashboardPage() {
   const isTeacherAdmin = roles.includes("TA");
   const isAssistantOnly = !activeClass && !substituteToday && !!assistantClass;
 
-  const postCount = roles.includes("PARENT") ? await (prisma as any).post.count() : 0;
+  const postCount = roles.includes("PARENT") ? await (prisma as any).post.count({ where: { published: true } }) : 0;
 
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto">

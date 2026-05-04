@@ -188,6 +188,7 @@ model Post {
   number    Int      @default(autoincrement())
   title     String
   content   String   @db.Text
+  published Boolean  @default(false)
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
