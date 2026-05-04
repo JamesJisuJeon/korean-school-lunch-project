@@ -103,6 +103,7 @@ export async function GET(req: Request) {
   // --- 반별 집계 ---
   type ClassStat = {
     className: string;
+    gradeName: string | null;
     totalStudents: number;
     orderedCount: number;
     confirmedCount: number;
@@ -127,6 +128,7 @@ export async function GET(req: Request) {
     if (!classMap.has(className)) {
       classMap.set(className, {
         className,
+        gradeName: student.class?.grade ?? null,
         totalStudents: 0,
         orderedCount: 0,
         confirmedCount: 0,
