@@ -56,7 +56,7 @@ export default async function Navbar() {
     (prisma as any).classAssistant.findUnique({ where: { userId: user.id } }),
   ]);
   const hasTeacherAccess = !!substitute || !!activeClass || !!assistant;
-  const postCount = isParent ? await (prisma as any).post.count() : 0;
+  const postCount = isParent ? await (prisma as any).post.count({ where: { published: true } }) : 0;
 
   return (
     <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">

@@ -46,15 +46,19 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
   const limit = 10;
   const skip = (page - 1) * limit;
+  const publishedOnly = searchParams.get("publishedOnly") === "true";
+
+  const where = publishedOnly ? { published: true } : {};
 
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
+      where,
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
       include: { author: { select: { name: true } } },
     }),
-    prisma.post.count(),
+    prisma.post.count({ where }),
   ]);
 
   return NextResponse.json({ success: true, data: posts, meta: { total, page, limit } });
