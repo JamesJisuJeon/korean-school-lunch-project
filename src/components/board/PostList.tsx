@@ -40,44 +40,88 @@ export default function PostList({ posts, basePath, total, page, onPageChange, o
       ) : (
         <ul className="divide-y divide-gray-100 dark:divide-gray-700">
           {posts.map((post) => (
-            <li key={post.id} className="flex items-center gap-2 py-3 px-2">
-              <Link
-                href={`${basePath}/${post.id}`}
-                className="flex-1 min-w-0 flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
+            <li key={post.id} className="py-3 px-2">
+              {/* 모바일: 제목 위, 날짜+버튼 아래 */}
+              <div className="sm:hidden">
+                <Link
+                  href={`${basePath}/${post.id}`}
+                  className="flex items-center gap-2 mb-1.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  {onTogglePublish && (
+                    <span
+                      className={`shrink-0 text-xs px-1.5 py-0.5 rounded font-medium ${
+                        post.published
+                          ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500"
+                      }`}
+                    >
+                      {post.published ? "공개" : "비공개"}
+                    </span>
+                  )}
+                  <span className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                    {post.title}
+                  </span>
+                </Link>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {formatInTimeZone(new Date(post.createdAt), NZ_TZ, "yyyy.MM.dd")}
+                  </span>
+                  {onTogglePublish && (
+                    <button
+                      onClick={() => onTogglePublish(post.id, post.published ?? false)}
+                      disabled={togglingIds?.has(post.id)}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                        post.published
+                          ? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                          : "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50"
+                      }`}
+                    >
+                      {togglingIds?.has(post.id) ? "..." : post.published ? "비공개로" : "공개하기"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* 데스크탑: 한 줄 레이아웃 */}
+              <div className="hidden sm:flex items-center gap-2">
+                <Link
+                  href={`${basePath}/${post.id}`}
+                  className="flex-1 min-w-0 flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  {onTogglePublish && (
+                    <span
+                      className={`shrink-0 text-xs px-1.5 py-0.5 rounded font-medium ${
+                        post.published
+                          ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
+                          : "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500"
+                      }`}
+                    >
+                      {post.published ? "공개" : "비공개"}
+                    </span>
+                  )}
+                  <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {post.title}
+                  </span>
+                </Link>
+
                 {onTogglePublish && (
-                  <span
-                    className={`shrink-0 text-xs px-1.5 py-0.5 rounded font-medium ${
+                  <button
+                    onClick={() => onTogglePublish(post.id, post.published ?? false)}
+                    disabled={togglingIds?.has(post.id)}
+                    className={`shrink-0 w-16 text-xs font-medium px-2 py-1 rounded-lg transition-colors disabled:opacity-50 ${
                       post.published
-                        ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400"
-                        : "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500"
+                        ? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                        : "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50"
                     }`}
                   >
-                    {post.published ? "공개" : "비공개"}
-                  </span>
+                    {togglingIds?.has(post.id) ? "..." : post.published ? "비공개로" : "공개하기"}
+                  </button>
                 )}
-                <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {post.title}
+
+                <span className="shrink-0 w-24 text-right text-sm text-gray-400 dark:text-gray-500">
+                  {formatInTimeZone(new Date(post.createdAt), NZ_TZ, "yyyy.MM.dd")}
                 </span>
-              </Link>
-
-              {onTogglePublish && (
-                <button
-                  onClick={() => onTogglePublish(post.id, post.published ?? false)}
-                  disabled={togglingIds?.has(post.id)}
-                  className={`shrink-0 w-16 text-xs font-medium px-2 py-1 rounded-lg transition-colors disabled:opacity-50 ${
-                    post.published
-                      ? "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                      : "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/50"
-                  }`}
-                >
-                  {togglingIds?.has(post.id) ? "..." : post.published ? "비공개" : "공개"}
-                </button>
-              )}
-
-              <span className="shrink-0 w-24 text-right text-sm text-gray-400 dark:text-gray-500">
-                {formatInTimeZone(new Date(post.createdAt), NZ_TZ, "yyyy.MM.dd")}
-              </span>
+              </div>
             </li>
           ))}
         </ul>
