@@ -56,6 +56,7 @@ export default function SalesManagementClient() {
   const [filterCoupon, setFilterCoupon] = useState("ALL"); // ALL | HAS | NONE
   const [filterCouponStatus, setFilterCouponStatus] = useState("ALL"); // ALL | PAID | UNPAID | POST_PAID | FREE_COUPON
   const [filterPAChild, setFilterPAChild] = useState(false);
+  const [filterNotes, setFilterNotes] = useState(false);
 
   // 헤더 고정을 위한 높이 측정
   const [filterHeight, setFilterHeight] = useState(0);
@@ -277,6 +278,11 @@ export default function SalesManagementClient() {
       result = result.filter(s => s.isPAChild);
     }
 
+    // 특이사항 필터
+    if (filterNotes) {
+      result = result.filter(s => s.orders.length > 0 && !!s.orders[0].notes && s.orders[0].notes.trim() !== "");
+    }
+
     // 정렬
     result.sort((a, b) => {
       let cmp = 0;
@@ -292,7 +298,7 @@ export default function SalesManagementClient() {
     });
 
     return result;
-  }, [students, searchTerm, filterClass, filterOrderType, filterStatus, filterCoupon, filterCouponStatus, filterPAChild, sortKey, sortDir]);
+  }, [students, searchTerm, filterClass, filterOrderType, filterStatus, filterCoupon, filterCouponStatus, filterPAChild, filterNotes, sortKey, sortDir]);
 
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (sortKey !== col) return <ChevronsUpDown className="w-3 h-3 ml-1 text-gray-400 dark:text-gray-600" />;
@@ -308,6 +314,7 @@ export default function SalesManagementClient() {
     filterCoupon !== "ALL",
     filterCouponStatus !== "ALL",
     filterPAChild,
+    filterNotes,
   ].filter(Boolean).length;
 
   const selectClass = "rounded-xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 text-[11px] xl:text-xs font-black text-gray-700 dark:text-gray-200 py-1 xl:py-2 px-2 xl:px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 appearance-none cursor-pointer transition-all";
@@ -378,7 +385,7 @@ export default function SalesManagementClient() {
             </div>
 
             {/* 필터 + 정렬 1줄 */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="hidden xl:flex items-center gap-1.5 shrink-0 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                 <Filter className="w-3.5 h-3.5" />
                 {activeFilterCount > 0 && (
@@ -387,7 +394,6 @@ export default function SalesManagementClient() {
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 flex-wrap flex-1">
                 <select className={selectClass} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
                   <option value="ALL">전체 학급</option>
                   {classList.map(cls => <option key={cls} value={cls}>{cls}</option>)}
@@ -403,6 +409,15 @@ export default function SalesManagementClient() {
                   {PAYMENT_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                   <option value="NONE">미신청</option>
                 </select>
+                <button
+                  onClick={() => setFilterNotes(v => !v)}
+                  className={`shrink-0 flex items-center gap-1 px-2 xl:px-3 py-1 xl:py-2 rounded-xl text-[11px] xl:text-xs font-black transition-all border-2 ${filterNotes
+                    ? "bg-red-400 text-white border-red-400"
+                    : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-100 dark:border-gray-700"
+                    }`}
+                >
+                  특이사항
+                </button>
                 <select className={selectClass} value={filterCoupon} onChange={(e) => setFilterCoupon(e.target.value)}>
                   <option value="ALL">전체 쿠폰</option>
                   <option value="HAS">쿠폰 있음</option>
@@ -427,13 +442,13 @@ export default function SalesManagementClient() {
                 {activeFilterCount > 0 && (
                   <>
                     <button
-                      onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
+                      onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); setFilterNotes(false); }}
                       className="xl:hidden flex items-center justify-center w-6 h-6 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full border border-red-100 dark:border-red-800 transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
                     <button
-                      onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); }}
+                      onClick={() => { setFilterClass("ALL"); setFilterOrderType("ALL"); setFilterStatus("ALL"); setFilterCoupon("ALL"); setFilterCouponStatus("ALL"); setFilterPAChild(false); setFilterNotes(false); }}
                       className="hidden xl:flex items-center gap-1 px-2 py-1 text-[10px] font-black text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-800 transition-colors"
                     >
                       <X className="w-3 h-3" /> 초기화
@@ -469,8 +484,7 @@ export default function SalesManagementClient() {
                 >
                   <RefreshCw className={`w-3.5 h-3.5 transition-transform ${isLoading ? "animate-spin" : ""}`} />
                 </button>
-              </div>
-              <span className="shrink-0 text-xs font-black text-gray-400 dark:text-gray-500">
+              <span className="ml-auto shrink-0 text-xs font-black text-gray-400 dark:text-gray-500">
                 {displayedStudents.length}
               </span>
             </div>
