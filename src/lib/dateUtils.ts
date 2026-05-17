@@ -21,7 +21,7 @@ export function formatUTCtoNZInput(utcDate: Date | string): string {
 /**
  * 특정 날짜(Date 객체, 로컬 무관)가 주어졌을 때,
  * 뉴질랜드 달력 기준으로 다음 '토요일'의 날짜 문자열(YYYY-MM-DD)과,
- * 해당 토요일에 선행하는 '목요일 오후 2시(14:00)'를 UTC Date로 계산해 반환합니다.
+ * 해당 토요일에 선행하는 '목요일 오후 4시(16:00)'를 UTC Date로 계산해 반환합니다.
  */
 export function getNextSatAndDeadline(baseDate: Date = new Date()) {
   const nzDate = toZonedTime(baseDate, NZ_TZ);
@@ -46,7 +46,7 @@ export function getNextSatAndDeadline(baseDate: Date = new Date()) {
   const thuYear = thursdayNZ.getFullYear();
   const thuMonth = String(thursdayNZ.getMonth() + 1).padStart(2, '0');
   const thuDay = String(thursdayNZ.getDate()).padStart(2, '0');
-  const defaultDeadlineLocalStr = `${thuYear}-${thuMonth}-${thuDay}T14:00`;
+  const defaultDeadlineLocalStr = `${thuYear}-${thuMonth}-${thuDay}T16:00`;
   const deadlineUTC = parseNZTimeToUTC(defaultDeadlineLocalStr);
 
   return {
