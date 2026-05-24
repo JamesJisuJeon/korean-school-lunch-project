@@ -37,7 +37,7 @@ export async function GET(req: Request) {
   }
 
   const students = await prisma.student.findMany({
-    where: { classId },
+    where: { classId, isActive: true },
     include: {
       orders: {
         where: { menuId },
