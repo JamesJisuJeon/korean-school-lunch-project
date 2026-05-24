@@ -54,7 +54,10 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
       .then((r) => r.json())
       .then((data: Menu[]) => {
         setMenus(data);
-        if (data.length > 0) setSelectedMenuId(data[0].id);
+        if (data.length > 0) {
+          const published = data.find((m: Menu) => m.isPublished);
+          setSelectedMenuId(published ? published.id : data[0].id);
+        }
       })
       .catch(() => {});
   }, []);
