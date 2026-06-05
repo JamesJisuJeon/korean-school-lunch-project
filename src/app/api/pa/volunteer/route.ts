@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     });
 
     if (!menuId) {
-      return NextResponse.json(paUsers.map((u) => ({ ...u, available: false, task: null })));
+      return NextResponse.json(paUsers.map((u) => ({ ...u, available: null, task: null })));
     }
 
     const records = await prisma.volunteer.findMany({
@@ -36,21 +36,24 @@ export async function GET(req: Request) {
     const recordMap = new Map(records.map((r) => [r.userId, r]));
 
     return NextResponse.json(
-      paUsers.map((u) => ({
-        userId: u.id,
-        name: u.name,
-        email: u.email,
-        roles: u.roles,
-        available: recordMap.get(u.id)?.available ?? false,
-        task: recordMap.get(u.id)?.task ?? null,
-      }))
+      paUsers.map((u) => {
+        const record = recordMap.get(u.id);
+        return {
+          userId: u.id,
+          name: u.name,
+          email: u.email,
+          roles: u.roles,
+          available: record ? record.available : null,
+          task: record?.task ?? null,
+        };
+      })
     );
   } catch {
     return NextResponse.json({ message: "봉사 현황 조회 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
 
-// 본인 봉사 가능 여부 토글
+// 본인 봉사 가능 여부 설정 (가능/불가능/null)
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ message: "인증이 필요합니다." }, { status: 401 });
@@ -62,7 +65,7 @@ export async function POST(req: Request) {
 
   try {
     const { menuId, available } = await req.json();
-    if (!menuId || typeof available !== "boolean") {
+    if (!menuId || (typeof available !== "boolean" && available !== null)) {
       return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
     }
 
@@ -97,7 +100,7 @@ export async function PATCH(req: Request) {
     const record = await prisma.volunteer.upsert({
       where: { menuId_userId: { menuId, userId } },
       update: { task: task ?? null },
-      create: { menuId, userId, available: false, task: task ?? null },
+      create: { menuId, userId, available: null, task: task ?? null },
     });
 
     return NextResponse.json(record);

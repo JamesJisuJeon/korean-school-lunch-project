@@ -15,11 +15,11 @@ interface VolunteerRow {
   name: string | null;
   email: string;
   roles: string[];
-  available: boolean;
+  available: boolean | null;
   task: string | null;
 }
 
-type FilterType = "all" | "available" | "unavailable" | "me";
+type FilterType = "all" | "available" | "unavailable" | "unanswered" | "me";
 type SortDir = "asc" | "desc";
 
 interface Props {
@@ -33,10 +33,33 @@ function formatDate(dateStr: string) {
 
 const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
   { value: "all", label: "전체" },
-  { value: "available", label: "봉사 가능" },
-  { value: "unavailable", label: "미응답" },
+  { value: "available", label: "가능" },
+  { value: "unavailable", label: "불가능" },
+  { value: "unanswered", label: "미응답" },
   { value: "me", label: "나" },
 ];
+
+function AvailableBadge({ available }: { available: boolean | null }) {
+  if (available === true) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">
+        가능
+      </span>
+    );
+  }
+  if (available === false) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+        불가능
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500">
+      미응답
+    </span>
+  );
+}
 
 export default function VolunteerClient({ userId, isSpa }: Props) {
   const [menus, setMenus] = useState<Menu[]>([]);
@@ -68,6 +91,7 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
     fetch(`/api/pa/volunteer?menuId=${menuId}`)
       .then((r) => r.json())
       .then((data: VolunteerRow[]) => {
+        if (!Array.isArray(data)) return;
         setVolunteers(data);
         const drafts: Record<string, string> = {};
         data.forEach((v) => { drafts[v.userId] = v.task ?? ""; });
@@ -83,8 +107,9 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
 
   const displayedVolunteers = useMemo(() => {
     let list = [...volunteers];
-    if (filter === "available") list = list.filter((v) => v.available);
-    else if (filter === "unavailable") list = list.filter((v) => !v.available);
+    if (filter === "available") list = list.filter((v) => v.available === true);
+    else if (filter === "unavailable") list = list.filter((v) => v.available === false);
+    else if (filter === "unanswered") list = list.filter((v) => v.available === null);
     else if (filter === "me") list = list.filter((v) => v.userId === userId);
     list.sort((a, b) => {
       const na = a.name || a.email;
@@ -93,45 +118,45 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
       return sortDir === "asc" ? cmp : -cmp;
     });
     return list;
-  }, [volunteers, filter, sortDir]);
+  }, [volunteers, filter, sortDir, userId]);
 
-  async function toggleAvailable(targetUserId: string, current: boolean) {
+  async function setAvailable(targetUserId: string, value: boolean | null) {
     if (targetUserId !== userId) return;
-    const next = !current;
-    setToggling((prev) => new Set(prev).add(targetUserId));
-    setVolunteers((prev) =>
-      prev.map((v) => (v.userId === targetUserId ? { ...v, available: next } : v))
+    const prev = volunteers.find((v) => v.userId === targetUserId)?.available ?? null;
+    setToggling((s) => new Set(s).add(targetUserId));
+    setVolunteers((vs) =>
+      vs.map((v) => (v.userId === targetUserId ? { ...v, available: value } : v))
     );
     try {
       const res = await fetch("/api/pa/volunteer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ menuId: selectedMenuId, available: next }),
+        body: JSON.stringify({ menuId: selectedMenuId, available: value }),
       });
       if (!res.ok) throw new Error();
     } catch {
-      setVolunteers((prev) =>
-        prev.map((v) => (v.userId === targetUserId ? { ...v, available: current } : v))
+      setVolunteers((vs) =>
+        vs.map((v) => (v.userId === targetUserId ? { ...v, available: prev } : v))
       );
     } finally {
-      setToggling((prev) => { const s = new Set(prev); s.delete(targetUserId); return s; });
+      setToggling((s) => { const n = new Set(s); n.delete(targetUserId); return n; });
     }
   }
 
   async function saveTask(targetUserId: string) {
     if (!isSpa) return;
     const row = volunteers.find((v) => v.userId === targetUserId);
-    if (!row?.available) return;
+    if (row?.available !== true) return;
     const task = taskDrafts[targetUserId] ?? "";
-    setSavingTask((prev) => new Set(prev).add(targetUserId));
+    setSavingTask((s) => new Set(s).add(targetUserId));
     try {
       await fetch("/api/pa/volunteer", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ menuId: selectedMenuId, userId: targetUserId, task }),
       });
-      setVolunteers((prev) =>
-        prev.map((v) => (v.userId === targetUserId ? { ...v, task: task || null } : v))
+      setVolunteers((vs) =>
+        vs.map((v) => (v.userId === targetUserId ? { ...v, task: task || null } : v))
       );
     } catch {
       setTaskDrafts((prev) => ({
@@ -139,11 +164,13 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
         [targetUserId]: volunteers.find((v) => v.userId === targetUserId)?.task ?? "",
       }));
     } finally {
-      setSavingTask((prev) => { const s = new Set(prev); s.delete(targetUserId); return s; });
+      setSavingTask((s) => { const n = new Set(s); n.delete(targetUserId); return n; });
     }
   }
 
-  const availableCount = volunteers.filter((v) => v.available).length;
+  const availableCount = volunteers.filter((v) => v.available === true).length;
+  const unavailableCount = volunteers.filter((v) => v.available === false).length;
+  const unansweredCount = volunteers.filter((v) => v.available === null).length;
 
   return (
     <div className="space-y-4">
@@ -187,25 +214,35 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                 </button>
               </div>
               {!loading && (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  가능{" "}
-                  <span className="font-bold text-green-600 dark:text-green-400">
-                    {availableCount}
+                <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                  <span>
+                    가능{" "}
+                    <span className="font-bold text-green-600 dark:text-green-400">{availableCount}</span>
+                    명
                   </span>
-                  명 / 전체 {volunteers.length}명
-                </span>
+                  <span>
+                    불가능{" "}
+                    <span className="font-bold text-red-500 dark:text-red-400">{unavailableCount}</span>
+                    명
+                  </span>
+                  <span>
+                    미응답{" "}
+                    <span className="font-bold text-gray-500 dark:text-gray-400">{unansweredCount}</span>
+                    명
+                  </span>
+                  <span>전체 {volunteers.length}명</span>
+                </div>
               )}
             </div>
 
             {/* 필터 + 정렬 */}
             <div className="flex items-center gap-2 flex-wrap">
-              {/* 필터 버튼 */}
               <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                 {FILTER_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setFilter(opt.value)}
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`px-2 py-1.5 text-xs font-medium transition-colors ${
                       filter === opt.value
                         ? "bg-green-500 text-white"
                         : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -216,10 +253,9 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                 ))}
               </div>
 
-              {/* 이름 정렬 버튼 */}
               <button
                 onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 {sortDir === "asc" ? (
                   <ArrowUp className="w-3.5 h-3.5" />
@@ -247,13 +283,13 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                   const isMe = v.userId === userId;
                   const isTogglingRow = toggling.has(v.userId);
                   const isSavingRow = savingTask.has(v.userId);
-                  const canEditTask = isSpa && v.available;
+                  const canEditTask = isSpa && v.available === true;
 
                   return (
                     <li
                       key={v.userId}
                       className={`px-5 py-4 transition-colors ${
-                        v.available ? "bg-green-50 dark:bg-green-900/10" : ""
+                        v.available === true ? "bg-green-50 dark:bg-green-900/10" : ""
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -267,20 +303,30 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                             </span>
                           )}
                         </div>
-                        <button
-                          onClick={() => isMe && !isTogglingRow && toggleAvailable(v.userId, v.available)}
-                          disabled={!isMe || isTogglingRow}
-                          title={isMe ? "탭하여 변경" : "본인만 변경할 수 있습니다"}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                            v.available
-                              ? "bg-green-500 text-white"
-                              : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                          } ${isMe ? "active:scale-95" : "opacity-60 cursor-not-allowed"} ${
-                            isTogglingRow ? "opacity-50" : ""
-                          }`}
-                        >
-                          {v.available ? "봉사 가능" : "미응답"}
-                        </button>
+                        {isMe ? (
+                          <select
+                            value={v.available === null ? "" : String(v.available)}
+                            onChange={(e) => {
+                              const val =
+                                e.target.value === "" ? null : e.target.value === "true";
+                              setAvailable(v.userId, val);
+                            }}
+                            disabled={isTogglingRow}
+                            className={`px-2.5 py-1.5 rounded-lg text-sm font-medium border transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 ${
+                              v.available === true
+                                ? "bg-green-500 border-green-500 text-white"
+                                : v.available === false
+                                ? "bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
+                                : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400"
+                            }`}
+                          >
+                            <option value="">미응답</option>
+                            <option value="true">가능</option>
+                            <option value="false">불가능</option>
+                          </select>
+                        ) : (
+                          <AvailableBadge available={v.available} />
+                        )}
                       </div>
                       {canEditTask ? (
                         <textarea
@@ -304,7 +350,7 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                         <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2 break-words whitespace-pre-wrap">
                           {v.task}
                         </p>
-                      ) : v.available ? (
+                      ) : v.available === true ? (
                         <p className="text-sm text-gray-400 dark:text-gray-500">담당업무 미정</p>
                       ) : null}
                     </li>
@@ -320,8 +366,8 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                       <th className="px-5 py-3 text-left font-semibold text-gray-600 dark:text-gray-400">
                         이름
                       </th>
-                      <th className="px-5 py-3 text-center font-semibold text-gray-600 dark:text-gray-400 w-32">
-                        봉사 가능
+                      <th className="px-5 py-3 text-center font-semibold text-gray-600 dark:text-gray-400 w-36">
+                        봉사 가능여부
                       </th>
                       <th className="px-5 py-3 text-left font-semibold text-gray-600 dark:text-gray-400">
                         담당업무
@@ -338,13 +384,13 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                       const isMe = v.userId === userId;
                       const isTogglingRow = toggling.has(v.userId);
                       const isSavingRow = savingTask.has(v.userId);
-                      const canEditTask = isSpa && v.available;
+                      const canEditTask = isSpa && v.available === true;
 
                       return (
                         <tr
                           key={v.userId}
                           className={`transition-colors ${
-                            v.available
+                            v.available === true
                               ? "bg-green-50 dark:bg-green-900/10"
                               : "hover:bg-gray-50 dark:hover:bg-gray-800/40"
                           }`}
@@ -362,28 +408,30 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                             </div>
                           </td>
                           <td className="px-5 py-3 text-center">
-                            <button
-                              onClick={() => isMe && !isTogglingRow && toggleAvailable(v.userId, v.available)}
-                              disabled={!isMe || isTogglingRow}
-                              title={isMe ? "클릭하여 변경" : "본인만 변경할 수 있습니다"}
-                              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
-                                isMe ? "cursor-pointer hover:scale-110" : "cursor-not-allowed opacity-60"
-                              } ${isTogglingRow ? "opacity-50" : ""}`}
-                            >
-                              <span
-                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                                  v.available
+                            {isMe ? (
+                              <select
+                                value={v.available === null ? "" : String(v.available)}
+                                onChange={(e) => {
+                                  const val =
+                                    e.target.value === "" ? null : e.target.value === "true";
+                                  setAvailable(v.userId, val);
+                                }}
+                                disabled={isTogglingRow}
+                                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium border transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 ${
+                                  v.available === true
                                     ? "bg-green-500 border-green-500 text-white"
-                                    : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                                    : v.available === false
+                                    ? "bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
+                                    : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400"
                                 }`}
                               >
-                                {v.available && (
-                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </span>
-                            </button>
+                                <option value="">미응답</option>
+                                <option value="true">가능</option>
+                                <option value="false">불가능</option>
+                              </select>
+                            ) : (
+                              <AvailableBadge available={v.available} />
+                            )}
                           </td>
                           <td className="px-5 py-3">
                             {canEditTask ? (
@@ -408,7 +456,7 @@ export default function VolunteerClient({ userId, isSpa }: Props) {
                               <span className="text-gray-700 dark:text-gray-300 break-words whitespace-pre-wrap">
                                 {v.task || (
                                   <span className="text-gray-400 dark:text-gray-500 text-xs">
-                                    {v.available ? "미정" : "—"}
+                                    {v.available === true ? "미정" : "—"}
                                   </span>
                                 )}
                               </span>
