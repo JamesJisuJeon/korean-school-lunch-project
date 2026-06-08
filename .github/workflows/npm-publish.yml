@@ -38,6 +38,9 @@ jobs:
           echo "NEXTAUTH_URL=https://snack.uniwiz.click/" >> .env
           echo "AUTH_TRUST_HOST=https://snack.uniwiz.click/" >> .env
           echo "PORT=3000" >> .env
+          echo "NEXT_PUBLIC_VAPID_PUBLIC_KEY=BOsb1B_iaP4wz8TlujsXgnu2GkktY_JCc4-sdcFnD10I_c7PL8iiA69ZYMgKh7Q-V27682y820fhEuwQ5cq73bM" >> .env
+          echo "VAPID_PRIVATE_KEY=wkWtAjzfVVq6Fllm0jaqq7EAOMLukzA4Y6bcPssDeMI" >> .env
+          echo "VAPID_SUBJECT=https://snack.uniwiz.click" >> .env
       - name: Build
         run: |
           cd /root/lunch/main-$TIMESTAMP
