@@ -56,20 +56,20 @@ export async function POST(req: Request) {
       }
     }
 
+    // 기존 게시 상태 조회
+    let alreadyPublished = false;
+    if (id) {
+      const existing = await prisma.menu.findUnique({ where: { id }, select: { isPublished: true } });
+      alreadyPublished = existing?.isPublished ?? false;
+    }
+
     // 간식날짜가 지난 메뉴는 게시 불가 (해제는 허용, 이미 게시된 메뉴 수정은 허용)
     const todayStr = new Date().toISOString().split('T')[0];
     const menuDateStr = menuDate.toISOString().split('T')[0];
-    if (isPublished && todayStr > menuDateStr) {
-      let alreadyPublished = false;
-      if (id) {
-        const existing = await prisma.menu.findUnique({ where: { id }, select: { isPublished: true } });
-        alreadyPublished = existing?.isPublished ?? false;
-      }
-      if (!alreadyPublished) {
-        return NextResponse.json({
-          message: "간식날짜가 지난 메뉴는 게시할 수 없습니다."
-        }, { status: 400 });
-      }
+    if (isPublished && todayStr > menuDateStr && !alreadyPublished) {
+      return NextResponse.json({
+        message: "간식날짜가 지난 메뉴는 게시할 수 없습니다."
+      }, { status: 400 });
     }
 
     const existingPublishedMenu = await prisma.menu.findFirst({
@@ -91,8 +91,7 @@ export async function POST(req: Request) {
     let menu;
     if (id) {
       // 수정: 게시 중인 메뉴는 마감일시·공지사항·게시여부만 변경 허용
-      const existing = await prisma.menu.findUnique({ where: { id }, select: { isPublished: true } });
-      if (existing?.isPublished) {
+      if (alreadyPublished) {
         menu = await prisma.menu.update({
           where: { id },
           data: {

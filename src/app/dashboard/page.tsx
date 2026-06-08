@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { getNZTodayRange } from "@/lib/dateUtils";
 import { formatInTimeZone } from "date-fns-tz";
+import NotificationToggle from "@/components/NotificationToggle";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -64,12 +65,22 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-8 max-w-6xl mx-auto">
       <div className="mb-8 sm:mb-10 text-center md:text-left">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">
-          안녕하세요, {session.user.name || session.user.email}님!
-        </h1>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">
-          오늘도 학부모회의 원활한 간식 운영을 위해 함께해 주셔서 깊이 감사드립니다.
-        </p>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50">
+              안녕하세요, {session.user.name || session.user.email}님!
+            </h1>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
+              오늘도 학부모회의 원활한 간식 운영을 위해 함께해 주셔서 깊이 감사드립니다.
+            </p>
+          </div>
+          {/* TODO: 학부모 배포 시 "PA" → "PARENT" 로 변경 */}
+          {roles.includes("PA") && (
+            <div className="flex justify-center md:justify-end">
+              <NotificationToggle />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
