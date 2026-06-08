@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Coffee, Calendar, Lock, Globe, Clock, Utensils, Star, Upload, X, Check, Edit2, Trash2 } from "lucide-react";
+import { Coffee, Calendar, Lock, Globe, Clock, Utensils, Star, Upload, X, Check, Edit2, Trash2, Bell } from "lucide-react";
 import { formatUTCtoNZInput, getNextSatAndDeadline, parseNZTimeToUTC } from "@/lib/dateUtils";
 
 interface Menu {
@@ -193,6 +193,29 @@ export default function MenuManagementClient() {
         alert(data.message || "오류가 발생했습니다.");
       }
     } catch (err) {
+      alert("서버 통신 중 오류가 발생했습니다.");
+    }
+    setIsLoading(false);
+  };
+
+  const handleSendNotification = async (menu: Menu) => {
+    if (!confirm("알림 구독 중인 학부모에게 간식 게시 알림을 발송하시겠습니까?")) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/push/notify-menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuId: menu.id }),
+      });
+
+      if (res.ok) {
+        alert("알림이 발송되었습니다.");
+      } else {
+        const data = await res.json();
+        alert(data.message || "알림 발송 중 오류가 발생했습니다.");
+      }
+    } catch {
       alert("서버 통신 중 오류가 발생했습니다.");
     }
     setIsLoading(false);
@@ -456,41 +479,52 @@ export default function MenuManagementClient() {
                     ? "간식날짜가 지난 메뉴는 삭제할 수 없습니다."
                     : undefined;
                   return (
-                    <div className="flex gap-2 mt-auto">
-                      <button
-                        onClick={() => handleEdit(menu)}
-                        disabled={isPast}
-                        title={isPast ? "간식날짜가 지난 메뉴는 수정할 수 없습니다." : undefined}
-                        className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-2 border-gray-300 dark:border-gray-600 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-800"
-                      >
-                        <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 수정
-                      </button>
-                      {menu.isPublished ? (
+                    <div className="flex flex-col gap-2 mt-auto">
+                      {menu.isPublished && (
                         <button
-                          onClick={() => handleUnpublish(menu)}
+                          onClick={() => handleSendNotification(menu)}
                           disabled={isLoading}
-                          className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors border-2 border-red-200 dark:border-red-800 shadow-sm"
+                          className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs sm:text-sm bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border-2 border-indigo-200 dark:border-indigo-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                          <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시 해제
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handlePublish(menu)}
-                          disabled={isLoading || isPast}
-                          title={isPast ? "간식날짜가 지난 메뉴는 게시할 수 없습니다." : undefined}
-                          className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border-2 border-blue-200 dark:border-blue-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-50 dark:disabled:hover:bg-blue-900/30"
-                        >
-                          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시
+                          <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시 알림 발송
                         </button>
                       )}
-                      <button
-                        onClick={() => handleDeleteRequest(menu)}
-                        disabled={deleteDisabled}
-                        title={deleteTitle}
-                        className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-red-600 dark:bg-red-700 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-red-800 transition-colors border-2 border-red-700 dark:border-red-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-600 dark:disabled:hover:bg-red-700"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 삭제
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(menu)}
+                          disabled={isPast}
+                          title={isPast ? "간식날짜가 지난 메뉴는 수정할 수 없습니다." : undefined}
+                          className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-2 border-gray-300 dark:border-gray-600 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-800"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 수정
+                        </button>
+                        {menu.isPublished ? (
+                          <button
+                            onClick={() => handleUnpublish(menu)}
+                            disabled={isLoading}
+                            className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors border-2 border-red-200 dark:border-red-800 shadow-sm"
+                          >
+                            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시 해제
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handlePublish(menu)}
+                            disabled={isLoading || isPast}
+                            title={isPast ? "간식날짜가 지난 메뉴는 게시할 수 없습니다." : undefined}
+                            className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border-2 border-blue-200 dark:border-blue-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-50 dark:disabled:hover:bg-blue-900/30"
+                          >
+                            <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 게시
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteRequest(menu)}
+                          disabled={deleteDisabled}
+                          title={deleteTitle}
+                          className="flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm bg-red-600 dark:bg-red-700 text-white font-bold rounded-xl hover:bg-red-700 dark:hover:bg-red-800 transition-colors border-2 border-red-700 dark:border-red-800 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-600 dark:disabled:hover:bg-red-700"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 삭제
+                        </button>
+                      </div>
                     </div>
                   );
                 })()}

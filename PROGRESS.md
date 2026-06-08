@@ -1,6 +1,19 @@
 # 한국학교 점심 관리 시스템 개발 현황 및 로드맵
 
-## 📋 현재 진행 상태 (2026-04-20 기준 최신) - 완료 🎉
+## 📋 현재 진행 상태 (2026-06-08 기준 최신) - 완료 🎉
+- [x] **PWA 푸시 알림 시스템 구현** (2026-06-08)
+  - `PushSubscription` 모델 추가 (migration: `20260607225337_add_push_subscription`)
+  - `src/lib/push.ts` — VAPID 설정, `sendToAllParents` / `sendToUnorderedParents` 유틸
+  - `src/instrumentation.ts` — 마감 4시간 전 미신청자 대상 cron 알림 (10분 간격)
+  - `src/app/api/push/subscribe/route.ts` — 구독 등록(POST) / 해제(DELETE)
+  - `src/app/api/push/notify-menu/route.ts` — PA 수동 게시 알림 발송 API
+  - `public/sw.js` — push 수신 및 notificationclick 핸들러 추가
+  - `src/components/NotificationToggle.tsx` — 구독 ON/OFF UI (알림 종류 안내 포함)
+  - 대시보드에 NotificationToggle 노출 (역할 조건부)
+  - `pa/menu` — 게시된 메뉴에 "게시 알림 발송" 버튼 추가 (수동 발송)
+  - **현재 PA 전용 테스트 모드** — 학부모 배포 전환 방법은 항목 23 참고
+
+## 📋 이전 진행 상태 (2026-04-20 기준) - 완료 🎉
 - [x] **출석 관리 기능 (파트 D) 구현 완료** (2026-04-20)
   - Attendance 모델 추가 (studentId × menuId 복합 unique, isPresent + status 이중 필드)
   - `api/teacher/class` GET — attendances 포함, PATCH — attendance/attendanceStatus 액션 추가
@@ -492,6 +505,34 @@
   - `dev`: `node scripts/start-dev.js`
   - `start`: `node scripts/start-prod.js`
 - **`.env`에 `PORT=3000` 추가:** 변경 시 `NEXTAUTH_URL`도 함께 수정 필요.
+
+### 23. PWA 푸시 알림 시스템 (2026-06-08)
+
+- **DB:** `PushSubscription` 모델 추가. `userId`(FK cascade), `endpoint`(unique), `p256dh`, `auth` 필드.
+- **VAPID 환경변수:** `.env`에 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` 추가. `VAPID_SUBJECT`는 `https://도메인` 형식 사용 (`mailto:` 접두어 없음).
+- **알림 종류:**
+  - **게시 알림 (수동):** PA가 `pa/menu`에서 "게시 알림 발송" 버튼 클릭 → `/api/push/notify-menu` 호출 → 구독 중인 대상 전원 발송.
+  - **마감 임박 알림 (자동):** `instrumentation.ts` cron이 10분마다 마감 4시간 전 메뉴를 감지해 미신청자에게 자동 발송.
+- **플랫폼:** Android 브라우저 — 설치 없이 수신 가능. iOS — 홈 화면 추가(PWA) 후 수신 가능 (iOS 16.4+).
+- **구독 UI:** `NotificationToggle` 컴포넌트. 알림 종류·플랫폼 안내 포함. 기본값 미구독.
+
+**⚠️ 학부모 배포 전 변경 필요 (현재 PA 전용 테스트 모드)**
+
+`src/lib/push.ts`:
+```ts
+// 현재
+const PUSH_TARGET_ROLE = 'PA';
+// 변경
+const PUSH_TARGET_ROLE = 'PARENT';
+```
+
+`src/app/dashboard/page.tsx`:
+```tsx
+// 현재
+{roles.includes("PA") && <NotificationToggle />}
+// 변경
+{roles.includes("PARENT") && <NotificationToggle />}
+```
 
 ---
 
