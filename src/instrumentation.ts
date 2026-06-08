@@ -1,4 +1,5 @@
 export async function register() {
+  console.log('[instrumentation] register() called, NEXT_RUNTIME:', process.env.NEXT_RUNTIME);
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { default: cron } = await import('node-cron');
     const { prisma } = await import('@/lib/prisma');
@@ -6,11 +7,15 @@ export async function register() {
 
     const DEADLINE_HOURS_BEFORE = 4;
 
+    console.log('[instrumentation] cron 등록 완료');
     // 매 10분마다 마감 임박 메뉴 체크
     cron.schedule('*/10 * * * *', async () => {
+      console.log('[cron] 마감 임박 체크:', new Date().toISOString());
       try {
+        // 10분 단위로 내림해서 경계값 누락 방지 (cron 지연 ms 때문에 gte 체크 실패)
         const now = new Date();
-        const windowStart = new Date(now.getTime() + DEADLINE_HOURS_BEFORE * 60 * 60 * 1000);
+        const roundedNow = new Date(Math.floor(now.getTime() / (10 * 60 * 1000)) * (10 * 60 * 1000));
+        const windowStart = new Date(roundedNow.getTime() + DEADLINE_HOURS_BEFORE * 60 * 60 * 1000);
         const windowEnd = new Date(windowStart.getTime() + 10 * 60 * 1000);
 
         const menus = await prisma.menu.findMany({
