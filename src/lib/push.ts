@@ -48,7 +48,7 @@ export async function sendToUnorderedParents(menuId: string, payload: PushPayloa
       user: {
         roles: { has: PUSH_TARGET_ROLE },
         ...(orderedIds.length > 0 && {
-          students: { none: { id: { in: orderedIds } } },
+          students: { some: { id: { notIn: orderedIds } } },
         }),
       },
     },
