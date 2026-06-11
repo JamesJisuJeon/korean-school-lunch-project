@@ -26,8 +26,7 @@ async function sendOne(endpoint: string, p256dh: string, auth: string, payload: 
   }
 }
 
-// TODO: 학부모 배포 시 'PA' → 'PARENT' 로 변경
-const PUSH_TARGET_ROLE = 'PA';
+const PUSH_TARGET_ROLE = 'PARENT';
 
 export async function sendToAllParents(payload: PushPayload) {
   const subs = await prisma.pushSubscription.findMany({
