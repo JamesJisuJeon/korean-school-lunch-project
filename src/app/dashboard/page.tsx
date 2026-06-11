@@ -74,8 +74,7 @@ export default async function DashboardPage() {
               오늘도 학부모회의 원활한 간식 운영을 위해 함께해 주셔서 깊이 감사드립니다.
             </p>
           </div>
-          {/* TODO: 학부모 배포 시 "PA" → "PARENT" 로 변경 */}
-          {roles.includes("PA") && (
+          {roles.includes("PARENT") && (
             <div className="flex justify-center md:justify-end">
               <NotificationToggle />
             </div>

@@ -83,7 +83,7 @@ export default function NotificationToggle() {
       </button>
       <div className="text-xs text-gray-400 dark:text-gray-500 text-center md:text-right space-y-0.5">
         <p className="font-medium text-gray-500 dark:text-gray-400">알림 종류: 간식 메뉴 게시 · 신청 마감 4시간 전</p>
-        <p>Android: 브라우저에서 바로 수신 가능</p>
+        <p>Android: 브라우저/앱에서 수신 가능</p>
         <p>iPhone: 홈 화면에 앱 설치 후 수신 가능</p>
       </div>
     </div>
