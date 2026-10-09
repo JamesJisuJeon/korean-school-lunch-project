@@ -25,7 +25,8 @@ export async function GET(req: Request) {
     // 2. 해당 학년도 학급에 소속된 모든 학생 조회 (주문 정보 및 쿠폰 정보 포함)
     const students = await prisma.student.findMany({
       where: {
-        class: { academicYearId: activeYear.id }
+        class: { academicYearId: activeYear.id },
+        isActive: true,
       },
       include: {
         class: true,
