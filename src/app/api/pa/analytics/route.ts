@@ -20,7 +20,10 @@ export async function GET(req: Request) {
   if (!menu) return NextResponse.json({ message: "메뉴를 찾을 수 없습니다." }, { status: 404 });
 
   const students = await prisma.student.findMany({
-    where: { class: { academicYearId: activeYear.id } },
+    where: {
+      class: { academicYearId: activeYear.id },
+      isActive: true,
+    },
     include: {
       class: true,
       orders: { where: { menuId } },
